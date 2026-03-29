@@ -1,9 +1,67 @@
 @import "tailwindcss";
+@source "../components";
+@source "./";
 
-@theme inline {
+@theme {
   --color-background: #000000;
   --color-foreground: #ffffff;
-  --font-space-grotesk: var(--font-space-grotesk);
+  
+  /* Fonts */
+  --font-headline: "Space Grotesk", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-label: "Inter", sans-serif;
+  
+  /* Stitch Colors */
+  --color-error-dim: #f87171;
+  --color-surface-tint: #2563eb;
+  --color-primary-fixed: #dbeafe;
+  --color-surface: #000000;
+  --color-on-error-container: #fca5a5;
+  --color-on-tertiary-fixed-variant: #374151;
+  --color-secondary: #f97316;
+  --color-on-primary-container: #dbeafe;
+  --color-surface-container-lowest: #000000;
+  --color-on-primary-fixed: #1e3a8a;
+  --color-surface-container-high: #141414;
+  --color-on-error: #ffffff;
+  --color-on-secondary-container: #ffedd5;
+  --color-secondary-dim: #fb923c;
+  --color-primary-fixed-dim: #bfdbfe;
+  --color-on-surface: #ffffff;
+  --color-on-primary-fixed-variant: #1d4ed8;
+  --color-on-secondary-fixed: #7c2d12;
+  --color-surface-container-low: #0a0a0a;
+  --color-tertiary-dim: #d1d5db;
+  --color-primary-container: rgba(37, 99, 235, 0.2);
+  --color-tertiary-fixed-dim: #e5e7eb;
+  --color-on-secondary: #ffffff;
+  --color-outline-variant: rgba(255, 255, 255, 0.05);
+  --color-tertiary-container: rgba(255, 255, 255, 0.1);
+  --color-on-secondary-fixed-variant: #c2410c;
+  --color-primary: #2563eb;
+  --color-on-background: #ffffff;
+  --color-outline: rgba(255, 255, 255, 0.1);
+  --color-surface-bright: #1a1a1a;
+  --color-primary-dim: #3b82f6;
+  --color-on-tertiary-container: #ffffff;
+  --color-tertiary: #ffffff;
+  --color-surface-container-highest: #1f1f1f;
+  --color-surface-variant: rgba(255, 255, 255, 0.02);
+  --color-on-primary: #ffffff;
+  --color-on-surface-variant: rgba(255, 255, 255, 0.6);
+  --color-secondary-fixed-dim: #fed7aa;
+  --color-tertiary-fixed: #f3f4f6;
+  --color-on-tertiary: #000000;
+  --color-secondary-fixed: #ffedd5;
+  --color-inverse-surface: #ffffff;
+  --color-on-tertiary-fixed: #111827;
+  --color-inverse-primary: #60a5fa;
+  --color-secondary-container: rgba(249, 115, 22, 0.2);
+  --color-surface-dim: #060606;
+  --color-error-container: #450a0a;
+  --color-error: #ef4444;
+  --color-inverse-on-surface: #000000;
+  --color-surface-container: #0d0d0d;
 }
 
 body {

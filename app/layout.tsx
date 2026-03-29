@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Space_Grotesk } from "next/font/google";
+import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 import SmoothScroll from "@/components/LenisProvider";
 
@@ -8,9 +8,14 @@ const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
 });
 
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
-  title: "StellarSub",
-  description: "Minimalist Cosmic Operations",
+  title: "Event Horizon | Cosmic Market",
+  description: "Trade on the outcome of future events with Zero-Knowledge privacy.",
 };
 
 export default function RootLayout({
@@ -21,11 +26,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} antialiased`}
+      className={`${spaceGrotesk.variable} ${inter.variable} antialiased`}
     >
+      <head>
+        <script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js" async></script>
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+      </head>
       <body className="min-h-full flex flex-col font-sans bg-black">
         <SmoothScroll>
-            {children}
+          {children}
         </SmoothScroll>
       </body>
     </html>

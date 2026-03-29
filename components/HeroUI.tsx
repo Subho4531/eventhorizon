@@ -19,7 +19,7 @@ export default function HeroUI() {
             >
               <span className="glass-pill px-4 py-1.5 rounded-full flex items-center justify-center gap-2 text-xs text-dim mb-10">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]"></span>
-                Ambient AI · Always On · Zero Effort
+                ZK-SNARKs · Cryptographically Sealed · True Privacy
               </span>
             </motion.div>
 
@@ -30,7 +30,7 @@ export default function HeroUI() {
               transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
               className="text-5xl md:text-7xl font-medium tracking-tight mb-2 drop-shadow-2xl"
             >
-              All In One Assistant
+              Event Horizon
             </motion.h1>
             
             <motion.h2
@@ -40,7 +40,7 @@ export default function HeroUI() {
               transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
               className="text-5xl md:text-7xl font-sans tracking-tight mb-8 drop-shadow-2xl"
             >
-              personalized, <span className="text-dim">fast</span> and <span className="text-dim">free.</span>
+              trade on the <span className="text-dim">future.</span> without <span className="text-dim">exposure.</span>
             </motion.h2>
 
             <motion.p
@@ -50,7 +50,7 @@ export default function HeroUI() {
               transition={{ duration: 1, delay: 0.6 }}
               className="text-dim text-sm max-w-lg mb-12 leading-relaxed"
             >
-              StellarSub listens, understands, and acts — converting your everyday conversations into scheduled tasks, automated workflows, and intelligent decisions.
+              Event Horizon is a Soroban-based prediction market where your positions are cryptographically sealed. Trade on outcomes using Zero-Knowledge proofs — your bets, your privacy.
             </motion.p>
 
             <motion.button
@@ -61,7 +61,7 @@ export default function HeroUI() {
               className="glass-pill text-white px-6 py-3 rounded-full flex items-center gap-2 text-sm hover:bg-white/10 transition-colors group"
             >
               <Sparkles className="w-4 h-4 text-white/70 group-hover:text-white transition-colors" />
-              <span>Download it <span className="text-dim ml-1">for free</span></span>
+              <span>Enter the <span className="text-dim ml-1">Markets</span></span>
             </motion.button>
          </div>
       </section>
@@ -80,7 +80,7 @@ export default function HeroUI() {
               style={{ transformStyle: "preserve-3d" }}
             >
               <div className="flex items-center gap-2 mb-4 text-xs text-dim uppercase tracking-wider">
-                <Mic className="w-4 h-4 text-white" /> Voice Input
+                <Mic className="w-4 h-4 text-white" /> Market Resolution
                 <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500"></span>
               </div>
               <div className="flex items-end gap-1 h-10 mb-5">
@@ -89,7 +89,7 @@ export default function HeroUI() {
                  ))}
               </div>
               <p className="text-xs text-white/80 leading-relaxed">
-                "Remind me to review the Q4 report tomorrow at 9 AM and send it to the team."
+                "Oracle has signed the outcome. Reveal your cryptographically sealed commitment to claim the payout."
               </p>
             </motion.div>
 
@@ -103,17 +103,17 @@ export default function HeroUI() {
               style={{ transformStyle: "preserve-3d" }}
             >
               <div className="flex items-center justify-between mb-5 text-xs uppercase tracking-wider text-dim">
-                <span className="flex items-center gap-2 text-white"><Calendar className="w-4 h-4"/> Scheduled</span>
-                <span>Today</span>
+                <span className="flex items-center gap-2 text-white"><Calendar className="w-4 h-4"/> Active Markets</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
               </div>
               <div className="space-y-4">
                 <div className="flex justify-between items-center bg-white/5 p-3 rounded-lg border border-white/5 text-xs text-white/90">
-                   <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-blue-400"/> Review Q4 report</span>
-                   <span className="text-dim">9:00 AM</span>
+                   <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-blue-400"/> AGI by 2026?</span>
+                   <span className="text-blue-400">82% YES</span>
                 </div>
                 <div className="flex justify-between items-center text-xs text-dim px-2">
-                   <span className="flex items-center gap-2"><div className="w-4 h-4 rounded-full border border-white/20"></div> Standup sync</span>
-                   <span>11:30 AM</span>
+                   <span className="flex items-center gap-2"><div className="w-4 h-4 rounded-full border border-white/20"></div> Soroban $1B TVL</span>
+                   <span className="text-red-400">45% NO</span>
                 </div>
               </div>
             </motion.div>
@@ -127,12 +127,12 @@ export default function HeroUI() {
               className="absolute left-[15%] top-[60%] glass-card p-5 rounded-xl w-64 md:w-72 shadow-2xl"
             >
               <div className="flex items-center gap-2 mb-4 text-xs text-dim uppercase tracking-wider">
-                <CheckCircle2 className="w-4 h-4 text-white" /> Auto Notes
+                <CheckCircle2 className="w-4 h-4 text-white" /> ZK Verification
               </div>
               <ul className="space-y-3 text-xs text-white/70 leading-relaxed">
-                <li className="flex items-start gap-2"><span className="w-1 h-1 mt-1.5 bg-white/50 rounded-full shrink-0"></span> Review Q4 financial report</li>
-                <li className="flex items-start gap-2"><span className="w-1 h-1 mt-1.5 bg-white/50 rounded-full shrink-0"></span> Send summary to team</li>
-                <li className="flex items-start gap-2"><span className="w-1 h-1 mt-1.5 bg-white/50 rounded-full shrink-0"></span> Update PRD for v2.0 release</li>
+                <li className="flex items-start gap-2"><span className="w-1 h-1 mt-1.5 bg-white/50 rounded-full shrink-0"></span> Generating local randomness...</li>
+                <li className="flex items-start gap-2"><span className="w-1 h-1 mt-1.5 bg-white/50 rounded-full shrink-0"></span> Hashing side + nonce...</li>
+                <li className="flex items-start gap-2"><span className="w-1 h-1 mt-1.5 bg-white/50 rounded-full shrink-0"></span> Submitting snarkjs proof</li>
               </ul>
             </motion.div>
 
@@ -145,13 +145,13 @@ export default function HeroUI() {
               className="absolute right-[15%] top-[80%] glass-card p-5 rounded-xl w-60 md:w-64 shadow-2xl"
             >
               <div className="flex items-center gap-2 mb-5 text-xs text-dim uppercase tracking-wider">
-                <TrendingUp className="w-4 h-4 text-white" /> Productivity
+                <TrendingUp className="w-4 h-4 text-white" /> Win Rate
               </div>
               <div className="mb-2 flex items-baseline gap-2">
                  <span className="text-3xl text-white font-medium tracking-tight">87%</span> 
                  <span className="text-xs text-blue-400 font-medium">+47%</span>
               </div>
-              <p className="text-xs text-dim mb-6">Tasks automated this week</p>
+              <p className="text-xs text-dim mb-6">Markets resolved accurately</p>
               
               <div className="h-12 w-full relative">
                 <svg viewBox="0 0 100 30" className="absolute inset-0 w-full h-full overflow-visible">

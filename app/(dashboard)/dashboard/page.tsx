@@ -1,0 +1,153 @@
+export default function Home() {
+  return (
+    <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 h-full content-start">
+      {/* Hero Section with Event Horizon Typography */}
+      <section className="col-span-1 xl:col-span-8 space-y-8">
+        <div className="glass-panel rounded-3xl p-6 md:p-10 overflow-hidden relative">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
+            <div className="max-w-md">
+              <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-[10px] uppercase tracking-[0.3em] font-black mb-4 inline-block">
+                Active Horizon Event
+              </span>
+              <h1 className="text-4xl md:text-5xl font-sans text-white font-bold leading-tight">
+                2026 Cosmic Expedition Success Rate
+              </h1>
+              <p className="text-white/40 text-xs mt-4 leading-relaxed uppercase tracking-widest">
+                Real-time prediction market for orbital settlement benchmarks
+              </p>
+            </div>
+            <div className="text-left md:text-right">
+              <div className="text-[10px] text-white/30 uppercase tracking-[0.3em] mb-2 font-bold">Consensus</div>
+              <div className="text-5xl md:text-6xl font-bold text-white font-sans tracking-tighter">74.2%</div>
+            </div>
+          </div>
+          
+          {/* Mini Chart - Minimalist */}
+          <div className="w-full h-48 bg-white/[0.02] rounded-2xl mb-10 relative border border-white/5 overflow-hidden">
+            <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1000 200">
+              <path className="drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]" d="M0,150 Q200,160 400,130 T700,90 T1000,40" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"></path>
+              <path d="M0,150 Q200,160 400,130 T700,90 T1000,40 V200 H0 Z" fill="url(#chartGradient)"></path>
+              <defs>
+                <linearGradient id="chartGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                  <stop offset="0%" stopColor="white" stopOpacity="0.05"></stop>
+                  <stop offset="100%" stopColor="white" stopOpacity="0"></stop>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5">
+              <div className="w-[300px] h-[300px] bg-white rounded-full blur-[100px]"></div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <button className="bg-blue-600/90 backdrop-blur-md text-white rounded-2xl py-4 flex flex-col items-center justify-center shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition-all cursor-pointer">
+              <span className="text-xl font-bold font-sans">YES</span>
+              <span className="text-[9px] text-white/80 uppercase font-black tracking-widest">Buy 74¢</span>
+            </button>
+            <button className="bg-orange-500/90 backdrop-blur-md text-white rounded-2xl py-4 flex flex-col items-center justify-center shadow-lg shadow-orange-500/20 hover:bg-orange-400 transition-all cursor-pointer">
+              <span className="text-xl font-bold font-sans">NO</span>
+              <span className="text-[9px] text-white/80 uppercase font-black tracking-widest">Buy 26¢</span>
+            </button>
+            <div className="bg-white/5 rounded-2xl py-4 px-6 border border-white/5 flex flex-col justify-center">
+              <span className="block text-[9px] text-white/40 uppercase font-bold tracking-widest mb-1">Total Pool</span>
+              <span className="block text-xl font-bold font-sans text-white">$2.4M</span>
+            </div>
+            <div className="bg-white/5 rounded-2xl py-4 px-6 border border-white/5 flex flex-col justify-center">
+              <span className="block text-[9px] text-white/40 uppercase font-bold tracking-widest mb-1">Deadline</span>
+              <span className="block text-xl font-bold font-sans text-white">14:02:44</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="glass-panel p-8 rounded-3xl group cursor-pointer hover:bg-white/[0.04] transition-all">
+            <div className="flex justify-between items-center mb-6">
+              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-blue-500/40 transition-all">
+                <span className="material-symbols-outlined text-white/60">rocket_launch</span>
+              </div>
+              <span className="text-blue-400 text-[10px] font-black tracking-widest">LIVE DATA</span>
+            </div>
+            <h3 className="text-lg font-bold mb-6 font-sans text-white leading-tight">Starship-V Launch Success by Q4?</h3>
+            <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
+              <div>
+                <div className="text-[9px] text-white/30 uppercase font-bold mb-1">Market Sentiment</div>
+                <div className="text-3xl font-bold text-white font-sans">32%</div>
+              </div>
+              <span className="text-[10px] text-white/60 font-bold uppercase tracking-widest group-hover:text-white transition-colors">Trade Outcome →</span>
+            </div>
+          </div>
+          
+          <div className="glass-panel p-8 rounded-3xl group cursor-pointer hover:bg-white/[0.04] transition-all">
+            <div className="flex justify-between items-center mb-6">
+              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-purple-400/40 transition-all">
+                <span className="material-symbols-outlined text-white/60">satellite_alt</span>
+              </div>
+              <span className="text-purple-400 text-[10px] font-black tracking-widest">TRENDING</span>
+            </div>
+            <h3 className="text-lg font-bold mb-6 font-sans text-white leading-tight">New Exoplanet Biosignature Discovery?</h3>
+            <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
+              <div>
+                <div className="text-[9px] text-white/30 uppercase font-bold mb-1">Market Sentiment</div>
+                <div className="text-3xl font-bold text-white font-sans">15%</div>
+              </div>
+              <span className="text-[10px] text-white/60 font-bold uppercase tracking-widest group-hover:text-white transition-colors">Trade Outcome →</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Sidebar Grid Restyled */}
+      <section className="col-span-1 xl:col-span-4 space-y-8">
+        <div className="glass-panel rounded-3xl p-8">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-xs font-bold font-sans uppercase tracking-[0.2em] flex items-center text-white">
+              <span className="material-symbols-outlined mr-3 text-white/40">sensors</span>
+              Cosmic Alerts
+            </h2>
+            <span className="text-[8px] bg-white/10 text-white px-3 py-1 rounded-full font-black tracking-widest animate-pulse border border-white/10">STREAMING</span>
+          </div>
+          <div className="space-y-6">
+            <div className="border-l border-white/10 pl-5 py-1 group cursor-default">
+              <div className="text-[9px] text-white/30 uppercase font-bold mb-2 tracking-widest">02:14 UTC</div>
+              <p className="text-xs leading-relaxed text-white/80 group-hover:text-white transition-colors">Lunar Outpost 3 reports helium-3 surge; market shifts 8%.</p>
+            </div>
+            <div className="border-l border-white/10 pl-5 py-1 group cursor-default">
+              <div className="text-[9px] text-white/30 uppercase font-bold mb-2 tracking-widest">01:45 UTC</div>
+              <p className="text-xs leading-relaxed text-white/60 group-hover:text-white transition-colors">Orbital debris collision near GPS-Block-A constellation.</p>
+            </div>
+            <div className="border-l border-white/10 pl-5 py-1 group cursor-default">
+              <div className="text-[9px] text-white/30 uppercase font-bold mb-2 tracking-widest">23:10 UTC</div>
+              <p className="text-xs leading-relaxed text-white/60 group-hover:text-white transition-colors">Mars colonization funding bill passes initial hearing.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-panel rounded-3xl p-8">
+          <h2 className="text-xs font-bold font-sans uppercase tracking-[0.2em] mb-6 flex items-center text-white">
+            <span className="material-symbols-outlined mr-3 text-white/40">blur_on</span>
+            Nebula Topics
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            <span className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold text-white/70 hover:border-white/40 hover:text-white transition-all cursor-pointer">#Mars2030</span>
+            <span className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold text-white/70 hover:border-white/40 hover:text-white transition-all cursor-pointer">#Fusion</span>
+            <span className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold text-white/70 hover:border-white/40 hover:text-white transition-all cursor-pointer">#Mining</span>
+            <span className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold text-white/70 hover:border-white/40 hover:text-white transition-all cursor-pointer">#JamesWebb</span>
+          </div>
+        </div>
+
+        <div className="glass-panel rounded-3xl p-8 bg-gradient-to-br from-white/[0.03] to-transparent">
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <div className="text-[9px] text-white/30 uppercase font-bold mb-2 tracking-widest">Global Volume</div>
+              <div className="text-2xl font-bold font-sans text-white">$412.8M</div>
+            </div>
+            <div className="border-l border-white/10 pl-6">
+              <div className="text-[9px] text-white/30 uppercase font-bold mb-2 tracking-widest">Total Stakes</div>
+              <div className="text-2xl font-bold font-sans text-white">84.2K</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
