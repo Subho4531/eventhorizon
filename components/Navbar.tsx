@@ -2,10 +2,11 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import ConnectWalletButton from "./ui/connectWalletButton";
 
 export default function Navbar() {
   return (
-    <motion.nav 
+    <motion.nav
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
@@ -28,9 +29,7 @@ export default function Navbar() {
       </div>
 
       <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="pointer-events-auto">
-        <Link href="/dashboard" className="inline-block px-6 py-2.5 rounded-[12px] font-medium text-sm transition-all text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 shadow-[0_0_20px_rgba(59,130,246,0.5)] border border-white/20">
-          Launch DApp
-        </Link>
+        <ConnectWalletButton />
       </motion.div>
     </motion.nav>
   );

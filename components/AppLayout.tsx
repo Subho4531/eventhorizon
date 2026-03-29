@@ -4,9 +4,15 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import { useWallet } from "@/components/WalletProvider";
+import { Loader2 } from "lucide-react";
+import ConnectWalletButton from "./ui/connectWalletButton";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { publicKey, isConnecting, connect } = useWallet();
+  
+  const formatKey = (key: string) => `${key.slice(0, 5)}...${key.slice(-4)}`;
 
   return (
     <>
@@ -41,9 +47,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 type="text"
               />
             </div>
-            <button className="bg-blue-600/80 backdrop-blur-md border border-blue-400/30 text-white px-5 md:px-6 py-2 md:py-2.5 rounded-xl font-bold text-xs hover:brightness-110 transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)]">
-              Connect Wallet
-            </button>
+            <ConnectWalletButton/>
           </div>
         </nav>
         

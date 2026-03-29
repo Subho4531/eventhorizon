@@ -13,6 +13,8 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+import { WalletProvider } from "@/components/WalletProvider";
+
 export const metadata: Metadata = {
   title: "Event Horizon | Cosmic Market",
   description: "Trade on the outcome of future events with Zero-Knowledge privacy.",
@@ -33,9 +35,11 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
       </head>
       <body className="min-h-full flex flex-col font-sans bg-black">
-        <SmoothScroll>
-          {children}
-        </SmoothScroll>
+        <WalletProvider>
+          <SmoothScroll>
+            {children}
+          </SmoothScroll>
+        </WalletProvider>
       </body>
     </html>
   );
