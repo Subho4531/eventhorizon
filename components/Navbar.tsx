@@ -3,8 +3,10 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import ConnectWalletButton from "./ui/connectWalletButton";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
+  const pathname = usePathname();
   return (
     <motion.nav
       initial={{ opacity: 0, y: -20 }}
@@ -21,11 +23,12 @@ export default function Navbar() {
         </span>
       </div>
 
-      {/* Tabs Menu */}
+      {/* Tabs Menu */} 
       <div className="hidden md:flex items-center gap-1 glass-pill px-2 py-1.5 rounded-full pointer-events-auto shadow-2xl">
-        <Link href="/markets" className="px-4 py-1.5 rounded-full text-sm font-medium text-white bg-white/10 hover:bg-white/20 transition-all">Markets</Link>
-        <Link href="/portfolio" className="px-4 py-1.5 rounded-full text-sm font-medium text-dim hover:text-white transition-all">Portfolio</Link>
-        <Link href="/leaderboard" className="px-4 py-1.5 rounded-full text-sm font-medium text-dim hover:text-white transition-all">Leaderboard</Link>
+        <Link href="/dashboard" className={`px-4 py-1.5 rounded-full text-sm font-medium ${pathname === '/dashboard' ? 'text-white' : 'text-dim'} hover:bg-white/20 transition-all`}>Dashboard</Link>
+        <Link href="/markets" className={`px-4 py-1.5 rounded-full text-sm font-medium ${pathname === '/markets' ? 'text-white' : 'text-dim'} hover:bg-white/20 transition-all`}>Markets</Link>
+        <Link href="/portfolio" className={`px-4 py-1.5 rounded-full text-sm font-medium ${pathname === '/portfolio' ? 'text-white' : 'text-dim'} hover:bg-white/20 transition-all`}>Portfolio</Link>
+        <Link href="/leaderboard" className={`px-4 py-1.5 rounded-full text-sm font-medium ${pathname === '/leaderboard' ? 'text-white' : 'text-dim'} hover:bg-white/20 transition-all`}>Leaderboard</Link>
       </div>
 
       <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="pointer-events-auto">

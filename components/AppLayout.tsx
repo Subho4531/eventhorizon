@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { useWallet } from "@/components/WalletProvider";
 import { Loader2 } from "lucide-react";
 import ConnectWalletButton from "./ui/connectWalletButton";
+import Navbar from "./Navbar";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -22,7 +23,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         
         {/* Top Navbar */}
         <nav className="col-span-1 md:col-span-2 flex justify-between items-center px-6 md:px-10 border-b border-white/5 bg-black/20 backdrop-blur-md z-50 pointer-events-auto">
-          <div className="flex flex-col">
+          {/* <div className="flex flex-col">
             <div className="text-xl font-bold tracking-tight text-white font-sans drop-shadow-md">
               Event Horizon
             </div>
@@ -48,7 +49,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               />
             </div>
             <ConnectWalletButton/>
-          </div>
+          </div> */}
+          <Navbar/>
         </nav>
         
         {/* Sidebar */}
