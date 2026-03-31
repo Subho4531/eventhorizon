@@ -2,7 +2,7 @@ import { useWallet } from "../WalletProvider";
 import { Loader2 } from "lucide-react";
 
 export default function ConnectWalletButton() {
-    const { publicKey, connect, isConnecting , disconnect} = useWallet();
+    const { publicKey, connect, isConnecting , disconnect } = useWallet();
     const formatKey = (key: string) => {
         return `${key.slice(0, 4)}...${key.slice(-4)}`;
     };
@@ -15,7 +15,7 @@ export default function ConnectWalletButton() {
             <Loader2 className="w-4 h-4 animate-spin text-white/70" />
         ) : publicKey ? (
             formatKey(publicKey)
-        ) : (
+        ) : (   
             "Connect Wallet"
         )}
     </button>

@@ -1,13 +1,32 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../lib/generated/prisma"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+
+model User {
+  publicKey    String        @id
+  name         String        @default("")
+  bio          String        @default("")
+  pfpUrl       String        @default("")
+  links        Json          @default("[]")
+  balance      Float         @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+}
+
+model Transaction {
+  id            String   @id @default(cuid())
+  userPublicKey String
+  type          String   // "DEPOSIT" | "WITHDRAWAL"
+  amount        Float
+  hash          String   @default("")
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userPublicKey], references: [publicKey])
 }

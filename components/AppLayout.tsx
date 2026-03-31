@@ -8,6 +8,7 @@ import { useWallet } from "@/components/WalletProvider";
 import { Loader2 } from "lucide-react";
 import ConnectWalletButton from "./ui/connectWalletButton";
 import Navbar from "./Navbar";
+import OnboardingModal from "./OnboardingModal";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -15,11 +16,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   
   const formatKey = (key: string) => `${key.slice(0, 5)}...${key.slice(-4)}`;
 
+
   return (
     <>
-      
+      <OnboardingModal />
       {/* App Grid Layout */}
-      <div className="min-h-screen w-full relative z-10 grid grid-cols-1 md:grid-cols-[240px_1fr] grid-rows-[80px_1fr] bg-black/20 shadow-2xl pointer-events-none">
+
+      <div className="min-h-screen w-full relative z-10 grid grid-cols-1 md:grid-cols-[240px_1fr] grid-rows-[80px_1fr] bg-black/20 shadow-2xl">
         
         {/* Top Navbar */}
         <nav className="col-span-1 md:col-span-2 flex justify-between items-center px-6 md:px-10 border-b border-white/5 bg-black/20 backdrop-blur-md z-50 pointer-events-auto">
@@ -54,7 +57,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </nav>
         
         {/* Sidebar */}
-        <aside className="hidden md:flex flex-col border-r border-white/5 bg-black/10 backdrop-blur-md py-8 pointer-events-auto h-full overflow-y-auto">
+        <aside className="hidden md:flex flex-col border-r border-white/5 bg-black/10 backdrop-blur-md py-8 sticky top-[80px] h-[calc(100vh-80px)] overflow-y-auto">
           <div className="px-8 mb-10">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center">
@@ -101,7 +104,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </aside>
 
         {/* Main Content Area */}
-        <main className="overflow-y-auto p-4 md:p-10 custom-scrollbar col-span-1 md:col-span-1 pointer-events-auto h-full max-h-[calc(100vh-80px)]">
+        <main className="p-4 md:p-10 custom-scrollbar col-span-1 md:col-span-1">
            {children}
         </main>
       </div>

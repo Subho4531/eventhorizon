@@ -45,3 +45,23 @@ next-env.d.ts
 .design
 
 /lib/generated/prisma
+
+# Rust / Soroban
+**/target/
+contracts/**/target/
+contracts/**/deploy_output.txt
+contracts/**/error_output.txt
+
+# ZK / Circom
+**/node_modules
+circuit/*.ptau
+circuit/*.zkey
+circuit/*.r1cs
+circuit/*.sym
+circuit/*_js/
+
+# Local Temporary & Debug Files
+/tmp/
+/ts_errors.txt
+/diff.txt
+/test.css

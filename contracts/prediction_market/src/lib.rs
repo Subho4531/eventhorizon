@@ -1,144 +1,634 @@
+//! # ZK Prediction Market + Escrow — Soroban Contract
+//!
+//! ## Architecture
+//!
+//! This single contract serves two roles:
+//!
+//! ### 1. Escrow Vault
+//!   - Users deposit XLM → balance tracked in on-chain storage.
+//!   - Bets and bonds are deducted from escrow; winnings are credited back.
+//!   - Users can withdraw their free balance at any time.
+//!
+//! ### 2. ZK Prediction Market
+//!   - Bets are "sealed": only a Poseidon commitment is stored on-chain.
+//!   - The bettor's chosen side (YES/NO) is a private witness in the ZK proof.
+//!   - At claim time the bettor furnishes a Groth16 proof proving they bet on
+//!     the winning side, without revealing which side they chose at bet time.
+//!   - A nullifier prevents double-claiming the same position.
+//!
+//! ## Function Summary
+//!
+//! | Function           | Auth      | Description                                   |
+//! |--------------------|-----------|-----------------------------------------------|
+//! | `init`             | –         | One-time setup: XLM token address + admin     |
+//! | `deposit`          | user      | Transfer XLM from user wallet → escrow        |
+//! | `withdraw`         | user      | Transfer XLM from escrow → user wallet        |
+//! | `balance_of`       | public    | Return user's current escrow balance          |
+//! | `create_market`    | creator   | Open a new market, take creator bond          |
+//! | `place_bet`        | bettor    | Seal a bet: store commitment, deduct stake    |
+//! | `resolve`          | oracle    | Set market outcome + payout multiplier        |
+//! | `claim`            | bettor    | Groth16-verify reveal proof, pay winner       |
+//! | `slash_bond`       | anyone    | After dispute window, slash bad oracle bond   |
+//! | `get_market`       | public    | Read market state                             |
+//! | `get_position`     | public    | Read sealed position by commitment            |
+//! | `escrow_balance`   | public    | Read contract's own XLM balance               |
+
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, Address, BytesN, Env, Symbol};
 
-#[contracttype]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum MarketStatus {
-    Open = 0,
-    Resolved = 1,
-}
+mod groth16;
+mod types;
 
-#[contracttype]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum Outcome {
-    Yes = 0,
-    No = 1,
-}
+use groth16::verify_reveal_proof;
+use types::*;
+use soroban_sdk::{
+    contract, contractimpl, token, Address, BytesN, Env, Symbol,
+    symbol_short,
+};
 
-#[contracttype]
-#[derive(Clone)]
-pub struct Market {
-    pub creator: Address,
-    pub oracle: Address,
-    pub title: Symbol,
-    pub status: MarketStatus,
-    pub outcome: Option<Outcome>,
-    pub yes_pool: i128,
-    pub no_pool: i128,
-}
+// Dispute window: 48 hours in seconds
+const DISPUTE_WINDOW_SECS: u64 = 48 * 60 * 60;
 
-#[contracttype]
-#[derive(Clone)]
-pub struct Position {
-    pub bettor: Address,
-    pub market_id: u32,
-    pub amount: i128,
-}
-
-#[contracttype]
-pub enum DataKey {
-    Market(u32),
-    MarketCount,
-    Commitment(BytesN<32>), // Maps ZK Commitment -> Position
-    Nullifier(BytesN<32>),  // Maps ZK Nullifier -> bool (spent)
-}
+// ──────────────────────────────────────────────────────────────────────────────
+// Contract
+// ──────────────────────────────────────────────────────────────────────────────
 
 #[contract]
 pub struct ZKPredictionMarket;
 
 #[contractimpl]
 impl ZKPredictionMarket {
-    pub fn create_market(env: Env, creator: Address, oracle: Address, title: Symbol) -> u32 {
-        creator.require_auth();
-        
-        let mut id: u32 = env.storage().instance().get(&DataKey::MarketCount).unwrap_or(0);
-        id += 1;
-        
-        let market = Market {
-            creator,
-            oracle,
-            title,
-            status: MarketStatus::Open,
-            outcome: None,
-            yes_pool: 0,
-            no_pool: 0,
-        };
-        
-        env.storage().instance().set(&DataKey::MarketCount, &id);
-        env.storage().instance().set(&DataKey::Market(id), &market);
-        id
+    // ── Initialisation ────────────────────────────────────────────────────────
+
+    /// One-time initialisation. Must be called before any other function.
+    ///
+    /// # Arguments
+    /// * `admin`     – Address authorised to emergency-pause (future use).
+    /// * `xlm_token` – Address of the native XLM Stellar Asset Contract (SAC).
+    ///                 On Testnet: `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC`
+    pub fn init(env: Env, admin: Address, xlm_token: Address) {
+        // Can only be called once.
+        if env.storage().instance().has(&DataKey::Admin) {
+            panic!("Already initialised");
+        }
+        admin.require_auth();
+        env.storage().instance().set(&DataKey::Admin, &admin);
+        env.storage().instance().set(&DataKey::XlmToken, &xlm_token);
+        env.storage().instance().extend_ttl(17_280, 17_280); // ~30 days
     }
 
-    pub fn place_bet(env: Env, bettor: Address, market_id: u32, commitment: BytesN<32>, amount: i128) {
+    // ── Escrow: Deposit ───────────────────────────────────────────────────────
+
+    /// Deposit `amount` stroops of XLM from `user`'s wallet into their escrow
+    /// balance held by this contract.
+    ///
+    /// The user must have authorised this contract to spend their XLM via the
+    /// SAC (`token.approve(contract, amount)`) OR the `transfer` auth is
+    /// included inline in the same Soroban auth tree (recommended pattern).
+    ///
+    /// Emits: `"deposit"` event with { user, amount }.
+    pub fn deposit(env: Env, user: Address, amount: i128) {
+        user.require_auth();
+        if amount <= 0 {
+            panic!("Amount must be positive");
+        }
+
+        // Pull XLM from user's wallet into the contract's custody.
+        let xlm = Self::xlm_client(&env);
+        xlm.transfer(&user, &env.current_contract_address(), &amount);
+
+        // Credit escrow balance.
+        let bal = Self::get_escrow_bal(&env, &user);
+        env.storage()
+            .persistent()
+            .set(&DataKey::EscrowBal(user.clone()), &(bal + amount));
+
+        env.events()
+            .publish((symbol_short!("deposit"), user), amount);
+    }
+
+    /// Withdraw `amount` stroops from the caller's escrow back to their wallet.
+    ///
+    /// Fails if `amount` exceeds the caller's free (un-locked) escrow balance.
+    ///
+    /// Emits: `"withdraw"` event with { user, amount }.
+    pub fn withdraw(env: Env, user: Address, amount: i128) {
+        user.require_auth();
+        if amount <= 0 {
+            panic!("Amount must be positive");
+        }
+
+        let bal = Self::get_escrow_bal(&env, &user);
+        if bal < amount {
+            panic!("Insufficient escrow balance");
+        }
+
+        // Debit escrow balance before external transfer (reentrancy guard).
+        env.storage()
+            .persistent()
+            .set(&DataKey::EscrowBal(user.clone()), &(bal - amount));
+
+        // Return XLM to user's wallet.
+        let xlm = Self::xlm_client(&env);
+        xlm.transfer(&env.current_contract_address(), &user, &amount);
+
+        env.events()
+            .publish((symbol_short!("withdraw"), user), amount);
+    }
+
+    /// Return `user`'s current escrow balance in stroops.
+    pub fn balance_of(env: Env, user: Address) -> i128 {
+        Self::get_escrow_bal(&env, &user)
+    }
+
+    /// Return the total XLM balance held by this contract (escrow + pools + bonds).
+    pub fn escrow_balance(env: Env) -> i128 {
+        let xlm = Self::xlm_client(&env);
+        xlm.balance(&env.current_contract_address())
+    }
+
+    // ── Markets: Create ───────────────────────────────────────────────────────
+
+    /// Create a new binary prediction market.
+    ///
+    /// The `creator` must have at least `bond` stroops in their escrow balance.
+    /// The bond is locked until the market resolves + dispute window passes.
+    ///
+    /// # Arguments
+    /// * `creator`    – Market creator (also bonds XLM as good-faith deposit).
+    /// * `oracle`     – Address authorised to call `resolve()`.
+    /// * `title`      – Short title symbol (≤ 32 ASCII chars).
+    /// * `close_time` – Unix timestamp (seconds) after which no new bets accepted.
+    /// * `bond`       – Stroops locked as creator bond.
+    ///
+    /// Returns the new market ID.
+    pub fn create_market(
+        env: Env,
+        creator: Address,
+        oracle: Address,
+        title: Symbol,
+        close_time: u64,
+        bond: i128,
+    ) -> u32 {
+        creator.require_auth();
+
+        let now = env.ledger().timestamp();
+        if close_time <= now {
+            panic!("close_time must be in the future");
+        }
+        if bond < 0 {
+            panic!("Bond must be non-negative");
+        }
+
+        // Lock creator bond from escrow.
+        if bond > 0 {
+            let bal = Self::get_escrow_bal(&env, &creator);
+            if bal < bond {
+                panic!("Insufficient escrow balance for bond");
+            }
+            env.storage()
+                .persistent()
+                .set(&DataKey::EscrowBal(creator.clone()), &(bal - bond));
+        }
+
+        // Allocate market ID.
+        let mut count: u32 = env
+            .storage()
+            .instance()
+            .get(&DataKey::MarketCount)
+            .unwrap_or(0);
+        count += 1;
+
+        let market = Market {
+            creator: creator.clone(),
+            oracle,
+            title: title.clone(),
+            status: MarketStatus::Open,
+            outcome: None,
+            close_time,
+            total_pool: 0,
+            bond,
+            dispute_end: 0,
+            payout_bps: 0,
+        };
+
+        env.storage()
+            .instance()
+            .set(&DataKey::MarketCount, &count);
+        env.storage()
+            .persistent()
+            .set(&DataKey::Market(count), &market);
+
+        env.events()
+            .publish((symbol_short!("mkt_new"), creator), (count, title));
+
+        count
+    }
+
+    // ── Markets: Bet ─────────────────────────────────────────────────────────
+
+    /// Seal a ZK bet on a market.
+    ///
+    /// The bettor's chosen side (YES/NO) is embedded in `commitment` —
+    /// a Poseidon hash computed off-chain:
+    ///   `commitment = Poseidon(side, nonce, bettor_key)`
+    ///
+    /// Only the commitment is stored on-chain; the side remains private until
+    /// the bettor constructs a reveal proof at claim time.
+    ///
+    /// The `amount` in stroops is deducted from the bettor's escrow balance.
+    ///
+    /// Emits: `"bet"` event with { bettor, market_id, commitment, amount }.
+    pub fn place_bet(
+        env: Env,
+        bettor: Address,
+        market_id: u32,
+        commitment: BytesN<32>,
+        amount: i128,
+    ) {
         bettor.require_auth();
-        
+        if amount <= 0 {
+            panic!("Amount must be positive");
+        }
+
         let market_key = DataKey::Market(market_id);
-        let market: Market = env.storage().instance().get(&market_key).unwrap();
+        let mut market: Market = env
+            .storage()
+            .persistent()
+            .get(&market_key)
+            .expect("Market not found");
+
+        // Guard: market must be open and before close_time.
         if market.status != MarketStatus::Open {
             panic!("Market is not open");
         }
-        
+        if env.ledger().timestamp() >= market.close_time {
+            panic!("Betting period has ended");
+        }
+
+        // Guard: reject duplicate commitment (replay protection).
+        let commitment_key = DataKey::Position(commitment.clone());
+        if env.storage().persistent().has(&commitment_key) {
+            panic!("Commitment already exists");
+        }
+
+        // Deduct stake from bettor's escrow balance.
+        let bal = Self::get_escrow_bal(&env, &bettor);
+        if bal < amount {
+            panic!("Insufficient escrow balance");
+        }
+        env.storage()
+            .persistent()
+            .set(&DataKey::EscrowBal(bettor.clone()), &(bal - amount));
+
+        // Record sealed position.
         let position = Position {
             bettor: bettor.clone(),
             market_id,
             amount,
+            claimed: false,
         };
-        
-        // Save the commitment. The contract does NOT know if this is a YES or NO bet.
-        env.storage().instance().set(&DataKey::Commitment(commitment.clone()), &position);
+        env.storage()
+            .persistent()
+            .set(&commitment_key, &position);
+
+        // Update total pool (side breakdown is private until claims).
+        market.total_pool += amount;
+        env.storage()
+            .persistent()
+            .set(&market_key, &market);
+
+        env.events().publish(
+            (symbol_short!("bet"), bettor),
+            (market_id, commitment, amount),
+        );
     }
 
-    pub fn resolve(env: Env, oracle: Address, market_id: u32, outcome: Outcome) {
-        oracle.require_auth();
-        let market_key = DataKey::Market(market_id);
-        let mut market: Market = env.storage().instance().get(&market_key).unwrap();
-        
-        if oracle != market.oracle {
-            panic!("Unauthorized: Caller is not the registered oracle");
-        }
-        
-        market.status = MarketStatus::Resolved;
-        market.outcome = Some(outcome);
-        env.storage().instance().set(&market_key, &market);
-    }
+    // ── Markets: Resolve ──────────────────────────────────────────────────────
 
-    pub fn claim(
-        env: Env, 
-        bettor: Address, 
-        market_id: u32, 
-        commitment: BytesN<32>, 
-        nullifier: BytesN<32>, 
-        dummy_proof: BytesN<32>
+    /// Resolve a market. Only the registered oracle may call this.
+    ///
+    /// Sets the winning outcome and the payout multiplier. The dispute window
+    /// starts immediately; payouts unlock after `dispute_end`.
+    ///
+    /// # Arguments
+    /// * `market_id`   – Target market.
+    /// * `outcome`     – `Outcome::Yes` or `Outcome::No`.
+    /// * `payout_bps`  – Winner payout in basis points.
+    ///                   E.g. `20_000` = 2× (winners get 2× their stake).
+    ///                   Must be > 10_000 (i.e. at least 1×, to avoid rug).
+    ///
+    /// Emits: `"resolved"` event with { market_id, outcome, payout_bps }.
+    pub fn resolve(
+        env: Env,
+        oracle: Address,
+        market_id: u32,
+        outcome: Outcome,
+        payout_bps: u32,
     ) {
+        oracle.require_auth();
+
+        if payout_bps < 10_000 {
+            panic!("payout_bps must be >= 10_000 (1x minimum)");
+        }
+
         let market_key = DataKey::Market(market_id);
-        let market: Market = env.storage().instance().get(&market_key).unwrap();
-        
+        let mut market: Market = env
+            .storage()
+            .persistent()
+            .get(&market_key)
+            .expect("Market not found");
+
+        if market.oracle != oracle {
+            panic!("Caller is not the registered oracle");
+        }
+        if market.status == MarketStatus::Resolved {
+            panic!("Market already resolved");
+        }
+
+        let now = env.ledger().timestamp();
+        market.status = MarketStatus::Resolved;
+        market.outcome = Some(outcome.clone());
+        market.payout_bps = payout_bps;
+        market.dispute_end = now + DISPUTE_WINDOW_SECS;
+
+        env.storage()
+            .persistent()
+            .set(&market_key, &market);
+
+        env.events()
+            .publish((symbol_short!("resolved"), oracle), (market_id, payout_bps));
+    }
+
+    // ── Markets: Claim ────────────────────────────────────────────────────────
+
+    /// Claim winnings for a sealed bet using a ZK reveal proof.
+    ///
+    /// The Groth16 proof (generated off-chain by snarkjs) proves that:
+    ///   1. The bettor knows the preimage of `commitment` (their side + nonce + key).
+    ///   2. The side encoded in the commitment matches the market's winning outcome.
+    ///   3. The `nullifier` is derived deterministically from that preimage.
+    ///
+    /// The contract enforces:
+    ///   - Market is resolved and dispute window has passed.
+    ///   - This nullifier has not been spent before.
+    ///   - The referenced commitment exists and belongs to `bettor`.
+    ///   - Proof structural validity (non-infinity points, valid ranges).
+    ///
+    /// On success, the payout is credited to the bettor's escrow balance.
+    ///
+    /// # Arguments
+    /// * `commitment` – The 32-byte Poseidon commitment stored when bet was placed.
+    /// * `nullifier`  – The 32-byte Poseidon nullifier from the reveal circuit.
+    /// * `proof`      – Groth16 proof: (π_A ∈ G1, π_B ∈ G2, π_C ∈ G1).
+    ///
+    /// Emits: `"claim"` event with { bettor, market_id, nullifier, payout }.
+    pub fn claim(
+        env: Env,
+        bettor: Address,
+        market_id: u32,
+        commitment: BytesN<32>,
+        nullifier: BytesN<32>,
+        proof: Groth16Proof,
+    ) {
+        bettor.require_auth();
+
+        let market_key = DataKey::Market(market_id);
+        let market: Market = env
+            .storage()
+            .persistent()
+            .get(&market_key)
+            .expect("Market not found");
+
+        // Guard: market must be resolved.
         if market.status != MarketStatus::Resolved {
-            panic!("Cannot claim: Market is not resolved");
+            panic!("Market is not yet resolved");
         }
-        
-        // Prevent double claiming
-        if env.storage().instance().has(&DataKey::Nullifier(nullifier.clone())) {
-            panic!("Already claimed");
+
+        // Guard: dispute window must have elapsed.
+        let now = env.ledger().timestamp();
+        if now < market.dispute_end {
+            panic!("Dispute window still open");
         }
-        
-        let pos_key = DataKey::Commitment(commitment.clone());
-        let position: Position = env.storage().instance().get(&pos_key).unwrap();
-        
+
+        // Guard: nullifier must not have been spent.
+        let nullifier_key = DataKey::Nullifier(nullifier.clone());
+        if env.storage().persistent().has(&nullifier_key) {
+            panic!("Nullifier already spent (double-claim attempt)");
+        }
+
+        // Guard: commitment must exist and belong to this bettor.
+        let commitment_key = DataKey::Position(commitment.clone());
+        let mut position: Position = env
+            .storage()
+            .persistent()
+            .get(&commitment_key)
+            .expect("Commitment not found");
+
         if position.bettor != bettor {
-             panic!("Not the commitment owner");
+            panic!("Commitment does not belong to caller");
         }
-        
-        // MOCK ZK VERIFICATION:
-        // In a real scenario, we perform a Groth16 verification here:
-        // verify(proof, [commitment, nullifier, market.outcome])
-        // If the proof is valid, it guarantees the user knew the secret for the commitment
-        // and that they picked the winning outcome.
-        
-        // Mark nullifier as spent.
-        env.storage().instance().set(&DataKey::Nullifier(nullifier), &true);
-        
-        // Initiate payout to bettor...
+        if position.market_id != market_id {
+            panic!("Commitment is for a different market");
+        }
+        if position.claimed {
+            panic!("Position already claimed");
+        }
+
+        // Determine winning_side from market outcome.
+        let winning_side = match market.outcome.as_ref().unwrap() {
+            Outcome::Yes => 0u32,
+            Outcome::No  => 1u32,
+        };
+
+        // ── ZK Proof Verification ─────────────────────────────────────────────
+        // Verify the Groth16 RevealBet proof. The circuit proves:
+        //   Poseidon(side, nonce, bettor_key) == commitment  AND  side == winning_side
+        // and outputs:
+        //   nullifier = Poseidon(commitment, nonce)
+        //
+        // Public inputs (circuit signals):
+        //   [0] commitment   – the stored commitment
+        //   [1] winning_side – 0 (YES) or 1 (NO)
+        //   [2] nullifier    – the one-time spend tag
+        let proof_valid = verify_reveal_proof(
+            &env,
+            &proof,
+            &commitment,
+            winning_side,
+            &nullifier,
+        );
+        if !proof_valid {
+            panic!("Invalid ZK proof");
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
+        // Mark nullifier spent BEFORE external state mutations (reentrancy guard).
+        env.storage()
+            .persistent()
+            .set(&nullifier_key, &true);
+
+        // Mark position as claimed.
+        position.claimed = true;
+        env.storage()
+            .persistent()
+            .set(&commitment_key, &position);
+
+        // Compute and credit payout.
+        // payout = bet_amount × payout_bps / 10_000
+        let payout = (position.amount as i128) * (market.payout_bps as i128) / 10_000;
+
+        let current_bal = Self::get_escrow_bal(&env, &bettor);
+        env.storage()
+            .persistent()
+            .set(&DataKey::EscrowBal(bettor.clone()), &(current_bal + payout));
+
+        env.events().publish(
+            (symbol_short!("claim"), bettor),
+            (market_id, nullifier, payout),
+        );
+    }
+
+    // ── Markets: Slash Bond ───────────────────────────────────────────────────
+
+    /// Slash the creator's bond after the dispute window if the oracle's
+    /// resolution is determined to be wrong.
+    ///
+    /// In the hackathon version the admin triggers the slash; in production
+    /// this would be governed by an on-chain dispute game (UMA-style).
+    ///
+    /// The bond is transferred to a treasury address (admin for now).
+    ///
+    /// Emits: `"slash"` event with { market_id, bond_amount }.
+    pub fn slash_bond(env: Env, market_id: u32) {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .expect("Not initialised");
+        admin.require_auth();
+
+        let market_key = DataKey::Market(market_id);
+        let mut market: Market = env
+            .storage()
+            .persistent()
+            .get(&market_key)
+            .expect("Market not found");
+
+        if market.bond == 0 {
+            panic!("No bond to slash");
+        }
+
+        let bond = market.bond;
+        market.bond = 0;
+        env.storage()
+            .persistent()
+            .set(&market_key, &market);
+
+        // Credit bond to admin's escrow (or send directly).
+        let admin_bal = Self::get_escrow_bal(&env, &admin);
+        env.storage()
+            .persistent()
+            .set(&DataKey::EscrowBal(admin.clone()), &(admin_bal + bond));
+
+        env.events()
+            .publish((symbol_short!("slash"), admin), (market_id, bond));
+    }
+
+    // ── Release Creator Bond ──────────────────────────────────────────────────
+
+    /// Return the creator's bond after a successful resolution + dispute window.
+    /// Called by the creator after `dispute_end` has passed.
+    ///
+    /// Emits: `"bond_ret"` event with { creator, market_id, bond }.
+    pub fn release_bond(env: Env, creator: Address, market_id: u32) {
+        creator.require_auth();
+
+        let market_key = DataKey::Market(market_id);
+        let mut market: Market = env
+            .storage()
+            .persistent()
+            .get(&market_key)
+            .expect("Market not found");
+
+        if market.creator != creator {
+            panic!("Caller is not the market creator");
+        }
+        if market.status != MarketStatus::Resolved {
+            panic!("Market is not resolved");
+        }
+        let now = env.ledger().timestamp();
+        if now < market.dispute_end {
+            panic!("Dispute window still open");
+        }
+        if market.bond == 0 {
+            panic!("Bond already released or slashed");
+        }
+
+        let bond = market.bond;
+        market.bond = 0;
+        env.storage()
+            .persistent()
+            .set(&market_key, &market);
+
+        let bal = Self::get_escrow_bal(&env, &creator);
+        env.storage()
+            .persistent()
+            .set(&DataKey::EscrowBal(creator.clone()), &(bal + bond));
+
+        env.events()
+            .publish((symbol_short!("bond_ret"), creator), (market_id, bond));
+    }
+
+    // ── Query helpers ─────────────────────────────────────────────────────────
+
+    /// Return full market state for a given market ID.
+    pub fn get_market(env: Env, market_id: u32) -> Market {
+        env.storage()
+            .persistent()
+            .get(&DataKey::Market(market_id))
+            .expect("Market not found")
+    }
+
+    /// Return the sealed position associated with a commitment hash.
+    pub fn get_position(env: Env, commitment: BytesN<32>) -> Position {
+        env.storage()
+            .persistent()
+            .get(&DataKey::Position(commitment))
+            .expect("Position not found")
+    }
+
+    /// Return the total number of markets created.
+    pub fn market_count(env: Env) -> u32 {
+        env.storage()
+            .instance()
+            .get(&DataKey::MarketCount)
+            .unwrap_or(0)
+    }
+
+    /// Return true if a nullifier has been spent.
+    pub fn is_nullifier_spent(env: Env, nullifier: BytesN<32>) -> bool {
+        env.storage()
+            .persistent()
+            .has(&DataKey::Nullifier(nullifier))
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    fn xlm_client(env: &Env) -> token::Client<'_> {
+        let xlm: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::XlmToken)
+            .expect("Not initialised — call init() first");
+        token::Client::new(env, &xlm)
+    }
+
+    fn get_escrow_bal(env: &Env, user: &Address) -> i128 {
+        env.storage()
+            .persistent()
+            .get(&DataKey::EscrowBal(user.clone()))
+            .unwrap_or(0)
     }
 }
+
 mod test;
