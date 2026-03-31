@@ -22,10 +22,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <OnboardingModal />
       {/* App Grid Layout */}
 
-      <div className="min-h-screen w-full relative z-10 grid grid-cols-1 md:grid-cols-[240px_1fr] grid-rows-[80px_1fr] bg-black/20 shadow-2xl">
+      <div className={`min-h-screen w-full relative z-10 grid grid-cols-1 ${pathname === '/markets' ? 'md:grid-cols-[240px_1fr]' : 'md:grid-cols-1'} grid-rows-[80px_1fr] bg-black/20 shadow-2xl`}>
         
         {/* Top Navbar */}
-        <nav className="col-span-1 md:col-span-2 flex justify-between items-center px-6 md:px-10 border-b border-white/5 bg-black/20 backdrop-blur-md z-50 pointer-events-auto">
+        <nav className="col-span-1 md:col-span-full flex justify-between items-center px-6 md:px-10 border-b border-white/5 bg-black/20 backdrop-blur-md z-50 pointer-events-auto">
           {/* <div className="flex flex-col">
             <div className="text-xl font-bold tracking-tight text-white font-sans drop-shadow-md">
               Event Horizon
@@ -57,54 +57,56 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </nav>
         
         {/* Sidebar */}
-        <aside className="hidden md:flex flex-col border-r border-white/5 bg-black/10 backdrop-blur-md py-8 sticky top-[80px] h-[calc(100vh-80px)] overflow-y-auto">
-          <div className="px-8 mb-10">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center">
-                <span className="material-symbols-outlined text-white text-lg">explore</span>
-              </div>
-              <div>
-                <div className="text-[10px] text-white font-bold uppercase tracking-widest">Observatory</div>
-                <div className="flex items-center">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-2 animate-pulse"></span>
-                  <div className="text-[8px] text-white/40 uppercase tracking-widest">Live Signals</div>
+        {pathname === '/markets' && (
+          <aside className="hidden md:flex flex-col border-r border-white/5 bg-black/10 backdrop-blur-md py-8 sticky top-[80px] h-[calc(100vh-80px)] overflow-y-auto">
+            <div className="px-8 mb-10">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-white text-lg">explore</span>
+                </div>
+                <div>
+                  <div className="text-[10px] text-white font-bold uppercase tracking-widest">Markets</div>
+                  <div className="flex items-center">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-2 animate-pulse"></span>
+                    <div className="text-[8px] text-white/40 uppercase tracking-widest">Live Signals</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          
-          <nav className="flex-1 space-y-2">
-            <Link className={`flex items-center px-8 py-3 transition-all ${pathname === '/dashboard' ? 'bg-white/5 text-white border-r-2 border-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`} href="/dashboard">
-              <span className={`material-symbols-outlined mr-4 text-xl ${pathname === '/dashboard' ? 'opacity-80' : 'opacity-60'}`}>dashboard</span>
-              <span className="text-[10px] uppercase tracking-[0.2em] font-bold">Home</span>
-            </Link>
-            <Link className={`flex items-center px-8 py-3 transition-all ${pathname === '/markets' ? 'bg-white/5 text-white border-r-2 border-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`} href="/markets">
-              <span className={`material-symbols-outlined mr-4 text-xl ${pathname === '/markets' ? 'opacity-80' : 'opacity-60'}`}>show_chart</span>
-              <span className="text-[10px] uppercase tracking-[0.2em] font-bold">Pulse</span>
-            </Link>
-            <Link className={`flex items-center px-8 py-3 transition-all ${pathname === '/portfolio' ? 'bg-white/5 text-white border-r-2 border-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`} href="/portfolio">
-              <span className={`material-symbols-outlined mr-4 text-xl ${pathname === '/portfolio' ? 'opacity-80' : 'opacity-60'}`}>language</span>
-              <span className="text-[10px] uppercase tracking-[0.2em] font-bold">Galaxy</span>
-            </Link>
-            <Link className={`flex items-center px-8 py-3 transition-all ${pathname === '/leaderboard' ? 'bg-white/5 text-white border-r-2 border-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`} href="/leaderboard">
-              <span className={`material-symbols-outlined mr-4 text-xl ${pathname === '/leaderboard' ? 'opacity-80' : 'opacity-60'}`}>auto_awesome</span>
-              <span className="text-[10px] uppercase tracking-[0.2em] font-bold">Moonshots</span>
-            </Link>
-          </nav>
-          
-          <div className="p-6 space-y-4">
-            <button className="w-full bg-white/5 border border-white/10 text-white py-3 rounded-xl font-bold text-[9px] uppercase tracking-widest hover:bg-white/10 transition-all">
-                New Prediction
-            </button>
-            <div className="flex justify-between items-center px-2 opacity-30 text-[9px] uppercase tracking-widest font-bold">
-                <a href="#">Support</a>
-                <a href="#">Docs</a>
+            
+            <nav className="flex-1 space-y-2">
+              <Link className={`flex items-center px-8 py-3 transition-all ${(pathname as string) === '/dashboard' ? 'bg-white/5 text-white border-r-2 border-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`} href="/dashboard">
+                <span className={`material-symbols-outlined mr-4 text-xl ${(pathname as string) === '/dashboard' ? 'opacity-80' : 'opacity-60'}`}>dashboard</span>
+                <span className="text-[10px] uppercase tracking-[0.2em] font-bold">Home</span>
+              </Link>
+              <Link className={`flex items-center px-8 py-3 transition-all ${(pathname as string) === '/markets' ? 'bg-white/5 text-white border-r-2 border-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`} href="/markets">
+                <span className={`material-symbols-outlined mr-4 text-xl ${(pathname as string) === '/markets' ? 'opacity-80' : 'opacity-60'}`}>show_chart</span>
+                <span className="text-[10px] uppercase tracking-[0.2em] font-bold">Pulse</span>
+              </Link>
+              <Link className={`flex items-center px-8 py-3 transition-all ${(pathname as string) === '/portfolio' ? 'bg-white/5 text-white border-r-2 border-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`} href="/portfolio">
+                <span className={`material-symbols-outlined mr-4 text-xl ${(pathname as string) === '/portfolio' ? 'opacity-80' : 'opacity-60'}`}>language</span>
+                <span className="text-[10px] uppercase tracking-[0.2em] font-bold">Galaxy</span>
+              </Link>
+              <Link className={`flex items-center px-8 py-3 transition-all ${(pathname as string) === '/leaderboard' ? 'bg-white/5 text-white border-r-2 border-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`} href="/leaderboard">
+                <span className={`material-symbols-outlined mr-4 text-xl ${(pathname as string) === '/leaderboard' ? 'opacity-80' : 'opacity-60'}`}>auto_awesome</span>
+                <span className="text-[10px] uppercase tracking-[0.2em] font-bold">Moonshots</span>
+              </Link>
+            </nav>
+            
+            <div className="p-6 space-y-4">
+              <button className="w-full bg-white/5 border border-white/10 text-white py-3 rounded-xl font-bold text-[9px] uppercase tracking-widest hover:bg-white/10 transition-all">
+                  New Prediction
+              </button>
+              <div className="flex justify-between items-center px-2 opacity-30 text-[9px] uppercase tracking-widest font-bold">
+                  <a href="#">Support</a>
+                  <a href="#">Docs</a>
+              </div>
             </div>
-          </div>
-        </aside>
+          </aside>
+        )}
 
         {/* Main Content Area */}
-        <main className="p-4 md:p-10 custom-scrollbar col-span-1 md:col-span-1">
+        <main className="p-4 md:p-10 custom-scrollbar col-span-1">
            {children}
         </main>
       </div>
