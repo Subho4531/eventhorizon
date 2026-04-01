@@ -7,6 +7,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum MarketStatus {
+  OPEN
+  CLOSED
+  RESOLVED
+  DISPUTED
+}
 
 model User {
   publicKey    String        @id
@@ -17,7 +23,10 @@ model User {
   balance      Float         @default(0)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  transactions Transaction[]
+  
+  transactions   Transaction[]
+  createdMarkets Market[]      @relation("MarketCreator")
+  bets           Bet[]
 }
 
 model Transaction {
@@ -29,4 +38,53 @@ model Transaction {
   createdAt     DateTime @default(now())
 
   user User @relation(fields: [userPublicKey], references: [publicKey])
+}
+
+model Market {
+  id            String       @id @default(cuid())
+  title         String
+  description   String?      @default("")
+  creatorId     String
+  creator       User         @relation("MarketCreator", fields: [creatorId], references: [publicKey])
+  
+  // Dates
+  openDate      DateTime     @default(now())
+  closeDate     DateTime
+  
+  // Prediction Logic
+  outcome       String?      // "YES", "NO", or null if not resolved
+  yesPool       Float        @default(0)
+  noPool        Float        @default(0)
+  totalVolume   Float        @default(0)
+  
+  status        MarketStatus @default(OPEN)
+  bondAmount    Float        @default(0)
+
+  bets          Bet[]
+  
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model Bet {
+  id            String   @id @default(cuid())
+  marketId      String
+  market        Market   @relation(fields: [marketId], references: [id])
+  
+  userPublicKey String
+  user          User     @relation(fields: [userPublicKey], references: [publicKey])
+  
+  amount        Float
+  side          String   // "YES" or "NO"
+  
+  // ZK Primitives
+  commitment    String   @unique
+  nullifier     String?  @unique
+  revealed      Boolean  @default(false)
+  
+  txHash        String?
+  claimedAt     DateTime?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

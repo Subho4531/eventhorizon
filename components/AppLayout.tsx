@@ -25,7 +25,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className={`min-h-screen w-full relative z-10 grid grid-cols-1 ${pathname === '/markets' ? 'md:grid-cols-[240px_1fr]' : 'md:grid-cols-1'} grid-rows-[80px_1fr] bg-black/20 shadow-2xl`}>
         
         {/* Top Navbar */}
-        <nav className="col-span-1 md:col-span-full flex justify-between items-center px-6 md:px-10 border-b border-white/5 bg-black/20 backdrop-blur-md z-50 pointer-events-auto">
+        <nav className="col-span-1 md:col-span-full flex justify-between items-center px-6 md:px-10 border-b border-white/5 bg-black/20 backdrop-blur-md z-50 top-0 sticky pointer-events-auto">
           {/* <div className="flex flex-col">
             <div className="text-xl font-bold tracking-tight text-white font-sans drop-shadow-md">
               Event Horizon
