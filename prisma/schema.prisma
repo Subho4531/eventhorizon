@@ -24,9 +24,22 @@ model User {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   
+  // Intelligence fields
+  reputationScore      Int       @default(500)
+  reputationTier       String    @default("Intermediate")
+  oracleReliability    Float?
+  totalResolutions     Int       @default(0)
+  disputedResolutions  Int       @default(0)
+  avgResolutionTime    Float?
+  
   transactions   Transaction[]
   createdMarkets Market[]      @relation("MarketCreator")
   bets           Bet[]
+  challenges     DisputeChallenge[]
+  votes          DisputeVote[]
+  liquidityRewards LiquidityReward[]
+  
+  @@index([reputationScore])
 }
 
 model Transaction {
@@ -61,7 +74,17 @@ model Market {
   status        MarketStatus @default(OPEN)
   bondAmount    Float        @default(0)
 
+  // Intelligence fields
+  qualityScore         Float?
+  manipulationScore    Float     @default(0)
+  minBetSize           Float     @default(10)
+  incentiveMultiplier  Float     @default(1.0)
+  volatility           Float     @default(0)
+
   bets          Bet[]
+  probabilityHistory ProbabilityHistory[]
+  challenges    DisputeChallenge[]
+  riskFlags     ManipulationAlert[]
   
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -94,4 +117,108 @@ model Bet {
   @@index([marketId])
   @@index([userPublicKey])
   @@index([commitment])
+}
+
+model ProbabilityHistory {
+  id          String   @id @default(cuid())
+  marketId    String
+  market      Market   @relation(fields: [marketId], references: [id])
+  probability Float
+  confidence  Float
+  sources     Json
+  createdAt   DateTime @default(now())
+  
+  @@index([marketId, createdAt])
+}
+
+model DisputeChallenge {
+  id              String   @id @default(cuid())
+  marketId        String
+  market          Market   @relation(fields: [marketId], references: [id])
+  challengerId    String
+  challenger      User     @relation(fields: [challengerId], references: [publicKey])
+  
+  evidence        String   // JSON: { description, urls }
+  proposedOutcome String   // "YES" | "NO"
+  bond            Float    @default(100)
+  status          String   @default("PENDING")  // PENDING | ACCEPTED | REJECTED
+  
+  votingEndsAt    DateTime
+  createdAt       DateTime @default(now())
+  
+  votes           DisputeVote[]
+  
+  @@index([marketId])
+  @@index([status])
+}
+
+model DisputeVote {
+  id          String   @id @default(cuid())
+  disputeId   String
+  dispute     DisputeChallenge @relation(fields: [disputeId], references: [id])
+  voterId     String
+  voter       User     @relation(fields: [voterId], references: [publicKey])
+  
+  outcome     String   // "YES" | "NO" | "ORIGINAL"
+  stake       Float
+  weight      Float
+  createdAt   DateTime @default(now())
+  
+  @@unique([disputeId, voterId])
+  @@index([disputeId])
+}
+
+model ManipulationAlert {
+  id          String   @id @default(cuid())
+  marketId    String
+  market      Market   @relation(fields: [marketId], references: [id])
+  
+  flagType    String   // "rapid_betting" | "volume_spike" | "wash_trading" | "sybil_cluster"
+  severity    String   // "INFO" | "WARNING" | "CRITICAL"
+  details     Json
+  resolved    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  @@index([marketId])
+  @@index([severity, resolved])
+}
+
+model LiquidityReward {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [publicKey])
+  
+  weekStart   DateTime
+  points      Float
+  reward      Float?
+  claimed     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  @@index([userId, weekStart])
+}
+
+model WalletRelationship {
+  id          String   @id @default(cuid())
+  sourceWallet String
+  targetWallet String
+  relationship String   // "funded_by" | "co_bets"
+  confidence  Float
+  createdAt   DateTime @default(now())
+  
+  @@unique([sourceWallet, targetWallet, relationship])
+  @@index([sourceWallet])
+  @@index([targetWallet])
+}
+
+model SystemAlert {
+  id          String   @id @default(cuid())
+  type        String   // "manipulation" | "dispute" | "oracle_delay" | "liquidity"
+  severity    String   // "INFO" | "WARNING" | "CRITICAL"
+  message     String
+  metadata    Json
+  resolved    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  @@index([severity, resolved])
+  @@index([createdAt])
 }
