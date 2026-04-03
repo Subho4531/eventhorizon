@@ -70,7 +70,7 @@ This plan implements AI-based market intelligence, manipulation detection, reput
   - Create API routes: GET /api/users/[publicKey]/reputation, GET /api/oracles/[address]/reliability
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7_
 
-- [ ]* 4.1 Write property tests for reputation system
+- [x] 4.1 Write property tests for reputation system
   - **Property 9: Reputation Score Bounds** - scores always 0-1000
   - **Property 10: Reputation Updates** - win +5, lose -2, capped/floored correctly
   - **Property 11: Reputation Tier Assignment** - tiers assigned correctly for score ranges
@@ -78,7 +78,7 @@ This plan implements AI-based market intelligence, manipulation detection, reput
   - **Property 13: Oracle Flagging Threshold** - flags when reliability <0.80
   - **Validates: Requirements 4.6, 4.2, 4.3, 4.8, 5.3, 5.4**
 
-- [ ] 5. Manipulation Detection service (all patterns)
+- [x] 5. Manipulation Detection service (all patterns)
   - Implement lib/intelligence/manipulation-detector.ts with analyzeBet, calculateRiskScore, detectWashTrading, detectSybilAccounts, getMarketRisk
   - Implement rapid betting detection (>10 bets/60s from same user)
   - Implement volume spike detection (>500% increase/1h)
