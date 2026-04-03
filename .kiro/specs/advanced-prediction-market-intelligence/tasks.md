@@ -34,14 +34,14 @@ This plan implements AI-based market intelligence, manipulation detection, reput
   - Implement in-memory caching with 60-second TTL for probability estimates
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
 
-- [-] 2.1 Write property tests for probability model
+- [x] 2.1 Write property tests for probability model
   - **Property 1: Probability Estimate Bounds** - probabilities always between 0.00 and 1.00
   - **Property 3: Probability Fallback Behavior** - falls back to volume-weighted when external unavailable
   - **Property 4: Historical Data Retention** - 90-day history retrievable
   - **Property 5: Exponential Decay Weighting** - weights follow 0.95^days_ago
   - **Validates: Requirements 1.4, 1.7, 2.3, 2.5**
 
-- [ ] 3. Liquidity Manager + Incentive System service
+- [x] 3. Liquidity Manager + Incentive System service
   - Implement lib/intelligence/liquidity-manager.ts with calculateMinBetSize, getIncentiveMultiplier, adjustBondRequirement, distributeLiquidityRewards, getLiquidityParams
   - Implement volume-based bet size adjustment (>1000 XLM/hour → +10%, <100 XLM/24h → -10%, bounds 1-100 XLM)
   - Implement low-liquidity incentive multiplier (pool <500 XLM → 1.05×)
@@ -51,7 +51,7 @@ This plan implements AI-based market intelligence, manipulation detection, reput
   - Create LiquidityReward records for user tracking
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 12.1, 12.2, 12.3, 12.4, 12.5, 12.6_
 
-- [ ]* 3.1 Write property tests for liquidity manager
+- [x] 3.1 Write property tests for liquidity manager
   - **Property 6: Liquidity Parameter Bounds** - min bet size always 1-100 XLM
   - **Property 7: Volume-Based Bet Size Adjustment** - adjusts correctly based on volume thresholds
   - **Property 8: Low-Liquidity Incentive** - 1.05× multiplier when pool <500 XLM
