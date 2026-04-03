@@ -24,7 +24,7 @@ This plan implements AI-based market intelligence, manipulation detection, reput
   - Generate Prisma client
   - _Requirements: 16.3, 16.4, 16.5_
 
-- [ ] 2. Probability Model + Historical Analysis service
+- [x] 2. Probability Model + Historical Analysis service
   - Implement lib/intelligence/probability-model.ts with generateInitialProbability, updateProbability, getProbabilityHistory, calculateAccuracy
   - Implement volume-weighted probability calculation using pool size data
   - Implement historical data analysis with exponential decay weighting (0.95^days_ago)
@@ -34,7 +34,7 @@ This plan implements AI-based market intelligence, manipulation detection, reput
   - Implement in-memory caching with 60-second TTL for probability estimates
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
 
-- [ ]* 2.1 Write property tests for probability model
+- [-] 2.1 Write property tests for probability model
   - **Property 1: Probability Estimate Bounds** - probabilities always between 0.00 and 1.00
   - **Property 3: Probability Fallback Behavior** - falls back to volume-weighted when external unavailable
   - **Property 4: Historical Data Retention** - 90-day history retrievable
