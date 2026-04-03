@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDisputeEvidence, flagEvidence } from '@/lib/intelligence/dispute-resolution'
+import { withRateLimit } from '@/lib/middleware/rate-limit'
 
 /**
  * GET /api/disputes/[id]/evidence
  * Get evidence for a dispute
  */
-export async function GET(
+export const GET = withRateLimit(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   try {
     const { id: disputeId } = await params
     
@@ -30,16 +31,16 @@ export async function GET(
       { status: 500 }
     )
   }
-}
+})
 
 /**
  * POST /api/disputes/[id]/evidence
  * Flag evidence as misleading
  */
-export async function POST(
+export const POST = withRateLimit(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   try {
     const { id: disputeId } = await params
     const body = await request.json()
@@ -79,4 +80,4 @@ export async function POST(
       { status: 500 }
     )
   }
-}
+})

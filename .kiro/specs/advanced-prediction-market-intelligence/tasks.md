@@ -143,7 +143,7 @@ This plan implements AI-based market intelligence, manipulation detection, reput
   - **Property 33: Alert Threshold Triggering** - alerts for risk >70, oracle delay >24h, liquidity <5000 XLM
   - **Validates: Requirements 11.1, 11.2, 11.3, 11.4, 11.5, 6.6, 14.2, 14.4, 14.5**
 
-- [ ] 8. Background Jobs + Caching infrastructure
+- [x] 8. Background Jobs + Caching infrastructure
   - Implement lib/jobs/probability-updater.ts (30s interval, updates markets closing within 24h every cycle, others every 60s)
   - Implement lib/jobs/liquidity-adjuster.ts (300s interval, recalculates all liquidity parameters)
   - Implement lib/jobs/quality-updater.ts (3600s interval, updates quality scores)
@@ -161,7 +161,7 @@ This plan implements AI-based market intelligence, manipulation detection, reput
   - **Property 36: Performance Bounds** - 100 markets in 10s, bet analysis in 5s, reputation update in 2s
   - **Validates: Requirements 1.2, 1.5, 15.4, 17.1, 17.2, 17.3**
 
-- [ ] 9. API Routes + Frontend Integration
+- [x] 9. API Routes + Frontend Integration
   - Enhance components/MarketsGrid.tsx with quality score badge, risk indicator, AI probability display
   - Create components/DisputeModal.tsx for challenge submission form
   - Create components/VoteModal.tsx for dispute voting interface

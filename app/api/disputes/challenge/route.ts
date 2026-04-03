@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { submitChallenge, ChallengeParams } from '@/lib/intelligence/dispute-resolution'
+import { withRateLimit } from '@/lib/middleware/rate-limit'
 
 /**
  * POST /api/disputes/challenge
  * Submit a challenge to a market resolution
  */
-export async function POST(request: NextRequest) {
+export const POST = withRateLimit(async (request: NextRequest) => {
   try {
     const body = await request.json()
 
@@ -73,4 +74,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

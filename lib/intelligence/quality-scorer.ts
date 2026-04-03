@@ -1,5 +1,6 @@
 import prisma from '@/lib/db'
 import { calculateOracleReliability } from './reputation-system'
+import { intelligenceCache } from '@/lib/cache/intelligence-cache'
 
 export interface QualityBreakdown {
   totalScore: number  // 0-100
@@ -9,33 +10,21 @@ export interface QualityBreakdown {
   marketClarity: number  // 20% weight
 }
 
-// In-memory cache with 60-second TTL
-interface CacheEntry {
-  score: number
-  timestamp: number
-}
-
-const qualityCache = new Map<string, CacheEntry>()
-const CACHE_TTL = 60 * 1000 // 60 seconds
-
 /**
  * Calculate quality score (0-100) for a market
  * Formula: (creatorReputation/1000 × 30) + (oracleReliability × 30) + (min(liquidityPool/1000, 1) × 20) + (clarityScore × 20)
  */
 export async function calculateQualityScore(marketId: string): Promise<number> {
   // Check cache first
-  const cached = qualityCache.get(marketId)
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.score
+  const cached = intelligenceCache.get<number>(`quality:${marketId}`)
+  if (cached !== null) {
+    return cached
   }
 
   const breakdown = await getQualityBreakdown(marketId)
   
   // Cache the result
-  qualityCache.set(marketId, {
-    score: breakdown.totalScore,
-    timestamp: Date.now()
-  })
+  intelligenceCache.set(`quality:${marketId}`, breakdown.totalScore)
 
   // Update market record
   await prisma.market.update({

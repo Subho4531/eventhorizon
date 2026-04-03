@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDisputeStatus } from '@/lib/intelligence/dispute-resolution'
+import { withRateLimit } from '@/lib/middleware/rate-limit'
 
 /**
  * GET /api/markets/[id]/disputes
  * Get all disputes for a market
  */
-export async function GET(
+export const GET = withRateLimit(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   try {
     const { id: marketId } = await params
     
@@ -23,4 +24,4 @@ export async function GET(
       { status: 500 }
     )
   }
-}
+})

@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { submitVote, Vote } from '@/lib/intelligence/dispute-resolution'
+import { withRateLimit } from '@/lib/middleware/rate-limit'
 
 /**
  * POST /api/disputes/[id]/vote
  * Submit a vote on a dispute
  */
-export async function POST(
+export const POST = withRateLimit(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   try {
     const { id: disputeId } = await params
     const body = await request.json()
@@ -72,4 +73,4 @@ export async function POST(
       { status: 500 }
     )
   }
-}
+})

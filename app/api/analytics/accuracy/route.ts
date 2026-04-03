@@ -7,8 +7,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getAggregateAccuracy, calculateAccuracy } from "@/lib/intelligence/probability-model";
+import { withRateLimit } from "@/lib/middleware/rate-limit";
 
-export async function GET(request: NextRequest) {
+export const GET = withRateLimit(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
     const marketId = searchParams.get("marketId");
@@ -46,4 +47,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+})

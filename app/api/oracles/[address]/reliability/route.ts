@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getOracleMetrics } from '@/lib/intelligence/reputation-system'
+import { withRateLimit } from '@/lib/middleware/rate-limit'
 
-export async function GET(
+export const GET = withRateLimit(async (
   request: NextRequest,
   { params }: { params: Promise<{ address: string }> }
-) {
+) => {
   try {
     const { address } = await params
 
@@ -33,4 +34,4 @@ export async function GET(
       { status: 500 }
     )
   }
-}
+})

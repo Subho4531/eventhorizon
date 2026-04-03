@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRecentAlerts } from '@/lib/intelligence/alert-system'
+import { withRateLimit } from '@/lib/middleware/rate-limit'
 
-export async function GET(request: NextRequest) {
+export const GET = withRateLimit(async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams
     const hours = parseInt(searchParams.get('hours') || '24', 10)
@@ -17,4 +18,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

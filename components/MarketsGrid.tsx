@@ -2,15 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { TrendingUp, Clock, AlertCircle, Loader2, Brain, Sparkles } from "lucide-react";
 import BetModal from "./BetModal";
+import QualityIndicator from "./QualityIndicator";
+import RiskAlert from "./RiskAlert";
 
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
+interface MarketIntelligence {
+  probability?: number;
+  qualityScore?: number;
+  manipulationScore?: number;
+  riskFlags?: string[];
+}
+
 export default function MarketsGrid() {
   const [markets, setMarkets] = useState<any[]>([]);
+  const [intelligence, setIntelligence] = useState<Record<string, MarketIntelligence>>({});
   const [loading, setLoading] = useState(true);
   const [selectedMarket, setSelectedMarket] = useState<any | null>(null);
 
@@ -19,7 +29,11 @@ export default function MarketsGrid() {
       try {
         const res = await fetch("/api/markets");
         const data = await res.json();
-        setMarkets(data.markets || []);
+        const marketList = data.markets || [];
+        setMarkets(marketList);
+        
+        // Fetch intelligence data for each market
+        fetchIntelligenceData(marketList);
       } catch (err) {
         console.error(err);
       } finally {
@@ -28,6 +42,33 @@ export default function MarketsGrid() {
     }
     fetchMarkets();
   }, []);
+
+  const fetchIntelligenceData = async (marketList: any[]) => {
+    const intelligenceData: Record<string, MarketIntelligence> = {};
+    
+    await Promise.all(
+      marketList.map(async (market) => {
+        try {
+          const [probRes, qualityRes, riskRes] = await Promise.all([
+            fetch(`/api/markets/${market.id}/probability`).catch(() => null),
+            fetch(`/api/markets/${market.id}/quality`).catch(() => null),
+            fetch(`/api/markets/${market.id}/risk`).catch(() => null),
+          ]);
+
+          intelligenceData[market.id] = {
+            probability: probRes?.ok ? (await probRes.json()).probability : undefined,
+            qualityScore: qualityRes?.ok ? (await qualityRes.json()).score : undefined,
+            manipulationScore: riskRes?.ok ? (await riskRes.json()).score : undefined,
+            riskFlags: riskRes?.ok ? (await riskRes.json()).flags?.map((f: any) => f.type) : [],
+          };
+        } catch (err) {
+          console.error(`Failed to fetch intelligence for market ${market.id}:`, err);
+        }
+      })
+    );
+    
+    setIntelligence(intelligenceData);
+  };
 
   const calculateOdds = (yes: number, no: number) => {
     const total = yes + no;
@@ -70,6 +111,9 @@ export default function MarketsGrid() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {markets.map((market, i) => {
             const odds = calculateOdds(market.yesPool, market.noPool);
+            const intel = intelligence[market.id] || {};
+            const showRiskAlert = intel.manipulationScore && intel.manipulationScore >= 70;
+            
             return (
               <motion.div 
                 key={market.id}
@@ -80,9 +124,14 @@ export default function MarketsGrid() {
               >
                 <Card onClick={() => setSelectedMarket(market)} className="cursor-pointer hover:bg-white/5 transition-all">
                   <CardHeader className="flex flex-row justify-between items-start pb-2 space-y-0">
-                    <Badge variant="outline" className={`${market.status === 'OPEN' ? 'border-blue-500/50 text-blue-400' : 'border-dim/50 text-dim'}`}>
-                       <span className={`w-1.5 h-1.5 rounded-full mr-2 ${market.status === 'OPEN' ? 'bg-blue-500 animate-pulse' : 'bg-dim'}`}></span> {market.status}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className={`${market.status === 'OPEN' ? 'border-blue-500/50 text-blue-400' : 'border-dim/50 text-dim'}`}>
+                         <span className={`w-1.5 h-1.5 rounded-full mr-2 ${market.status === 'OPEN' ? 'bg-blue-500 animate-pulse' : 'bg-dim'}`}></span> {market.status}
+                      </Badge>
+                      {intel.qualityScore !== undefined && (
+                        <QualityIndicator score={intel.qualityScore} size="sm" showLabel={false} />
+                      )}
+                    </div>
                     <span className="text-xs text-dim flex items-center gap-1 mt-0">
                        <TrendingUp className="w-3 h-3"/> {market.totalVolume?.toLocaleString() || 0} XLM
                     </span>
@@ -90,6 +139,23 @@ export default function MarketsGrid() {
                   
                   <CardContent className="flex flex-col flex-grow">
                     <CardTitle className="leading-tight mb-4">{market.title}</CardTitle>
+                    
+                    {showRiskAlert && (
+                      <div className="mb-4">
+                        <RiskAlert 
+                          score={intel.manipulationScore!} 
+                          flags={intel.riskFlags}
+                        />
+                      </div>
+                    )}
+                    
+                    {intel.probability !== undefined && (
+                      <div className="mb-3 flex items-center gap-2 text-[10px] text-purple-400 bg-purple-500/10 border border-purple-500/30 rounded-lg px-3 py-2">
+                        <Brain className="w-3.5 h-3.5" />
+                        <span className="font-bold uppercase tracking-widest">AI Estimate:</span>
+                        <span className="font-bold">{(intel.probability * 100).toFixed(1)}%</span>
+                      </div>
+                    )}
                     
                     <div className="space-y-3 mt-auto pt-4">
                        <Progress 

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { withRateLimit } from '@/lib/middleware/rate-limit'
 
-export async function GET(request: NextRequest) {
+export const GET = withRateLimit(async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams
     const userId = searchParams.get('userId')
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})
 
 function getWeekStart(date: Date): Date {
   const d = new Date(date)

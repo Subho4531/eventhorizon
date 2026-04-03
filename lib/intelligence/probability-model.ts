@@ -7,6 +7,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { intelligenceCache } from "@/lib/cache/intelligence-cache";
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Types
@@ -31,34 +32,15 @@ export interface AccuracyMetrics {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// In-Memory Cache (60-second TTL)
+// Cache Helpers (using centralized intelligence cache)
 // ──────────────────────────────────────────────────────────────────────────────
 
-interface CacheEntry {
-  estimate: ProbabilityEstimate;
-  expiresAt: number;
-}
-
-const probabilityCache = new Map<string, CacheEntry>();
-const CACHE_TTL_MS = 60_000; // 60 seconds
-
 function getCachedEstimate(marketId: string): ProbabilityEstimate | null {
-  const entry = probabilityCache.get(marketId);
-  if (!entry) return null;
-  
-  if (Date.now() > entry.expiresAt) {
-    probabilityCache.delete(marketId);
-    return null;
-  }
-  
-  return entry.estimate;
+  return intelligenceCache.get<ProbabilityEstimate>(`probability:${marketId}`);
 }
 
 function setCachedEstimate(marketId: string, estimate: ProbabilityEstimate): void {
-  probabilityCache.set(marketId, {
-    estimate,
-    expiresAt: Date.now() + CACHE_TTL_MS,
-  });
+  intelligenceCache.set(`probability:${marketId}`, estimate);
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -419,12 +401,12 @@ export async function getAggregateAccuracy(): Promise<{
  * Clear cache for a specific market (used on market resolution or bet placement).
  */
 export function invalidateCache(marketId: string): void {
-  probabilityCache.delete(marketId);
+  intelligenceCache.delete(`probability:${marketId}`);
 }
 
 /**
  * Clear all cached probability estimates.
  */
 export function clearCache(): void {
-  probabilityCache.clear();
+  intelligenceCache.invalidatePattern('probability:');
 }

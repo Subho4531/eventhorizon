@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getMarketRisk } from '@/lib/intelligence/manipulation-detector'
+import { withRateLimit } from '@/lib/middleware/rate-limit'
 
-export async function GET(
+export const GET = withRateLimit(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   try {
     const { id } = await params
 
@@ -18,4 +19,4 @@ export async function GET(
       { status: 500 }
     )
   }
-}
+})

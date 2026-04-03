@@ -7,11 +7,12 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { updateProbability, getProbabilityHistory } from "@/lib/intelligence/probability-model";
+import { withRateLimit } from "@/lib/middleware/rate-limit";
 
-export async function GET(
+export const GET = withRateLimit(async (
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
-) {
+) => {
   try {
     const { id: marketId } = await context.params;
 
@@ -54,4 +55,4 @@ export async function GET(
       { status: 500 }
     );
   }
-}
+});
