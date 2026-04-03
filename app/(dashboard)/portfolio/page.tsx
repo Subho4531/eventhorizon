@@ -13,7 +13,10 @@ import {
   depositToEscrow,
   withdrawFromEscrow,
   submitSignedXdr,
+  getMarket,
+  claimWinnings,
 } from "@/lib/escrow";
+import { Badge } from "@/components/ui/badge";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Transaction = {
@@ -43,9 +46,8 @@ const STATUS_MSG: Record<TxStatus, string | null> = {
 async function freighterSign(unsignedXdr: string): Promise<string> {
   const { signTransaction } = await import("@stellar/freighter-api");
   // freighter-api v4 uses networkPassphrase, not network
-  const networkPassphrase = process.env.NEXT_PUBLIC_STELLAR_NETWORK === "mainnet"
-    ? "Public Global Stellar Network ; September 2015"
-    : "Test SDF Network ; September 2015";
+  // Force Testnet for the cosmic event horizon hackathon
+  const networkPassphrase = "Test SDF Network ; September 2015";
   const result = await signTransaction(unsignedXdr, { networkPassphrase });
   // freighter-api v4 returns { signedTxXdr } or just the string
   if (typeof result === "string") return result;
@@ -357,15 +359,169 @@ function TxRow({ tx }: { tx: Transaction }) {
   );
 }
 
+// ── Sealed Position Component & Claim Logic ────────────────────────────────────
+interface SealedPosition {
+  marketId: string;
+  contractMarketId: number;
+  marketTitle: string;
+  side: 0 | 1; // 0=Yes, 1=No
+  nonce: string;
+  bettorKey: string;
+  commitment: string;
+  amount: string;
+  txHash: string;
+  status: "SEALED" | "CLAIMED" | "EXPIRED";
+}
+
+function SealedPositionCard({ position, onClaimed }: { position: SealedPosition, onClaimed: () => void }) {
+  const { publicKey } = useWallet();
+  const [claiming, setClaiming] = useState(false);
+  const [marketState, setMarketState] = useState<any>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function checkMarket() {
+      const state = await getMarket(position.contractMarketId);
+      if (state) setMarketState(state);
+    }
+    checkMarket();
+  }, [position.contractMarketId]);
+
+  const canClaim = marketState && marketState.status === 2; // Resolved
+
+  const handleClaim = async () => {
+    if (!publicKey) return;
+    setClaiming(true);
+    setError("");
+    try {
+      console.log("Generating Reveal Proof...");
+      // 1. Generate Reveal Proof
+      const input = {
+        side: position.side.toString(),
+        nonce: position.nonce,
+        bettor_key: position.bettorKey,
+        winning_side: marketState.outcome.toString() // Assuming outcome is 0 or 1
+      };
+
+      // @ts-ignore
+      const snarkjs = await import("snarkjs");
+      const { proof, publicSignals } = await snarkjs.groth16.fullProve(
+        input,
+        "/circuit/reveal/reveal_bet.wasm",
+        "/circuit/reveal/reveal_0001.zkey"
+      );
+
+      const nullifier = publicSignals[0];
+      console.log("Reveal proof generated. Nullifier:", nullifier);
+
+      // 2. Submit to Soroban
+      const res = await claimWinnings(
+        publicKey,
+        position.contractMarketId,
+        position.commitment,
+        nullifier,
+        proof
+      );
+
+      if (!res.success || !res.unsignedXdr) throw new Error("Claim tx failed");
+
+      const signedXdr = await freighterSign(res.unsignedXdr);
+      const submitRes = await submitSignedXdr(signedXdr);
+
+      if (!submitRes.hash) throw new Error("Submission failed");
+
+      // 3. Update local state
+      const portfolio = JSON.parse(localStorage.getItem("zk_portfolio") || "[]");
+      const updated = portfolio.map((p: any) => 
+        p.commitment === position.commitment ? { ...p, status: "CLAIMED" } : p
+      );
+      localStorage.setItem("zk_portfolio", JSON.stringify(updated));
+      
+      onClaimed();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Claim failed");
+    } finally {
+      setClaiming(false);
+    }
+  };
+
+  const calculatePayout = () => {
+    if (!marketState) return "Syncing...";
+    // Winner receives: bet_amount * payout_bps / 10,000
+    const payout = (parseFloat(position.amount) * (marketState.payout_bps || 0)) / 10000;
+    return `${payout.toFixed(2)} XLM`;
+  };
+
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:bg-white-[0.07] transition-all group">
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <div className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-1">
+            {position.side === 0 ? "YES" : "NO"} Position
+          </div>
+          <h4 className="text-sm font-bold text-white leading-tight">
+            {position.marketTitle || (marketState?.title ? (typeof marketState.title === 'string' ? marketState.title : "Cosmic Horizon") : "Syncing Title...")}
+          </h4>
+        </div>
+        <Badge variant="outline" className={position.status === 'CLAIMED' ? 'text-green-400 border-green-500/30' : 'text-blue-400 border-blue-500/30'}>
+          {position.status}
+        </Badge>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div>
+          <div className="text-[9px] text-white/30 uppercase tracking-widest">Stake</div>
+          <div className="text-sm font-bold text-white">{position.amount} XLM</div>
+        </div>
+        <div className="text-right">
+          <div className="text-[9px] text-white/30 uppercase tracking-widest">Est. Payout</div>
+          <div className="text-sm font-bold text-green-400">{calculatePayout()}</div>
+        </div>
+      </div>
+
+      {position.status === "SEALED" && (
+        <div className="pt-4 border-t border-white/5">
+          {canClaim ? (
+            <button
+              onClick={handleClaim}
+              disabled={claiming}
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            >
+              {claiming ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : "Reveal & Claim Winnings"}
+            </button>
+          ) : (
+            <div className="text-center text-[10px] text-white/20 uppercase tracking-widest py-2 bg-white/5 rounded-lg border border-white/5">
+              {marketState ? `Market ${marketState.status === 1 ? 'Closed (Resolving)' : 'Open'}` : "Syncing On-chain Status..."}
+            </div>
+          )}
+          {error && <p className="text-[10px] text-red-400 mt-2 text-center">{error}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main Portfolio Page ────────────────────────────────────────────────────────
 export default function PortfolioPage() {
   const { publicKey, user, isLoadingUser, refreshUser } = useWallet();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [sealedPositions, setSealedPositions] = useState<SealedPosition[]>([]);
   const [txLoading, setTxLoading] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const loadSealedPositions = useCallback(() => {
+    if (!publicKey) return;
+    const stored = localStorage.getItem("zk_portfolio");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Filter by current user
+      setSealedPositions(parsed.filter((p: any) => p.bettorKey === publicKey));
+    }
+  }, [publicKey]);
 
   const loadTransactions = useCallback(async () => {
     if (!publicKey) return;
@@ -381,7 +537,10 @@ export default function PortfolioPage() {
     }
   }, [publicKey]);
 
-  useEffect(() => { loadTransactions(); }, [loadTransactions]);
+  useEffect(() => { 
+    loadTransactions(); 
+    loadSealedPositions();
+  }, [loadTransactions, loadSealedPositions]);
 
   const copyKey = () => {
     if (publicKey) {
@@ -589,12 +748,31 @@ export default function PortfolioPage() {
                 <Star className="w-3 h-3" /> ZK-Sealed Vaults
               </div>
             </div>
+            <span className="text-[10px] text-white/30 uppercase tracking-widest">
+              {sealedPositions.length} active
+            </span>
           </div>
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <MapPin className="w-6 h-6 text-white/20 mb-3" />
-            <p className="text-[10px] text-white/30 uppercase tracking-widest">No open positions</p>
-            <p className="text-xs text-white/20 mt-1">Place a bet on the Markets page to see sealed positions here</p>
-          </div>
+
+          {sealedPositions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <MapPin className="w-6 h-6 text-white/20 mb-3" />
+              <p className="text-[10px] text-white/30 uppercase tracking-widest">No open positions</p>
+              <p className="text-xs text-white/20 mt-1">Place a bet on the Markets page to see sealed positions here</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sealedPositions.map((pos, i) => (
+                <SealedPositionCard 
+                  key={i} 
+                  position={pos} 
+                  onClaimed={() => {
+                    loadSealedPositions();
+                    refreshUser();
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </motion.div>
 
         {/* ── Transaction History ── */}

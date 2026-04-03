@@ -3,16 +3,19 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { X, Check, Loader2 } from "lucide-react";
+import { useWallet } from "./WalletProvider";
 // Using global snarkjs via script tag for browser compatibility
 
 interface BetModalProps {
   isOpen: boolean;
   onClose: () => void;
   marketTitle: string;
-  marketId: number;
+  marketId: string; // Prisma ID
+  contractMarketId: number; // On-chain ID
 }
 
-export default function BetModal({ isOpen, onClose, marketTitle, marketId }: BetModalProps) {
+export default function BetModal({ isOpen, onClose, marketTitle, marketId, contractMarketId }: BetModalProps) {
+  const { publicKey } = useWallet();
   const [side, setSide] = useState<0 | 1>(0); // 0 = Yes, 1 = No
   const [amount, setAmount] = useState("10");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -21,11 +24,15 @@ export default function BetModal({ isOpen, onClose, marketTitle, marketId }: Bet
   if (!isOpen) return null;
 
   const handleBet = async () => {
+    if (!publicKey) return alert("Please connect wallet first");
     setIsGenerating(true);
     try {
-      // 1. Generate local randomness (nonce) and key
+      // 1. Generate local randomness (nonce) and derive deterministic key
       const nonce = Math.floor(Math.random() * 1000000000).toString();
-      const bettorKey = "123456"; // Emulated user key for hackathon
+      
+      // 2. Derive deterministic key from public key (hackathon simplified)
+      // In production, this would be a message signed by the wallet and hashed.
+      const bettorKey = Array.from(publicKey.slice(2, 12)).reduce((acc, char) => acc + char.charCodeAt(0).toString(), "").slice(0, 15); 
       
       const input = {
         side: side.toString(),
@@ -33,10 +40,11 @@ export default function BetModal({ isOpen, onClose, marketTitle, marketId }: Bet
         bettor_key: bettorKey
       };
 
-      // 2. Generate ZK Proof using circum/snarkjs
-      // We are fetching the files we copied into 'public/circuit/seal/'
+      // 3. Generate ZK Proof using snarkjs (npm)
       console.log("Generating Zero-Knowledge commitment...");
-      const { proof, publicSignals } = await (window as any).snarkjs.groth16.fullProve(
+      // @ts-ignore
+      const snarkjs = await import("snarkjs");
+      const { proof, publicSignals } = await snarkjs.groth16.fullProve(
         input,
         "/circuit/seal/seal_bet.wasm",
         "/circuit/seal/seal_0001.zkey"
@@ -44,23 +52,65 @@ export default function BetModal({ isOpen, onClose, marketTitle, marketId }: Bet
       
       const commitment = publicSignals[0];
       console.log("Proof verified, commitment:", commitment);
+
+      // 4. Submit to Soroban
+      const { placeBet, submitSignedXdr } = await import("@/lib/escrow");
+      const { signTransaction } = await import("@stellar/freighter-api");
+
+      const res = await placeBet(publicKey, contractMarketId, commitment, parseFloat(amount));
       
-      // Save local proof data to localStorage so we can claim later!
+      if (!res.success || !res.unsignedXdr) {
+        throw new Error("Failed to build place_bet transaction");
+      }
+
+      console.log("Signing transaction with Freighter...");
+      let signedXdr: string;
+      try {
+        const signRes = await signTransaction(res.unsignedXdr, {
+          networkPassphrase: "Test SDF Network ; September 2015"
+        });
+        // freighter-api returns { signedTxXdr, signerAddress } or just the string depending on version
+        signedXdr = typeof signRes === "string" ? signRes : (signRes as any).signedTxXdr;
+      } catch (signErr) {
+        throw new Error("User rejected signing or Freighter error");
+      }
+      
+      const submitRes = await submitSignedXdr(signedXdr);
+
+      if (!submitRes || !submitRes.hash) {
+        throw new Error("Transaction submission failed");
+      }
+
+      console.log("On-chain bet confirmed:", submitRes.hash);
+
+      // 5. Index in Prisma
+      await fetch("/api/bets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          marketId,
+          userPublicKey: publicKey,
+          amount,
+          commitment,
+          txHash: submitRes.hash
+        })
+      });
+      
+      // 6. Save local proof data to localStorage for the reveal flow
       const portfolio = JSON.parse(localStorage.getItem("zk_portfolio") || "[]");
       portfolio.push({
         marketId,
+        contractMarketId,
         marketTitle,
         side,
         nonce,
         bettorKey,
         commitment,
         amount,
+        txHash: submitRes.hash,
         status: "SEALED"
       });
       localStorage.setItem("zk_portfolio", JSON.stringify(portfolio));
-
-      // In real Soroban Dapp, we'd sign & submit a tx to `place_bet(market_id, commitment, amount)`
-      // ... await freighter.signTransaction(...)
       
       setSuccess(true);
       setTimeout(() => {

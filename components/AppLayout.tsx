@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { useWallet } from "@/components/WalletProvider";
-import { Loader2 } from "lucide-react";
+import { Loader2, TrendingUp } from "lucide-react";
 import ConnectWalletButton from "./ui/connectWalletButton";
 import Navbar from "./Navbar";
 import OnboardingModal from "./OnboardingModal";
@@ -20,96 +20,93 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <OnboardingModal />
-      {/* App Grid Layout */}
+      
+      {/* Global Fixed Navbar */}
+      <Navbar />
 
-      <div className={`min-h-screen w-full relative z-10 grid grid-cols-1 ${pathname === '/markets' ? 'md:grid-cols-[240px_1fr]' : 'md:grid-cols-1'} grid-rows-[80px_1fr] bg-black/20 shadow-2xl`}>
+      {/* Main Content Layout */}
+      <div className={`min-h-screen w-full relative z-10 flex bg-[#030303]/40 shadow-2xl pt-[80px]`}>
         
-        {/* Top Navbar */}
-        <nav className="col-span-1 md:col-span-full flex justify-between items-center px-6 md:px-10 border-b border-white/5 bg-black/20 backdrop-blur-md z-50 top-0 sticky pointer-events-auto">
-          {/* <div className="flex flex-col">
-            <div className="text-xl font-bold tracking-tight text-white font-sans drop-shadow-md">
-              Event Horizon
-            </div>
-            <div className="text-[10px] text-white/40 uppercase tracking-widest font-medium">
-              Cosmic Market
-            </div>
-          </div>
-          
-          <div className="hidden lg:flex items-center space-x-2 bg-white/5 p-1 rounded-full border border-white/10">
-             <Link href="/dashboard" className={`glass-pill px-6 py-1.5 rounded-full text-[11px] font-bold transition-all ${pathname === '/dashboard' ? 'text-white bg-white/10' : 'text-white/40 hover:text-white'}`}>Dashboard</Link>
-             <Link href="/markets" className={`glass-pill px-6 py-1.5 rounded-full text-[11px] font-bold transition-all ${pathname === '/markets' ? 'text-white bg-white/10' : 'text-white/40 hover:text-white'}`}>Markets</Link>
-             <Link href="/portfolio" className={`glass-pill px-6 py-1.5 rounded-full text-[11px] font-bold transition-all ${pathname === '/portfolio' ? 'text-white bg-white/10' : 'text-white/40 hover:text-white'}`}>Portfolio</Link>
-             <Link href="/leaderboard" className={`glass-pill px-6 py-1.5 rounded-full text-[11px] font-bold transition-all ${pathname === '/leaderboard' ? 'text-white bg-white/10' : 'text-white/40 hover:text-white'}`}>Leaderboard</Link>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="hidden sm:flex items-center bg-white/5 rounded-full px-4 py-2 border border-white/10">
-              <span className="material-symbols-outlined text-white/40 text-sm mr-2">search</span>
-              <input 
-                className="bg-transparent border-none outline-none focus:ring-0 text-xs w-28 md:w-32 text-white placeholder-white/20" 
-                placeholder="Search markets..." 
-                type="text"
-              />
-            </div>
-            <ConnectWalletButton/>
-          </div> */}
-          <Navbar/>
-        </nav>
-        
-        {/* Sidebar */}
+        {/* Sidebar (only on Desktop, only for specific routes if needed, otherwise hidden for clean Look) */}
         {pathname === '/markets' && (
-          <aside className="hidden md:flex flex-col border-r border-white/5 bg-black/10 backdrop-blur-md py-8 sticky top-[80px] h-[calc(100vh-80px)] overflow-y-auto">
+          <aside className="hidden md:flex flex-col w-[240px] border-r border-white/5 bg-black/20 backdrop-blur-3xl py-8 sticky top-[80px] h-[calc(100vh-80px)] overflow-y-auto">
             <div className="px-8 mb-10">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-white text-lg">explore</span>
+                <div className="w-10 h-10 rounded-2xl bg-blue-600/10 border border-blue-600/20 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-blue-400" />
                 </div>
                 <div>
                   <div className="text-[10px] text-white font-bold uppercase tracking-widest">Markets</div>
                   <div className="flex items-center">
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-2 animate-pulse"></span>
-                    <div className="text-[8px] text-white/40 uppercase tracking-widest">Live Signals</div>
+                    <div className="text-[8px] text-white/40 uppercase tracking-widest">Live Pulse</div>
                   </div>
                 </div>
               </div>
             </div>
             
-            <nav className="flex-1 space-y-2">
-              <Link className={`flex items-center px-8 py-3 transition-all ${(pathname as string) === '/dashboard' ? 'bg-white/5 text-white border-r-2 border-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`} href="/dashboard">
-                <span className={`material-symbols-outlined mr-4 text-xl ${(pathname as string) === '/dashboard' ? 'opacity-80' : 'opacity-60'}`}>dashboard</span>
-                <span className="text-[10px] uppercase tracking-[0.2em] font-bold">Home</span>
-              </Link>
-              <Link className={`flex items-center px-8 py-3 transition-all ${(pathname as string) === '/markets' ? 'bg-white/5 text-white border-r-2 border-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`} href="/markets">
-                <span className={`material-symbols-outlined mr-4 text-xl ${(pathname as string) === '/markets' ? 'opacity-80' : 'opacity-60'}`}>show_chart</span>
-                <span className="text-[10px] uppercase tracking-[0.2em] font-bold">Pulse</span>
-              </Link>
-              <Link className={`flex items-center px-8 py-3 transition-all ${(pathname as string) === '/portfolio' ? 'bg-white/5 text-white border-r-2 border-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`} href="/portfolio">
-                <span className={`material-symbols-outlined mr-4 text-xl ${(pathname as string) === '/portfolio' ? 'opacity-80' : 'opacity-60'}`}>language</span>
-                <span className="text-[10px] uppercase tracking-[0.2em] font-bold">Galaxy</span>
-              </Link>
-              <Link className={`flex items-center px-8 py-3 transition-all ${(pathname as string) === '/leaderboard' ? 'bg-white/5 text-white border-r-2 border-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`} href="/leaderboard">
-                <span className={`material-symbols-outlined mr-4 text-xl ${(pathname as string) === '/leaderboard' ? 'opacity-80' : 'opacity-60'}`}>auto_awesome</span>
-                <span className="text-[10px] uppercase tracking-[0.2em] font-bold">Moonshots</span>
-              </Link>
+            <nav className="flex-1 space-y-1">
+              {[
+                { href: "/dashboard", icon: "dashboard", label: "Home" },
+                { href: "/markets", icon: "show_chart", label: "Markets" },
+                { href: "/portfolio", icon: "account_balance_wallet", label: "Galaxy" },
+                { href: "/leaderboard", icon: "auto_awesome", label: "Rank" },
+                { href: "/admin", icon: "gavel", label: "Admin" },
+              ].map((item) => (
+                <Link 
+                  key={item.href}
+                  className={`flex items-center px-8 py-3.5 transition-all ${pathname === item.href ? 'bg-blue-600/10 text-white border-r-2 border-blue-500' : 'text-white/40 hover:text-white hover:bg-white/5'}`} 
+                  href={item.href}
+                >
+                  <span className="material-symbols-outlined mr-4 text-xl opacity-70">{item.icon}</span>
+                  <span className="text-[10px] uppercase tracking-[0.2em] font-bold">{item.label}</span>
+                </Link>
+              ))}
             </nav>
             
-            <div className="p-6 space-y-4">
-              <button className="w-full bg-white/5 border border-white/10 text-white py-3 rounded-xl font-bold text-[9px] uppercase tracking-widest hover:bg-white/10 transition-all">
-                  New Prediction
-              </button>
-              <div className="flex justify-between items-center px-2 opacity-30 text-[9px] uppercase tracking-widest font-bold">
-                  <a href="#">Support</a>
-                  <a href="#">Docs</a>
+            <div className="p-6">
+              <div className="bg-linear-to-br from-blue-600/20 to-violet-600/20 rounded-2xl p-4 border border-white/10">
+                <div className="text-[9px] text-white/60 uppercase tracking-widest font-bold mb-2">Beta Access</div>
+                <p className="text-[10px] text-white/40 leading-relaxed mb-3">ZK Prediction markets are now live on Testnet.</p>
+                <div className="text-[10px] text-blue-400 font-bold cursor-pointer hover:underline">View Docs →</div>
               </div>
             </div>
           </aside>
         )}
 
         {/* Main Content Area */}
-        <main className="p-4 md:p-10 custom-scrollbar col-span-1">
-           {children}
+        <main className={`flex-1 custom-scrollbar overflow-x-hidden ${pathname === '/markets' ? '' : 'max-w-7xl mx-auto'}`}>
+           <div className="p-4 md:p-8 lg:p-10">
+             {children}
+           </div>
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <motion.div 
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 md:hidden w-[90%] max-w-sm"
+      >
+        <div className="bg-[#0a0a0f]/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-2 px-4 shadow-[0_10px_40px_rgba(0,0,0,0.5)] flex items-center justify-between">
+          {[
+            { href: "/dashboard", icon: "dashboard", label: "Home" },
+            { href: "/markets", icon: "show_chart", label: "Pulse" },
+            { href: "/portfolio", icon: "account_balance_wallet", label: "Vault" },
+            { href: "/leaderboard", icon: "auto_awesome", label: "Rank" },
+            { href: "/admin", icon: "gavel", label: "Admin" },
+          ].map((item) => (
+            <Link 
+              key={item.href}
+              href={item.href}
+              className={`flex flex-col items-center p-2 rounded-2xl transition-all ${pathname === item.href ? 'text-blue-400 bg-white/5' : 'text-white/40'}`}
+            >
+              <span className="material-symbols-outlined text-xl mb-1">{item.icon}</span>
+              <span className="text-[8px] uppercase font-bold tracking-widest">{item.label}</span>
+            </Link>
+          ))}
+        </div>
+      </motion.div>
     </>
   );
 }

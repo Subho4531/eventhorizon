@@ -57,6 +57,7 @@ model Market {
   noPool        Float        @default(0)
   totalVolume   Float        @default(0)
   
+  contractMarketId Int?     @unique
   status        MarketStatus @default(OPEN)
   bondAmount    Float        @default(0)
 
@@ -64,6 +65,9 @@ model Market {
   
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+
+  @@index([creatorId])
+  @@index([status])
 }
 
 model Bet {
@@ -75,7 +79,6 @@ model Bet {
   user          User     @relation(fields: [userPublicKey], references: [publicKey])
   
   amount        Float
-  side          String   // "YES" or "NO"
   
   // ZK Primitives
   commitment    String   @unique
@@ -87,4 +90,8 @@ model Bet {
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([marketId])
+  @@index([userPublicKey])
+  @@index([commitment])
 }

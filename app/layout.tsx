@@ -16,8 +16,25 @@ const inter = Inter({
 import { WalletProvider } from "@/components/WalletProvider";
 
 export const metadata: Metadata = {
-  title: "Event Horizon | Cosmic Market",
-  description: "Trade on the outcome of future events with Zero-Knowledge privacy.",
+  title: {
+    default: "GravityFlow | ZK Prediction Market",
+    template: "%s | GravityFlow"
+  },
+  description: "Experience the next generation of prediction markets with Zero-Knowledge privacy on Stellar Testnet. Trade outcomes with deep liquidity and total anonymity.",
+  keywords: ["stellar", "prediction market", "zero-knowledge", "zk-proofs", "soroban", "crypto", "betting"],
+  openGraph: {
+    title: "GravityFlow | ZK Prediction Market",
+    description: "Privacy-first prediction markets on Stellar.",
+    url: "https://gravityflow.stellar",
+    siteName: "GravityFlow",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GravityFlow | ZK Prediction Market",
+    description: "The cosmic event horizon of ZK-prediction markets on Stellar.",
+  },
 };
 
 export default function RootLayout({
@@ -31,7 +48,6 @@ export default function RootLayout({
       className={`${spaceGrotesk.variable} ${inter.variable} antialiased`}
     >
       <head>
-        <script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.0/build/snarkjs.min.js" async></script>
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
       </head>
       <body className="min-h-full flex flex-col font-sans bg-black">

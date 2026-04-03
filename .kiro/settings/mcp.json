@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "OpenZeppelinStellarContracts": {
+      "url": "https://mcp.openzeppelin.com/contracts/stellar/mcp"
+    },
+    "docs-mcp-server": {
+      "type": "sse",
+      "url": "http://localhost:6280/sse",
+      "disabled": false,
+      "autoApprove": [
+        "search_docs",
+        "search_docs"
+      ]
+    }
+  }
+}
