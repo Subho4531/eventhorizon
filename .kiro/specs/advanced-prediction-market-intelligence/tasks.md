@@ -60,7 +60,7 @@ This plan implements AI-based market intelligence, manipulation detection, reput
   - **Property 32: Weekly Reward Distribution** - 1000 XLM distributed proportionally, points reset
   - **Validates: Requirements 3.3, 3.1, 3.2, 3.4, 12.1, 12.4, 12.5, 12.6**
 
-- [ ] 4. Reputation System + Oracle Tracking service
+- [x] 4. Reputation System + Oracle Tracking service
   - Implement lib/intelligence/reputation-system.ts with initializeUser, updateOnBetResult, updateOnMarketResolution, calculateOracleReliability, getReputationTier, getUserReputation
   - Implement reputation score adjustments (new user: 500, win: +5, lose: -2, market resolved: +20, disputed: -100, bounds: [0, 1000])
   - Implement reputation tier assignment (Novice: 0-299, Intermediate: 300-599, Expert: 600-799, Master: 800-1000)
