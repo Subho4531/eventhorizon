@@ -126,7 +126,7 @@ This plan implements AI-based market intelligence, manipulation detection, reput
   - **Property 28: Evidence Hiding Threshold** - hide after >10 flags
   - **Validates: Requirements 8.1, 8.2, 8.3, 8.7, 9.2, 9.3, 9.6, 9.7, 9.8, 10.2, 10.3, 10.5**
 
-- [ ] 7. Market Quality Scoring + Analytics Dashboard
+- [x] 7. Market Quality Scoring + Analytics Dashboard
   - Implement lib/intelligence/quality-scorer.ts with calculateQualityScore, getQualityBreakdown
   - Implement quality score calculation ((creatorReputation/1000 × 30) + (oracleReliability × 30) + (min(liquidityPool/1000, 1) × 20) + (clarityScore × 20))
   - Implement clarity score (min((titleLength + descLength)/200, 1))
