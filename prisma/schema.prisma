@@ -73,6 +73,7 @@ model Market {
   contractMarketId Int?     @unique
   status        MarketStatus @default(OPEN)
   bondAmount    Float        @default(0)
+  oracleAddress String?
 
   // Intelligence fields
   qualityScore         Float?

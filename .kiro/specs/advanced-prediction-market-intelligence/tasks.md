@@ -100,7 +100,7 @@ This plan implements AI-based market intelligence, manipulation detection, reput
   - **Property 34: Privacy-Preserving Aggregation** - uses only commitments/nullifiers/pool changes
   - **Validates: Requirements 6.4, 6.2, 6.3, 7.2, 7.4, 15.1, 15.2, 15.3, 15.5, 15.7**
 
-- [ ] 6. Dispute Resolution service (challenge + voting + evidence)
+- [x] 6. Dispute Resolution service (challenge + voting + evidence)
   - Implement lib/intelligence/dispute-resolution.ts with submitChallenge, submitVote, finalizeDispute, getDisputeStatus
   - Implement challenge submission (48h period, 100 XLM bond, evidence max 1000 chars + 3 URLs, extends period 24h)
   - Implement duplicate challenge prevention (one per user per market)
