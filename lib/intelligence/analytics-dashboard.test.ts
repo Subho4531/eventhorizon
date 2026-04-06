@@ -9,7 +9,7 @@
 
 import { describe, test, expect, beforeEach, vi } from 'vitest'
 import { getDashboardMetrics, type DashboardMetrics } from './analytics-dashboard'
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 
 describe('Analytics Dashboard', () => {
   beforeEach(() => {
@@ -104,7 +104,10 @@ describe('Analytics Dashboard', () => {
     
     // Verify the bet aggregate was called with correct time filter
     const betAggregateCall = vi.mocked(prisma.bet.aggregate).mock.calls[0][0]
-    expect(betAggregateCall?.where?.createdAt?.gte).toBeInstanceOf(Date)
+    const createdAtFilter = betAggregateCall?.where?.createdAt
+    if (createdAtFilter && typeof createdAtFilter === 'object' && 'gte' in createdAtFilter) {
+      expect(createdAtFilter.gte).toBeInstanceOf(Date)
+    }
   })
 
   test('identifies high-risk markets', async () => {

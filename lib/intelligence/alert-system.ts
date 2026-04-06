@@ -1,4 +1,4 @@
-import prisma from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 
 export type AlertSeverity = 'INFO' | 'WARNING' | 'CRITICAL'
 
@@ -47,16 +47,18 @@ export async function runBackgroundMonitoring(): Promise<void> {
     }
   })
 
-  for (const market of highRiskMarkets) {
-    await createSystemAlert({
-      type: 'manipulation',
-      severity: 'CRITICAL',
-      message: `Market "${market.title}" has critical manipulation risk (score: ${market.manipulationScore})`,
-      metadata: {
-        marketId: market.id,
-        score: market.manipulationScore
-      }
-    })
+  if (highRiskMarkets && Array.isArray(highRiskMarkets)) {
+    for (const market of highRiskMarkets) {
+      await createSystemAlert({
+        type: 'manipulation',
+        severity: 'CRITICAL',
+        message: `Market "${market.title}" has critical manipulation risk (score: ${market.manipulationScore})`,
+        metadata: {
+          marketId: market.id,
+          score: market.manipulationScore
+        }
+      })
+    }
   }
 
   // Check for delayed oracle resolutions (>24h after close)
@@ -72,17 +74,19 @@ export async function runBackgroundMonitoring(): Promise<void> {
     }
   })
 
-  for (const market of delayedMarkets) {
-    await createSystemAlert({
-      type: 'oracle_delay',
-      severity: 'WARNING',
-      message: `Market "${market.title}" has not been resolved 24h after close`,
-      metadata: {
-        marketId: market.id,
-        oracleAddress: market.creatorId,
-        closeDate: market.closeDate
-      }
-    })
+  if (delayedMarkets && Array.isArray(delayedMarkets)) {
+    for (const market of delayedMarkets) {
+      await createSystemAlert({
+        type: 'oracle_delay',
+        severity: 'WARNING',
+        message: `Market "${market.title}" has not been resolved 24h after close`,
+        metadata: {
+          marketId: market.id,
+          oracleAddress: market.creatorId,
+          closeDate: market.closeDate
+        }
+      })
+    }
   }
 
   // Check platform liquidity
@@ -93,7 +97,7 @@ export async function runBackgroundMonitoring(): Promise<void> {
     }
   })
 
-  const totalLiquidity = (liquidityData._sum.yesPool || 0) + (liquidityData._sum.noPool || 0)
+  const totalLiquidity = ((liquidityData?._sum?.yesPool) || 0) + ((liquidityData?._sum?.noPool) || 0)
 
   if (totalLiquidity < 5000) {
     await createSystemAlert({

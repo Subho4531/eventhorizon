@@ -1,4 +1,4 @@
-import prisma from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 
 export type ReputationTier = 'Novice' | 'Intermediate' | 'Expert' | 'Master'
 

@@ -20,8 +20,10 @@ interface DashboardMetrics {
   volume24h: number;
   highRiskMarkets: number;
   pendingDisputes: number;
-  avgOracleReliability: number;
-  avgResolutionTime: number;
+  oracleMetrics: {
+    avgResolutionTime: number;
+    avgReliability: number;
+  };
   totalUsers: number;
 }
 
@@ -218,14 +220,14 @@ export default function IntelligenceDashboard() {
             <div className="flex items-center justify-between mb-4">
               <Clock className="w-5 h-5 text-blue-400" />
               <span className="text-3xl font-bold text-blue-400">
-                {metrics.avgResolutionTime.toFixed(1)}h
+                {metrics.oracleMetrics.avgResolutionTime.toFixed(1)}h
               </span>
             </div>
             <p className="text-[10px] text-white/60 uppercase tracking-widest font-bold">
               Avg Resolution Time
             </p>
             <p className="text-[9px] text-white/40 mt-2">
-              Oracle reliability: {(metrics.avgOracleReliability * 100).toFixed(1)}%
+              Oracle reliability: {(metrics.oracleMetrics.avgReliability * 100).toFixed(1)}%
             </p>
           </CardContent>
         </Card>

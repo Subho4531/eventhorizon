@@ -3,6 +3,7 @@
  */
 
 import { intelligenceCache, invalidateCache } from '../intelligence-cache'
+import { describe, it, expect, beforeEach } from 'vitest'
 
 describe('IntelligenceCache', () => {
   beforeEach(() => {

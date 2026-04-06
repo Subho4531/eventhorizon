@@ -1,0 +1,33 @@
+tests/properties/bet-placement-preservation.test.ts(297,36): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+tests/properties/bet-placement-preservation.test.ts(297,45): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+tests/properties/bet-placement-preservation.test.ts(297,51): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+tests/properties/bet-placement-preservation.test.ts(297,58): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+tests/properties/bet-placement-preservation.test.ts(345,36): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+tests/properties/bet-placement-preservation.test.ts(345,45): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+tests/properties/bet-placement-preservation.test.ts(345,51): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+tests/properties/bet-placement-preservation.test.ts(345,58): error TS2737: BigInt literals are not available when targeting lower than ES2020.
+tests/properties/bet-placement-preservation.test.ts(417,71): error TS2322: Type '{ id: string; title: string; qualityScore: number | null; manipulationScore: number | null; }[]' is not assignable to type '{ id: string; title: string; qualityScore?: number | undefined; manipulationScore?: number | undefined; }[]'.
+  Type '{ id: string; title: string; qualityScore: number | null; manipulationScore: number | null; }' is not assignable to type '{ id: string; title: string; qualityScore?: number | undefined; manipulationScore?: number | undefined; }'.
+    Types of property 'qualityScore' are incompatible.
+      Type 'number | null' is not assignable to type 'number | undefined'.
+        Type 'null' is not assignable to type 'number | undefined'.
+tests/properties/bet-placement-preservation.test.ts(427,22): error TS18048: 'displayedMarket' is possibly 'undefined'.
+tests/properties/bet-placement-preservation.test.ts(428,22): error TS18048: 'displayedMarket' is possibly 'undefined'.
+tests/properties/bet-placement-preservation.test.ts(437,22): error TS18048: 'displayedMarket' is possibly 'undefined'.
+tests/properties/dispute-resolution.test.ts(99,27): error TS2339: Property 'votingEndsAt' does not exist on type '{ id: string; }'.
+tests/properties/dispute-resolution.test.ts(154,27): error TS2339: Property 'bond' does not exist on type '{ id: string; }'.
+tests/properties/dispute-resolution.test.ts(211,48): error TS2339: Property 'evidence' does not exist on type '{ id: string; }'.
+tests/properties/dispute-resolution.test.ts(323,27): error TS2339: Property 'weight' does not exist on type 'void'.
+tests/properties/dispute-resolution.test.ts(372,25): error TS2339: Property 'weight' does not exist on type 'void'.
+tests/properties/dispute-resolution.test.ts(574,72): error TS2345: Argument of type '(args: { select?: import("D:/Steller/gravityflow/node_modules/.prisma/client/index").Prisma.DisputeChallengeSelect<import("D:/Steller/gravityflow/node_modules/@prisma/client/runtime/client").DefaultArgs> | null | undefined; omit?: import("D:/Steller/gravityflow/node_modules/.prisma/client/index").Prisma.DisputeChall...' is not assignable to parameter of type '(args: { select?: import("D:/Steller/gravityflow/node_modules/.prisma/client/index").Prisma.DisputeChallengeSelect<import("D:/Steller/gravityflow/node_modules/@prisma/client/runtime/client").DefaultArgs> | null | undefined; omit?: import("D:/Steller/gravityflow/node_modules/.prisma/client/index").Prisma.DisputeChall...'.
+  Type 'Promise<any>' is missing the following properties from type 'Prisma__DisputeChallengeClient<{ id: string; status: string; createdAt: Date; marketId: string; evidence: string; proposedOutcome: string; bond: number; votingEndsAt: Date; challengerId: string; }, never, DefaultArgs, PrismaClientOptions>': market, challenger, votes
+tests/properties/dispute-resolution.test.ts(594,46): error TS2339: Property 'evidence' does not exist on type '{ id: string; }'.
+tests/properties/dispute-resolution.test.ts(635,46): error TS2339: Property 'evidence' does not exist on type 'DisputeStatus[]'.
+tests/properties/dispute-resolution.test.ts(687,27): error TS2339: Property 'stake' does not exist on type 'void'.
+tests/properties/dispute-resolution.test.ts(736,27): error TS2339: Property 'id' does not exist on type 'void'.
+tests/properties/manipulation-detection.test.ts(170,28): error TS2345: Argument of type '{ id: string; userId: string; marketId: string; amount: number; createdAt: Date; }' is not assignable to parameter of type 'Bet'.
+  Property 'userPublicKey' is missing in type '{ id: string; userId: string; marketId: string; amount: number; createdAt: Date; }' but required in type 'Bet'.
+tests/properties/manipulation-detection.test.ts(246,28): error TS2345: Argument of type '{ id: string; userId: string; marketId: string; amount: number; createdAt: Date; }' is not assignable to parameter of type 'Bet'.
+  Property 'userPublicKey' is missing in type '{ id: string; userId: string; marketId: string; amount: number; createdAt: Date; }' but required in type 'Bet'.
+tests/properties/manipulation-detection.test.ts(417,28): error TS2345: Argument of type '{ id: string; userId: string; marketId: string; amount: number; createdAt: Date; }' is not assignable to parameter of type 'Bet'.
+  Property 'userPublicKey' is missing in type '{ id: string; userId: string; marketId: string; amount: number; createdAt: Date; }' but required in type 'Bet'.

@@ -18,7 +18,7 @@ import {
   clearCache,
   type ProbabilityEstimate,
 } from './probability-model'
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Test Helpers

@@ -69,7 +69,18 @@ function calculateVolumeWeightedProbability(
  * Weight = 0.95^days_ago
  */
 function calculateDecayWeight(resolvedAt: Date): number {
+  // Validate date is not NaN
+  if (!resolvedAt || isNaN(resolvedAt.getTime())) {
+    return 0;
+  }
+  
   const daysAgo = (Date.now() - resolvedAt.getTime()) / (1000 * 60 * 60 * 24);
+  
+  // Handle negative or invalid days
+  if (daysAgo < 0 || !Number.isFinite(daysAgo)) {
+    return 0;
+  }
+  
   return Math.pow(0.95, daysAgo);
 }
 
@@ -115,7 +126,18 @@ async function analyzeHistoricalMarkets(
     let totalWeight = 0;
 
     for (const market of historicalMarkets) {
+      // Validate updatedAt is a valid date
+      if (!market.updatedAt || isNaN(market.updatedAt.getTime())) {
+        continue; // Skip invalid dates
+      }
+      
       const weight = calculateDecayWeight(market.updatedAt);
+      
+      // Skip if weight is 0 or invalid
+      if (weight === 0 || !Number.isFinite(weight)) {
+        continue;
+      }
+      
       const outcomeValue = market.outcome === "YES" ? 1.0 : 0.0;
       
       weightedSum += outcomeValue * weight;

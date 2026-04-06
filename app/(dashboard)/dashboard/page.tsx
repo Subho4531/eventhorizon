@@ -25,19 +25,35 @@ export default function Home() {
   const [selectedMarket, setSelectedMarket] = useState<Market | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  useEffect(() => {
-    async function fetchMarkets() {
-      try {
-        const res = await fetch("/api/markets");
-        const data = await res.json();
-        setMarkets(data.markets || []);
-      } catch (err) {
-        console.error("Failed to fetch markets", err);
-      } finally {
-        setLoading(false);
-      }
+  const fetchMarkets = async () => {
+    try {
+      const res = await fetch("/api/markets");
+      const data = await res.json();
+      setMarkets(data.markets || []);
+    } catch (err) {
+      console.error("Failed to fetch markets", err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchMarkets();
+  }, []);
+
+  // Listen for betPlaced events and refetch markets
+  useEffect(() => {
+    const handleBetPlaced = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log("Bet placed event received for market:", customEvent.detail?.marketId);
+      fetchMarkets();
+    };
+
+    window.addEventListener("betPlaced", handleBetPlaced);
+
+    return () => {
+      window.removeEventListener("betPlaced", handleBetPlaced);
+    };
   }, []);
 
   const heroMarket = markets[0];
@@ -81,6 +97,15 @@ export default function Home() {
         <span className="material-symbols-outlined text-6xl mb-4 opacity-20">cloud_off</span>
         <h2 className="text-xl font-bold tracking-widest uppercase">No Horizons Found</h2>
         <p className="text-xs mt-2 uppercase tracking-[0.2em]">The cosmic ledger is currently silent.</p>
+        {publicKey && (
+          <button 
+            onClick={() => setIsCreateModalOpen(true)}
+            className="mt-8 flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white text-[10px] uppercase tracking-widest font-bold border border-blue-400/30 hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
+          >
+            <span className="material-symbols-outlined text-sm">add</span>
+            Propose First Horizon
+          </button>
+        )}
       </div>
     );
   }
@@ -262,6 +287,7 @@ export default function Home() {
           marketTitle={selectedMarket.title}
           marketId={selectedMarket.id}
           contractMarketId={selectedMarket.contractMarketId}
+          marketStatus={selectedMarket.status}
         />
       )}
 

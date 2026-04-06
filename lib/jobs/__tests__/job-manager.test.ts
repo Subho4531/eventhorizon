@@ -2,16 +2,31 @@
  * Tests for job manager
  */
 
+import { describe, it, expect, afterEach, vi, beforeEach } from 'vitest'
 import { jobManager } from '../job-manager'
+import { prisma } from '@/lib/prisma'
 
 describe('JobManager', () => {
+  beforeEach(() => {
+    // Mock Prisma queries that jobs will make on startup
+    vi.mocked(prisma.market.findMany).mockResolvedValue([])
+    vi.mocked(prisma.market.aggregate).mockResolvedValue({
+      _sum: { yesPool: 5000, noPool: 5000 }
+    } as any)
+  })
+
   afterEach(() => {
     // Clean up after each test
     jobManager.stopAll()
+    vi.clearAllMocks()
   })
 
-  it('should start all jobs', () => {
+  it('should start all jobs', async () => {
     jobManager.startAll()
+    
+    // Wait for async initialization - jobs set intervals immediately but run async
+    await new Promise(resolve => setTimeout(resolve, 200))
+    
     const status = jobManager.getStatus()
     
     expect(status.started).toBe(true)
@@ -33,8 +48,12 @@ describe('JobManager', () => {
     expect(status.jobs.manipulationMonitor.running).toBe(false)
   })
 
-  it('should report healthy when all jobs running', () => {
+  it('should report healthy when all jobs running', async () => {
     jobManager.startAll()
+    
+    // Wait for async initialization - jobs set intervals immediately but run async
+    await new Promise(resolve => setTimeout(resolve, 200))
+    
     expect(jobManager.isHealthy()).toBe(true)
   })
 
@@ -44,7 +63,7 @@ describe('JobManager', () => {
 
   it('should not start jobs twice', () => {
     jobManager.startAll()
-    const consoleSpy = jest.spyOn(console, 'log')
+    const consoleSpy = vi.spyOn(console, 'log')
     
     jobManager.startAll()
     

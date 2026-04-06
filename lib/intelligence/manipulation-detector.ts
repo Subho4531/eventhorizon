@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 
 export interface MarketRisk {
   score: number
@@ -20,7 +20,7 @@ export interface SybilCluster {
 
 interface Bet {
   id: string
-  userId: string
+  userPublicKey: string
   marketId: string
   amount: number
   createdAt: Date
@@ -28,15 +28,16 @@ interface Bet {
 
 /**
  * Analyzes a bet for manipulation patterns and updates risk scores
+ * Performs only fast checks; defers expensive wash_trading and sybil detection
  */
 export async function analyzeBet(bet: Bet): Promise<void> {
   const marketId = bet.marketId
-  const userId = bet.userId
+  const userId = bet.userPublicKey
 
-  // Check rapid betting pattern
+  // Check rapid betting pattern (fast query with index)
   const recentBets = await prisma.bet.count({
     where: {
-      userId,
+      userPublicKey: userId,
       marketId,
       createdAt: {
         gte: new Date(Date.now() - 60 * 1000), // Last 60 seconds
@@ -52,7 +53,7 @@ export async function analyzeBet(bet: Bet): Promise<void> {
     })
   }
 
-  // Check volume spike
+  // Check volume spike (fast query with index)
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
   const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000)
 
@@ -82,6 +83,12 @@ export async function analyzeBet(bet: Bet): Promise<void> {
       increase: (recent / previous) * 100,
     })
   }
+
+  // Defer expensive wash_trading and sybil detection to background job
+  // These are called asynchronously without awaiting
+  detectWashTrading(marketId).catch(error => {
+    console.error(`[ManipulationDetector] Wash trading detection failed for market ${marketId}:`, error)
+  })
 }
 
 /**
@@ -147,14 +154,14 @@ export async function detectWashTrading(
       const bet1 = recentBets[i]
       const bet2 = recentBets[j]
 
-      if (bet1.userId === bet2.userId) continue
+      if (bet1.userPublicKey === bet2.userPublicKey) continue
 
       const timeDiff = bet2.createdAt.getTime() - bet1.createdAt.getTime()
       if (timeDiff <= 600 * 1000) {
         // Within 600 seconds
-        const key = [bet1.userId, bet2.userId].sort().join('-')
+        const key = [bet1.userPublicKey, bet2.userPublicKey].sort().join('-')
         if (!suspiciousPatterns.has(key)) {
-          suspiciousPatterns.set(key, [bet1.userId, bet2.userId])
+          suspiciousPatterns.set(key, [bet1.userPublicKey, bet2.userPublicKey])
         }
       }
     }
@@ -218,12 +225,12 @@ export async function detectSybilAccounts(addresses: string[]): Promise<SybilClu
     // Find markets where multiple accounts from this group bet
     const bets = await prisma.bet.findMany({
       where: {
-        userId: { in: accountArray },
+        userPublicKey: { in: accountArray },
         createdAt: { gte: oneDayAgo },
       },
       select: {
         marketId: true,
-        userId: true,
+        userPublicKey: true,
       },
     })
 
@@ -232,7 +239,7 @@ export async function detectSybilAccounts(addresses: string[]): Promise<SybilClu
       if (!marketGroups.has(bet.marketId)) {
         marketGroups.set(bet.marketId, new Set())
       }
-      marketGroups.get(bet.marketId)!.add(bet.userId)
+      marketGroups.get(bet.marketId)!.add(bet.userPublicKey)
     }
 
     // If multiple accounts bet on same market, it's suspicious

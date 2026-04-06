@@ -91,7 +91,7 @@ This plan implements AI-based market intelligence, manipulation detection, reput
   - Implement real-time bet monitoring with max 10s latency
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7_
 
-- [ ]* 5.1 Write property tests for manipulation detection
+- [x] 5.1 Write property tests for manipulation detection
   - **Property 14: Manipulation Risk Score Bounds** - scores always 0-100
   - **Property 15: Rapid Betting Detection** - flags >10 bets/60s
   - **Property 16: Volume Spike Detection** - flags >500% increase/1h
@@ -113,7 +113,7 @@ This plan implements AI-based market intelligence, manipulation detection, reput
   - Use Prisma transactions for atomic operations
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8, 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9, 9.10, 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7_
 
-- [ ]* 6.1 Write property tests for dispute resolution
+- [x] 6.1 Write property tests for dispute resolution
   - **Property 19: Challenge Period Opening** - 48h period opens on RESOLVED status
   - **Property 20: Challenge Bond Requirement** - exactly 100 XLM required
   - **Property 21: Challenge Evidence Constraints** - max 1000 chars, max 3 URLs
@@ -138,7 +138,7 @@ This plan implements AI-based market intelligence, manipulation detection, reput
   - Implement in-memory caching with 60-second TTL for quality scores
   - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7, 11.8, 11.9, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7, 14.8_
 
-- [ ]* 7.1 Write property tests for quality scoring
+- [x] 7.1 Write property tests for quality scoring
   - **Property 29: Quality Score Calculation** - formula produces 0-100 value
   - **Property 33: Alert Threshold Triggering** - alerts for risk >70, oracle delay >24h, liquidity <5000 XLM
   - **Validates: Requirements 11.1, 11.2, 11.3, 11.4, 11.5, 6.6, 14.2, 14.4, 14.5**
@@ -155,7 +155,7 @@ This plan implements AI-based market intelligence, manipulation detection, reput
   - Implement batch processing for concurrent market updates (batches of 20 for probability, 50 for liquidity, 100 for quality)
   - _Requirements: 1.2, 1.5, 3.6, 11.6, 13.2, 14.1, 17.1, 17.2, 17.3, 17.5, 17.6_
 
-- [ ]* 8.1 Write property tests for performance and privacy
+- [x] 8.1 Write property tests for performance and privacy
   - **Property 2: Probability Update Frequency** - updates every 60s (>24h away) or 30s (within 24h)
   - **Property 35: Differential Privacy Guarantee** - epsilon = 1.0 for user-level stats
   - **Property 36: Performance Bounds** - 100 markets in 10s, bet analysis in 5s, reputation update in 2s
@@ -175,11 +175,11 @@ This plan implements AI-based market intelligence, manipulation detection, reput
   - Update app/(dashboard)/admin/page.tsx with intelligence metrics
   - _Requirements: 1.8, 2.7, 3.8, 4.10, 5.8, 6.8, 8.8, 9.10, 10.7, 11.7, 11.8, 11.9, 12.7, 13.8, 14.8, 17.8_
 
-- [ ]* 9.1 Write property test for rate limiting
+- [x] 9.1 Write property test for rate limiting
   - **Property 37: Rate Limiting** - 100 requests per minute per user enforced
   - **Validates: Requirements 17.8**
 
-- [ ] 10. Final integration checkpoint
+- [x] 10. Final integration checkpoint
   - Run all property tests and verify they pass
   - Test end-to-end flows: market creation → probability estimate → bet placement → manipulation detection → resolution → challenge → voting → dispute resolution
   - Verify database migrations applied correctly

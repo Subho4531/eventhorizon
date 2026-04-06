@@ -1,7 +1,8 @@
 {
   "mcpServers": {
     "OpenZeppelinStellarContracts": {
-      "url": "https://mcp.openzeppelin.com/contracts/stellar/mcp"
+      "url": "https://mcp.openzeppelin.com/contracts/stellar/mcp",
+      "disabledTools": []
     },
     "docs-mcp-server": {
       "type": "sse",

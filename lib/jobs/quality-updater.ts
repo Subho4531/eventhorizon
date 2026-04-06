@@ -82,10 +82,10 @@ class QualityUpdater {
     const startTime = Date.now()
 
     try {
-      // Get all active markets
+      // Get all active markets (OPEN status)
       const markets = await prisma.market.findMany({
         where: {
-          status: 'ACTIVE'
+          status: 'OPEN'
         },
         select: {
           id: true

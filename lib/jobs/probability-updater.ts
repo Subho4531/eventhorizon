@@ -82,14 +82,14 @@ class ProbabilityUpdater {
     const startTime = Date.now()
 
     try {
-      // Get active markets
+      // Get active markets (OPEN status)
       const markets = await prisma.market.findMany({
         where: {
-          status: 'ACTIVE'
+          status: 'OPEN'
         },
         select: {
           id: true,
-          closeTime: true
+          closeDate: true
         }
       })
 
@@ -104,10 +104,10 @@ class ProbabilityUpdater {
 
       // Separate markets by urgency
       const urgentMarkets = markets.filter(m => 
-        new Date(m.closeTime) <= twentyFourHoursFromNow
+        new Date(m.closeDate) <= twentyFourHoursFromNow
       )
       const normalMarkets = markets.filter(m => 
-        new Date(m.closeTime) > twentyFourHoursFromNow
+        new Date(m.closeDate) > twentyFourHoursFromNow
       )
 
       // Update urgent markets every cycle

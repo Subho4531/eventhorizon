@@ -1,4 +1,4 @@
-import prisma from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 import { calculateOracleReliability } from './reputation-system'
 import { intelligenceCache } from '@/lib/cache/intelligence-cache'
 

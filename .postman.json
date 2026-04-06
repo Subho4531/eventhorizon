@@ -1,0 +1,488 @@
+{
+  "info": {
+    "name": "Gravity Prediction Market API",
+    "description": "API collection for Gravity - Privacy-Enhanced Prediction Market Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Markets",
+      "item": [
+        {
+          "name": "List Markets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/markets",
+              "host": ["{{base_url}}"],
+              "path": ["api", "markets"]
+            }
+          }
+        },
+        {
+          "name": "Get Market by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/markets/{{market_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "markets", "{{market_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Market",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Will BTC reach $100k by EOY?\",\n  \"description\": \"Bitcoin price prediction market\",\n  \"closeTime\": \"2024-12-31T23:59:59Z\",\n  \"oracleAddress\": \"GA2NUAFIJ6XN2QXRPWYGGGLSRIENLE4KISERJOSQS2IA37Z3PQVOLE43\",\n  \"bond\": 100\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/markets",
+              "host": ["{{base_url}}"],
+              "path": ["api", "markets"]
+            }
+          }
+        },
+        {
+          "name": "Resolve Market",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"outcome\": \"YES\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/markets/{{market_id}}/resolve",
+              "host": ["{{base_url}}"],
+              "path": ["api", "markets", "{{market_id}}", "resolve"]
+            }
+          }
+        },
+        {
+          "name": "Get Market Probability",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/markets/{{market_id}}/probability",
+              "host": ["{{base_url}}"],
+              "path": ["api", "markets", "{{market_id}}", "probability"]
+            }
+          }
+        },
+        {
+          "name": "Get Market Quality",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/markets/{{market_id}}/quality",
+              "host": ["{{base_url}}"],
+              "path": ["api", "markets", "{{market_id}}", "quality"]
+            }
+          }
+        },
+        {
+          "name": "Get Market Risk",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/markets/{{market_id}}/risk",
+              "host": ["{{base_url}}"],
+              "path": ["api", "markets", "{{market_id}}", "risk"]
+            }
+          }
+        },
+        {
+          "name": "Get Market Liquidity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/markets/{{market_id}}/liquidity",
+              "host": ["{{base_url}}"],
+              "path": ["api", "markets", "{{market_id}}", "liquidity"]
+            }
+          }
+        },
+        {
+          "name": "Get Market Disputes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/markets/{{market_id}}/disputes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "markets", "{{market_id}}", "disputes"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bets",
+      "item": [
+        {
+          "name": "List Bets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/bets?marketId={{market_id}}&limit=50&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bets"],
+              "query": [
+                {
+                  "key": "marketId",
+                  "value": "{{market_id}}"
+                },
+                {
+                  "key": "userPublicKey",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Bet Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/bets/stats?marketId={{market_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bets", "stats"],
+              "query": [
+                {
+                  "key": "marketId",
+                  "value": "{{market_id}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Place Bet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"marketId\": \"{{market_id}}\",\n  \"userPublicKey\": \"{{user_public_key}}\",\n  \"amount\": \"50\",\n  \"commitment\": \"12345...\",\n  \"txHash\": \"abc123...\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bets",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bets"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Disputes",
+      "item": [
+        {
+          "name": "Submit Challenge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"marketId\": \"{{market_id}}\",\n  \"challengerAddress\": \"{{user_public_key}}\",\n  \"evidence\": {\n    \"description\": \"The oracle made an error in resolving this market\",\n    \"urls\": [\"https://example.com/evidence\"]\n  },\n  \"proposedOutcome\": \"NO\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/disputes/challenge",
+              "host": ["{{base_url}}"],
+              "path": ["api", "disputes", "challenge"]
+            }
+          }
+        },
+        {
+          "name": "Submit Vote",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"voterAddress\": \"{{user_public_key}}\",\n  \"outcome\": \"YES\",\n  \"stake\": 10\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/disputes/{{dispute_id}}/vote",
+              "host": ["{{base_url}}"],
+              "path": ["api", "disputes", "{{dispute_id}}", "vote"]
+            }
+          }
+        },
+        {
+          "name": "Get Dispute Evidence",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/disputes/{{dispute_id}}/evidence",
+              "host": ["{{base_url}}"],
+              "path": ["api", "disputes", "{{dispute_id}}", "evidence"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users & Reputation",
+      "item": [
+        {
+          "name": "Get User Reputation",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{user_public_key}}/reputation",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "{{user_public_key}}", "reputation"]
+            }
+          }
+        },
+        {
+          "name": "Get Oracle Reliability",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/oracles/{{oracle_address}}/reliability",
+              "host": ["{{base_url}}"],
+              "path": ["api", "oracles", "{{oracle_address}}", "reliability"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Get Accuracy Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/analytics/accuracy",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "accuracy"]
+            }
+          }
+        },
+        {
+          "name": "Get Dashboard Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/analytics/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "dashboard"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Liquidity & Incentives",
+      "item": [
+        {
+          "name": "Get Liquidity Incentives",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/liquidity/incentives",
+              "host": ["{{base_url}}"],
+              "path": ["api", "liquidity", "incentives"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Alerts",
+      "item": [
+        {
+          "name": "Get Alerts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/alerts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "alerts"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "market_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_public_key",
+      "value": "GA2NUAFIJ6XN2QXRPWYGGGLSRIENLE4KISERJOSQS2IA37Z3PQVOLE43",
+      "type": "string"
+    },
+    {
+      "key": "oracle_address",
+      "value": "GA2NUAFIJ6XN2QXRPWYGGGLSRIENLE4KISERJOSQS2IA37Z3PQVOLE43",
+      "type": "string"
+    },
+    {
+      "key": "dispute_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/db";
+import { prisma } from "@/lib/db";
 
 // GET /api/markets - fetch all markets
 export async function GET() {
@@ -34,7 +34,12 @@ export async function POST(req: NextRequest) {
         contractMarketId,
         title,
         description: description ?? "",
-        creatorId,
+        creator: {
+          connectOrCreate: {
+            where: { publicKey: creatorId },
+            create: { publicKey: creatorId, name: "Test Creator" }
+          }
+        },
         closeDate: new Date(closeDate),
         bondAmount: parseFloat(bondAmount) || 0,
         status: "OPEN"

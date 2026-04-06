@@ -15,7 +15,7 @@ import {
   getQualityBreakdown,
   type QualityBreakdown,
 } from './quality-scorer'
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 import * as reputationSystem from './reputation-system'
 
 // ──────────────────────────────────────────────────────────────────────────────

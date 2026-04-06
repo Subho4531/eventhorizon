@@ -1,4 +1,4 @@
-import prisma from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 
 export interface DashboardMetrics {
   activeMarkets: number
@@ -31,7 +31,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     }
   })
 
-  const totalLiquidity = (liquidityData._sum.yesPool || 0) + (liquidityData._sum.noPool || 0)
+  const totalLiquidity = ((liquidityData?._sum?.yesPool) || 0) + ((liquidityData?._sum?.noPool) || 0)
 
   // 24h volume
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
@@ -44,7 +44,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     }
   })
 
-  const volume24h = volume24hData._sum.amount || 0
+  const volume24h = (volume24hData?._sum?.amount) || 0
 
   // High-risk markets (manipulation score > 60)
   const highRiskMarkets = await prisma.market.count({
@@ -78,8 +78,8 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     highRiskMarkets,
     pendingDisputes,
     oracleMetrics: {
-      avgResolutionTime: oracleData._avg.avgResolutionTime || 0,
-      avgReliability: oracleData._avg.oracleReliability || 0
+      avgResolutionTime: oracleData?._avg?.avgResolutionTime || 0,
+      avgReliability: oracleData?._avg?.oracleReliability || 0
     }
   }
 }

@@ -1,0 +1,179 @@
+# Implementation Plan
+
+- [x] 1. Write bug condition exploration test
+  - **Property 1: Bug Condition** - Bet Placement Flow Failures
+  - **CRITICAL**: This test MUST FAIL on unfixed code - failure confirms the bug exists
+  - **DO NOT attempt to fix the test or the code when it fails**
+  - **NOTE**: This test encodes the expected behavior - it will validate the fix when it passes after implementation
+  - **GOAL**: Surface counterexamples that demonstrate the bugs exist
+  - **Scoped PBT Approach**: Test concrete failing scenarios: Freighter rejection, network failures, database sync failures
+  - Test that bet placement flow handles all failure scenarios gracefully (from Bug Condition in design)
+  - Test scenarios:
+    - User rejects Freighter signature → modal should show retry option (not stuck in loading)
+    - Soroban RPC unavailable → should show network error with retry (not generic error)
+    - POST /api/bets fails after on-chain success → should handle state mismatch
+    - Admin navigates to /admin → should see bet management interface (currently missing)
+    - GET /api/bets with marketId filter → should return filtered bets (currently 405)
+  - The test assertions should match the Expected Behavior Properties from design (requirements 3.1-3.8)
+  - Run test on UNFIXED code
+  - **EXPECTED OUTCOME**: Test FAILS (this is correct - it proves the bugs exist)
+  - Document counterexamples found:
+    - BetModal stuck in loading state after Freighter rejection
+    - Generic error alerts with no actionable information
+    - No bet management interface in admin panel
+    - GET /api/bets returns 405 Method Not Allowed
+  - Mark task complete when test is written, run, and failures are documented
+  - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 2.3_
+
+- [x] 2. Write preservation property tests (BEFORE implementing fix)
+  - **Property 2: Preservation** - Existing Functionality Unchanged
+  - **IMPORTANT**: Follow observation-first methodology
+  - Observe behavior on UNFIXED code for non-buggy inputs:
+    - Market creation via CreateMarketModal works correctly
+    - Market resolution in admin panel functions properly
+    - Dashboard displays markets, stats, and layout correctly
+    - Wallet connection and Freighter integration work
+    - ZK proof generation produces correct commitments
+    - localStorage zk_portfolio structure is maintained
+    - IntelligenceDashboard displays quality/risk scores
+    - Markets page and Portfolio page display correctly
+  - Write property-based tests capturing observed behavior patterns from Preservation Requirements
+  - Property-based testing generates many test cases for stronger guarantees
+  - Test that all non-bet-placement flows produce identical results:
+    - Market browsing and display remain unchanged
+    - Wallet connection flow remains unchanged
+    - Market creation flow remains unchanged
+    - Market resolution flow remains unchanged
+    - ZK proof cryptographic parameters remain unchanged
+  - Run tests on UNFIXED code
+  - **EXPECTED OUTCOME**: Tests PASS (this confirms baseline behavior to preserve)
+  - Mark task complete when tests are written, run, and passing on unfixed code
+  - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
+
+- [-] 3. Fix bet placement and admin management
+
+  - [x] 3.1 Enhance BetModal error handling and UI state management
+    - Add granular error handling for each step:
+      - ZK proof generation errors with specific message
+      - Freighter signing rejection with user-friendly message
+      - Soroban submission errors with network error handling
+      - Database indexing errors with fallback retry logic
+      - localStorage save errors with warning (non-critical)
+    - Add market validation before bet flow starts:
+      - Fetch market status from `/api/markets/${marketId}`
+      - Verify status === "OPEN"
+      - Display error if market is closed/resolved
+    - Improve UI state management:
+      - Add separate loading states: `isGeneratingProof`, `isSigning`, `isSubmitting`, `isIndexing`
+      - Display current step to user: "Generating ZK Proof...", "Awaiting Signature...", "Submitting to Blockchain...", "Finalizing..."
+      - Add retry button that appears on error instead of requiring modal close/reopen
+    - Add transaction confirmation:
+      - Display transaction hash with link to Stellar explorer
+      - Show success message before closing modal
+    - Emit custom event `betPlaced` with market ID to trigger dashboard refresh
+    - _Bug_Condition: isBugCondition(input) where input.action === "PLACE_BET" AND betFlowFails(input.context)_
+    - _Expected_Behavior: Bet placement completes successfully OR displays actionable error with retry option (requirements 3.1, 3.2, 3.3, 3.4)_
+    - _Preservation: ZK proof generation, Freighter integration, localStorage structure remain unchanged (requirements 4.5, 4.6)_
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 4.5, 4.6_
+
+  - [x] 3.2 Update dashboard to handle bet placement events
+    - Add event listener for `betPlaced` custom event
+    - Refetch markets when event is triggered
+    - Pass full market object to BetModal (not just ID/title)
+    - Allow modal to validate market status before bet placement
+    - _Bug_Condition: isBugCondition(input) where uiStateInconsistent(input.context)_
+    - _Expected_Behavior: Dashboard refreshes after successful bet placement (requirement 3.3)_
+    - _Preservation: Dashboard layout, navigation, market display remain unchanged (requirement 4.1)_
+    - _Requirements: 3.3, 4.1_
+
+  - [x] 3.3 Enhance /api/bets endpoint with GET handler and validation
+    - Add validation to POST handler:
+      - Verify market exists and is OPEN before creating bet record
+      - Return specific error messages ("Market not found", "Market is closed")
+    - Implement GET /api/bets handler with query parameters:
+      - `marketId` (optional): Filter bets by market
+      - `userPublicKey` (optional): Filter bets by user
+      - `status` (optional): Filter by revealed/sealed status
+      - `limit` (optional): Pagination limit (default 50)
+      - `offset` (optional): Pagination offset (default 0)
+      - `sortBy` (optional): Sort field (amount, createdAt)
+      - `sortOrder` (optional): asc/desc
+    - Implement GET /api/bets/stats endpoint:
+      - Accept `marketId` (optional) query parameter
+      - Return: { totalVolume, betCount, avgBetSize, sealedCount, revealedCount }
+    - _Bug_Condition: isBugCondition(input) where input.action === "VIEW_BETS" AND betManagementInterfaceNotPresent()_
+    - _Expected_Behavior: API provides bet data with filtering, sorting, and statistics (requirements 3.6, 3.7, 3.8)_
+    - _Preservation: Existing API routes continue to function (requirement 4.1)_
+    - _Requirements: 3.4, 3.6, 3.7, 3.8, 4.1_
+
+  - [x] 3.4 Add bet management interface to admin panel
+    - Add state for bets, betStats, selectedMarketFilter, sortBy, sortOrder
+    - Add useEffect hook to fetch bets and stats on mount and filter changes
+    - Add bet management section below market resolution:
+      - Section header: "Bet Management"
+      - Filter dropdown: Select market (All Markets, or specific market titles)
+      - Sort controls: Sort by Amount/Date, Ascending/Descending
+      - Stats cards: Total Volume, Bet Count, Avg Bet Size
+      - Bet table with columns: Market, User, Amount, Commitment, Status, Timestamp
+    - Add inline bet table component:
+      - Responsive grid layout
+      - Truncated public keys (first 8 chars + "...")
+      - Truncated commitment hashes (first 12 chars + "...")
+      - Color-coded status badges (blue for Sealed, green for Revealed)
+      - Timestamp formatted as relative time (e.g., "2 hours ago")
+    - _Bug_Condition: isBugCondition(input) where input.action === "VIEW_BETS" AND input.context.route === "/admin"_
+    - _Expected_Behavior: Admin panel displays comprehensive bet management interface (requirements 3.5, 3.6, 3.7, 3.8)_
+    - _Preservation: Market resolution functionality and IntelligenceDashboard remain unchanged (requirements 4.2, 4.3)_
+    - _Requirements: 3.5, 3.6, 3.7, 3.8, 4.2, 4.3_
+
+  - [x] 3.5 Create reusable BetManagementTable component
+    - Extract bet table logic into reusable component
+    - Props interface: Accept `bets`, `loading`, `onSort`, `onFilter` props
+    - Responsive design using Tailwind grid with mobile-friendly stacking
+    - Interactive features:
+      - Click commitment hash to copy to clipboard
+      - Click user public key to view user profile (future enhancement)
+      - Hover to show full commitment/public key in tooltip
+    - _Bug_Condition: isBugCondition(input) where betManagementInterfaceNotPresent()_
+    - _Expected_Behavior: Reusable component provides consistent bet display across admin interfaces (requirements 3.6, 3.7)_
+    - _Preservation: No impact on existing components (requirement 4.1)_
+    - _Requirements: 3.6, 3.7, 4.1_
+
+  - [ ] 3.6 Verify bug condition exploration test now passes
+    - **Property 1: Expected Behavior** - Bet Placement Flow Success
+    - **IMPORTANT**: Re-run the SAME test from task 1 - do NOT write a new test
+    - The test from task 1 encodes the expected behavior
+    - When this test passes, it confirms the expected behavior is satisfied
+    - Run bug condition exploration test from step 1
+    - Verify all scenarios now pass:
+      - Freighter rejection shows retry option (not stuck)
+      - Network errors show actionable messages with retry
+      - Database sync failures are handled gracefully
+      - Admin panel shows bet management interface
+      - GET /api/bets returns filtered bet data
+    - **EXPECTED OUTCOME**: Test PASSES (confirms bugs are fixed)
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8_
+
+  - [ ] 3.7 Verify preservation tests still pass
+    - **Property 2: Preservation** - Existing Functionality Unchanged
+    - **IMPORTANT**: Re-run the SAME tests from task 2 - do NOT write new tests
+    - Run preservation property tests from step 2
+    - Verify all existing functionality remains unchanged:
+      - Market creation works identically
+      - Market resolution works identically
+      - Dashboard display is unchanged
+      - Wallet connection is unchanged
+      - ZK proof generation produces same commitments
+      - localStorage structure is backward compatible
+    - **EXPECTED OUTCOME**: Tests PASS (confirms no regressions)
+    - Confirm all tests still pass after fix (no regressions)
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
+
+- [ ] 4. Checkpoint - Ensure all tests pass
+  - Run all exploration tests - verify they now pass (bugs fixed)
+  - Run all preservation tests - verify they still pass (no regressions)
+  - Run unit tests for BetModal error handling
+  - Run unit tests for API endpoint filtering/sorting
+  - Run integration test: full bet placement flow end-to-end
+  - Run integration test: admin bet management flow
+  - Ensure all tests pass, ask the user if questions arise
