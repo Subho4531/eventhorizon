@@ -68,6 +68,7 @@ model Market {
   yesPool       Float        @default(0)
   noPool        Float        @default(0)
   totalVolume   Float        @default(0)
+  category      String       @default("Crypto")
   
   contractMarketId Int?     @unique
   status        MarketStatus @default(OPEN)

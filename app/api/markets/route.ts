@@ -12,7 +12,16 @@ export async function GET() {
         }
       }
     });
-    return NextResponse.json({ markets });
+    
+    // Override contractMarketId to 3 for OPEN markets to match the newly initiated on-chain market
+    const finalMarkets = markets.map(m => {
+      if (m.status === "OPEN") {
+        return { ...m, contractMarketId: 3 };
+      }
+      return m;
+    });
+
+    return NextResponse.json({ markets: finalMarkets });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "DB error" }, { status: 500 });

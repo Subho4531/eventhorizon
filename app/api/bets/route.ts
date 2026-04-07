@@ -6,10 +6,20 @@ import { Prisma } from "@prisma/client";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { marketId, userPublicKey, amount, commitment, txHash } = body;
+    const { marketId, userPublicKey, amount, side, commitment, txHash } = body;
     
     if (!marketId || !userPublicKey || !amount || !commitment) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    // Validate side
+    if (!side || (side !== "YES" && side !== "NO")) {
+      return NextResponse.json({ error: "side must be YES or NO" }, { status: 400 });
+    }
+
+    const stake = parseFloat(amount);
+    if (isNaN(stake) || stake < 1) {
+      return NextResponse.json({ error: "Minimum bet is 1 XLM" }, { status: 400 });
     }
 
     // Verify market exists and is OPEN
@@ -26,25 +36,55 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Market is closed" }, { status: 400 });
     }
 
-    // Record the bet in Prisma (without the private 'side' field)
-    const bet = await prisma.bet.create({
-      data: {
-        market: { connect: { id: marketId } },
-        user: { 
-          connectOrCreate: {
-            where: { publicKey: userPublicKey },
-            create: { publicKey: userPublicKey, name: "Test User" }
-          }
-        },
-        amount: parseFloat(amount),
-        commitment,
-        txHash: txHash ?? null,
-        revealed: false
-      }
+    // Ensure user exists and check balance
+    const user = await prisma.user.upsert({
+      where: { publicKey: userPublicKey },
+      update: {},
+      create: { publicKey: userPublicKey, name: "" },
+      select: { publicKey: true, balance: true },
     });
 
-    // Optionally update user balance here or rely on the transaction listener
-    // For now, let's keep it simple as the Portfolio also refreshes from Soroban/Txns
+    if (user.balance < stake) {
+      return NextResponse.json(
+        { error: `Insufficient balance. You have ${user.balance} XLM but tried to bet ${stake} XLM.` },
+        { status: 400 }
+      );
+    }
+
+    // Atomic transaction: create bet + update pool + deduct balance
+    const [bet] = await prisma.$transaction([
+      prisma.bet.create({
+        data: {
+          market: { connect: { id: marketId } },
+          user: { connect: { publicKey: userPublicKey } },
+          amount: stake,
+          commitment,
+          txHash: txHash ?? null,
+          revealed: false,
+        },
+      }),
+      prisma.market.update({
+        where: { id: marketId },
+        data: {
+          ...(side === "YES"
+            ? { yesPool: { increment: stake } }
+            : { noPool: { increment: stake } }),
+          totalVolume: { increment: stake },
+        },
+      }),
+      prisma.user.update({
+        where: { publicKey: userPublicKey },
+        data: { balance: { decrement: stake } },
+      }),
+    ]);
+
+    // Invalidate probability cache so odds recalculate with new pool sizes
+    try {
+      const { invalidateCache } = await import("@/lib/intelligence/probability-model");
+      invalidateCache(marketId);
+    } catch {
+      // Cache invalidation is non-critical
+    }
     
     return NextResponse.json({ bet }, { status: 201 });
   } catch (err) {

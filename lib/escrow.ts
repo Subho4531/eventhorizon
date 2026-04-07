@@ -115,9 +115,13 @@ async function buildSorobanCall(
     .setTimeout(30)
     .build();
 
+  console.log(`[escrow] Simulating ${method}...`);
   const simResult = await server.simulateTransaction(tx);
   if (rpc.Api.isSimulationError(simResult)) {
-    throw new Error(`Simulation error: ${simResult.error}`);
+    // Parse the diagnostic events to give a human-readable error
+    const errStr = simResult.error || "Unknown simulation error";
+    console.error(`[escrow] ${method} simulation failed:`, errStr);
+    throw new Error(`Contract ${method}() failed: ${errStr}`);
   }
 
   const prepared = rpc.assembleTransaction(tx, simResult).build();
@@ -284,24 +288,18 @@ export async function resolveMarket(
 
   try {
     const { Address, nativeToScVal, xdr } = await import("@stellar/stellar-sdk");
-    
-    // Outcome enum match (0 = Yes, 1 = No)
-    // In Rust: enum Outcome { Yes, No }
-    const outcomeVal = outcome === "YES" 
-      ? xdr.ScVal.scvVec([xdr.ScVal.scvSymbol("Yes")]) // Error: Outcome is likely a symbol or simple variant
-      : xdr.ScVal.scvVec([xdr.ScVal.scvSymbol("No")]);
-    
-    // Use nativeToScVal for enum if the library supports it, or build it manually.
-    // Based on lib.rs: pub enum Outcome { Yes, No } 
-    // Which is represented as ScVal Enum { name: "Yes", ... }
-    const scOutcome = outcome === "YES" 
-      ? nativeToScVal("Yes", { type: "symbol" })
-      : nativeToScVal("No", { type: "symbol" });
+
+    // `Outcome` is a #[contracttype] unit-variant enum (Yes=0, No=1).
+    // Soroban encodes these as ScVal::Vec([ScVal::Symbol("Yes"|"No")]),
+    // NOT as a raw u32 — that encoding is only for non-contracttype C-style enums.
+    const outcomeScVal = xdr.ScVal.scvVec([
+      xdr.ScVal.scvSymbol(outcome === "YES" ? "Yes" : "No"),
+    ]);
 
     const args = [
       new Address(oraclePubKey).toScVal(),
       nativeToScVal(marketId, { type: "u32" }),
-      scOutcome,
+      outcomeScVal,
       nativeToScVal(payoutBps, { type: "u32" }),
     ];
 

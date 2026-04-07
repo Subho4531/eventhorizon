@@ -1,0 +1,8 @@
+Γä╣∩╕Å  Signing transaction: 17aaafd1a2df426726c9297108f6a50467b9db4107db711af7fcbe7ad8232850
+
+error: the following required arguments were not provided:
+  --source-account <SOURCE_ACCOUNT>
+
+Usage: stellar.exe contract invoke --id <CONTRACT_ID> --source-account <SOURCE_ACCOUNT> --network <NETWORK> -- <CONTRACT_FN_AND_ARGS>...
+
+For more information, try '--help'.

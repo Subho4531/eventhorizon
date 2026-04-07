@@ -1,22 +1,28 @@
+"use client";
 import { useWallet } from "../WalletProvider";
-import { Loader2 } from "lucide-react";
+import { Loader2, Wallet } from "lucide-react";
 
 export default function ConnectWalletButton() {
-    const { publicKey, connect, isConnecting , disconnect } = useWallet();
-    const formatKey = (key: string) => {
-        return `${key.slice(0, 4)}...${key.slice(-4)}`;
-    };
-    return <button
-        onClick={publicKey ? disconnect : connect}
-        disabled={isConnecting}
-        className={`backdrop-blur-md border border-blue-400/30 text-white px-5 md:px-6 py-2 md:py-2.5 rounded-xl font-bold text-xs hover:brightness-110 transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center min-w-[140px] ${publicKey ? 'bg-white/10' : 'bg-blue-600/80'}`}
+  const { publicKey, connect, isConnecting, disconnect } = useWallet();
+
+  const formatKey = (key: string) => `${key.slice(0, 4)}…${key.slice(-4)}`;
+
+  return (
+    <button
+      onClick={publicKey ? disconnect : connect}
+      disabled={isConnecting}
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all ${
+        publicKey
+          ? "bg-white/[0.06] border border-white/[0.1] text-white/80 hover:bg-white/[0.1] hover:text-white"
+          : "bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_16px_rgba(37,99,235,0.4)]"
+      }`}
     >
-        {isConnecting ? (
-            <Loader2 className="w-4 h-4 animate-spin text-white/70" />
-        ) : publicKey ? (
-            formatKey(publicKey)
-        ) : (   
-            "Connect Wallet"
-        )}
+      {isConnecting ? (
+        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+      ) : (
+        <Wallet className="w-3.5 h-3.5" />
+      )}
+      {isConnecting ? "Connecting…" : publicKey ? formatKey(publicKey) : "Connect Wallet"}
     </button>
+  );
 }

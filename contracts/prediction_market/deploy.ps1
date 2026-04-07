@@ -107,7 +107,7 @@ Write-Host "`n==> Deploying contract to $NETWORK …" -ForegroundColor Cyan
 
 $deployOutput = stellar contract deploy `
     --wasm $wasmPath `
-    --source $identityName `
+    --source-account $identityName `
     --network $NETWORK 2>&1
 
 # Filter to the last line that looks like a contract ID (starts with C, 56 chars)
@@ -126,7 +126,7 @@ Write-Host "    Contract deployed: $contractId" -ForegroundColor Green
 Write-Host "`n==> Calling init() …" -ForegroundColor Cyan
 stellar contract invoke `
     --id $contractId `
-    --source $identityName `
+    --source-account $identityName `
     --network $NETWORK `
     -- init `
     --admin $deployerPublicKey `

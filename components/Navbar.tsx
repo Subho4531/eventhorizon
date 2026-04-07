@@ -2,41 +2,82 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import ConnectWalletButton from "./ui/connectWalletButton";
 import { usePathname } from "next/navigation";
+import ConnectWalletButton from "./ui/connectWalletButton";
 import { useWallet } from "./WalletProvider";
+import { Activity, BarChart2, Trophy, Shield, Zap } from "lucide-react";
 
+const NAV_ITEMS = [
+  { href: "/markets", label: "Markets", Icon: BarChart2 },
+  { href: "/portfolio", label: "Portfolio", Icon: Activity },
+  { href: "/leaderboard", label: "Leaderboard", Icon: Trophy },
+];
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { publicKey, connect, isConnecting , disconnect} = useWallet();
+  const { publicKey } = useWallet();
+
   return (
-    <motion.nav
-      initial={{ opacity: 0, y: -20 }}
+    <motion.header
+      initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
-      className="fixed top-0 left-0 right-0 z-50 px-8 py-6 flex items-start justify-between pointer-events-none"
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="fixed top-0 left-0 right-0 z-50 h-[60px] flex items-center border-b border-white/[0.06] bg-black/70 backdrop-blur-xl"
     >
-      <div className="flex flex-col items-start leading-tight pointer-events-auto">
-        <span className="text-xl font-bold tracking-tight text-white mb-1 drop-shadow-lg">
-          Event Horizon
-        </span>
-        <span className="text-xs text-white/50">
-          ZK Prediction Market
-        </span>
-      </div>
+      {/* Logo */}
+      <Link
+        href="/markets"
+        className="flex items-center gap-2.5 px-5 min-w-[220px] border-r border-white/[0.06] h-full"
+      >
+        <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
+          <Zap className="w-3.5 h-3.5 text-white" />
+        </div>
+        <div className="leading-none">
+          <div className="text-[13px] font-bold text-white tracking-tight">Event Horizon</div>
+          <div className="text-[9px] text-white/35 uppercase tracking-[0.15em] font-semibold mt-0.5">
+            ZK Prediction Market
+          </div>
+        </div>
+      </Link>
 
-      {/* Tabs Menu */} 
-      <div className={`items-center gap-1 glass-pill px-2 py-1.5 rounded-full pointer-events-auto shadow-2xl ${publicKey ? 'md:flex':'hidden' }`}>
-        <Link href="/dashboard" className={`px-4 py-1.5 rounded-full text-sm font-medium ${pathname === '/dashboard' ? 'text-white' : 'text-dim'} hover:bg-white/20 transition-all`}>Dashboard</Link>
-        <Link href="/markets" className={`px-4 py-1.5 rounded-full text-sm font-medium ${pathname === '/markets' ? 'text-white' : 'text-dim'} hover:bg-white/20 transition-all`}>Markets</Link>
-        <Link href="/portfolio" className={`px-4 py-1.5 rounded-full text-sm font-medium ${pathname === '/portfolio' ? 'text-white' : 'text-dim'} hover:bg-white/20 transition-all`}>Portfolio</Link>
-        <Link href="/leaderboard" className={`px-4 py-1.5 rounded-full text-sm font-medium ${pathname === '/leaderboard' ? 'text-white' : 'text-dim'} hover:bg-white/20 transition-all`}>Leaderboard</Link>
-      </div>
+      {/* Center Nav — always visible */}
+      <nav className="flex-1 flex items-center justify-center gap-1 px-4">
+        {NAV_ITEMS.map(({ href, label, Icon }) => {
+            const active = pathname === href || pathname.startsWith(href + "/");
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-all ${
+                  active
+                    ? "bg-white/10 text-white"
+                    : "text-white/45 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {label}
+              </Link>
+            );
+        })}
+      </nav>
 
-      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="pointer-events-auto">
+      {/* Right — Admin + Wallet */}
+      <div className="flex items-center gap-3 px-5 min-w-[220px] justify-end border-l border-white/[0.06] h-full">
+        {publicKey && (
+          <Link
+            href="/admin"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-widest transition-all ${
+              pathname === "/admin"
+                ? "bg-white/10 text-white"
+                : "text-white/30 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            <Shield className="w-3 h-3" />
+            Admin
+          </Link>
+        )}
         <ConnectWalletButton />
-      </motion.div>
-    </motion.nav>
+      </div>
+    </motion.header>
   );
 }
