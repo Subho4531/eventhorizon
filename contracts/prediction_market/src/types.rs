@@ -13,12 +13,8 @@ pub enum MarketStatus {
     Disputed = 3,
 }
 
-#[contracttype]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum Outcome {
-    Yes = 0,
-    No  = 1,
-}
+pub const OUTCOME_YES: u32 = 0;
+pub const OUTCOME_NO: u32 = 1;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Structs
@@ -37,13 +33,11 @@ pub struct Market {
     /// Current lifecycle stage.
     pub status: MarketStatus,
     /// Outcome set by oracle on resolution (None while open).
-    pub outcome: Option<Outcome>,
+    pub outcome: Option<u32>,
     /// Unix seconds after which no new bets may be placed.
     pub close_time: u64,
     /// Total XLM staked in this market (stroops).
     pub total_pool: i128,
-    /// Creator bond held in escrow, slashable on bad oracle behaviour.
-    pub bond: i128,
     /// Dispute window end (48 h after resolution). Payouts unlock after this.
     pub dispute_end: u64,
     /// Payout multiplier set by oracle at resolution (basis points, e.g. 20 000 = 2×).

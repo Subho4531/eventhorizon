@@ -63,7 +63,7 @@ export default function Navbar() {
 
       {/* Right — Admin + Wallet */}
       <div className="flex items-center gap-3 px-5 min-w-[220px] justify-end border-l border-white/[0.06] h-full">
-        {publicKey && (
+        {publicKey === process.env.NEXT_PUBLIC_ADMIN_ID && (
           <Link
             href="/admin"
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-widest transition-all ${

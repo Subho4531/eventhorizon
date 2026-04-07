@@ -46,7 +46,7 @@ use soroban_sdk::{
 };
 
 // Dispute window: 48 hours in seconds
-const DISPUTE_WINDOW_SECS: u64 = 48 * 60 * 60;
+const DISPUTE_WINDOW_SECS: u64 = 0; // Instant claims (no dispute window)
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Contract
@@ -167,27 +167,12 @@ impl ZKPredictionMarket {
         oracle: Address,
         title: Symbol,
         close_time: u64,
-        bond: i128,
     ) -> u32 {
         creator.require_auth();
 
         let now = env.ledger().timestamp();
         if close_time <= now {
             panic!("close_time must be in the future");
-        }
-        if bond < 0 {
-            panic!("Bond must be non-negative");
-        }
-
-        // Lock creator bond from escrow.
-        if bond > 0 {
-            let bal = Self::get_escrow_bal(&env, &creator);
-            if bal < bond {
-                panic!("Insufficient escrow balance for bond");
-            }
-            env.storage()
-                .persistent()
-                .set(&DataKey::EscrowBal(creator.clone()), &(bal - bond));
         }
 
         // Allocate market ID.
@@ -206,7 +191,6 @@ impl ZKPredictionMarket {
             outcome: None,
             close_time,
             total_pool: 0,
-            bond,
             dispute_end: 0,
             payout_bps: 0,
         };
@@ -214,9 +198,9 @@ impl ZKPredictionMarket {
         env.storage()
             .instance()
             .set(&DataKey::MarketCount, &count);
-        env.storage()
-            .persistent()
-            .set(&DataKey::Market(count), &market);
+        let k = DataKey::Market(count);
+        env.storage().persistent().set(&k, &market);
+        env.storage().persistent().extend_ttl(&k, 17_280, 17_280);
 
         env.events()
             .publish((symbol_short!("mkt_new"), creator), (count, title));
@@ -287,15 +271,15 @@ impl ZKPredictionMarket {
             amount,
             claimed: false,
         };
-        env.storage()
-            .persistent()
-            .set(&commitment_key, &position);
+        let k = commitment_key;
+        env.storage().persistent().set(&k, &position);
+        env.storage().persistent().extend_ttl(&k, 17_280, 17_280);
 
         // Update total pool (side breakdown is private until claims).
         market.total_pool += amount;
-        env.storage()
-            .persistent()
-            .set(&market_key, &market);
+        let k = market_key;
+        env.storage().persistent().set(&k, &market);
+        env.storage().persistent().extend_ttl(&k, 17_280, 17_280);
 
         env.events().publish(
             (symbol_short!("bet"), bettor),
@@ -322,7 +306,7 @@ impl ZKPredictionMarket {
         env: Env,
         oracle: Address,
         market_id: u32,
-        outcome: Outcome,
+        outcome: u32,
         payout_bps: u32,
     ) {
         oracle.require_auth();
@@ -347,13 +331,13 @@ impl ZKPredictionMarket {
 
         let now = env.ledger().timestamp();
         market.status = MarketStatus::Resolved;
-        market.outcome = Some(outcome.clone());
+        market.outcome = Some(outcome);
         market.payout_bps = payout_bps;
         market.dispute_end = now + DISPUTE_WINDOW_SECS;
 
-        env.storage()
-            .persistent()
-            .set(&market_key, &market);
+        let k = market_key;
+        env.storage().persistent().set(&k, &market);
+        env.storage().persistent().extend_ttl(&k, 17_280, 17_280);
 
         env.events()
             .publish((symbol_short!("resolved"), oracle), (market_id, payout_bps));
@@ -434,11 +418,7 @@ impl ZKPredictionMarket {
             panic!("Position already claimed");
         }
 
-        // Determine winning_side from market outcome.
-        let winning_side = match market.outcome.as_ref().unwrap() {
-            Outcome::Yes => 0u32,
-            Outcome::No  => 1u32,
-        };
+        let winning_side = market.outcome.unwrap();
 
         // ── ZK Proof Verification ─────────────────────────────────────────────
         // Verify the Groth16 RevealBet proof. The circuit proves:
@@ -463,15 +443,15 @@ impl ZKPredictionMarket {
         // ─────────────────────────────────────────────────────────────────────
 
         // Mark nullifier spent BEFORE external state mutations (reentrancy guard).
-        env.storage()
-            .persistent()
-            .set(&nullifier_key, &true);
+        let k = nullifier_key;
+        env.storage().persistent().set(&k, &true);
+        env.storage().persistent().extend_ttl(&k, 17_280, 17_280);
 
         // Mark position as claimed.
         position.claimed = true;
-        env.storage()
-            .persistent()
-            .set(&commitment_key, &position);
+        let k = commitment_key;
+        env.storage().persistent().set(&k, &position);
+        env.storage().persistent().extend_ttl(&k, 17_280, 17_280);
 
         // Compute and credit payout.
         // payout = bet_amount × payout_bps / 10_000
@@ -488,96 +468,7 @@ impl ZKPredictionMarket {
         );
     }
 
-    // ── Markets: Slash Bond ───────────────────────────────────────────────────
 
-    /// Slash the creator's bond after the dispute window if the oracle's
-    /// resolution is determined to be wrong.
-    ///
-    /// In the hackathon version the admin triggers the slash; in production
-    /// this would be governed by an on-chain dispute game (UMA-style).
-    ///
-    /// The bond is transferred to a treasury address (admin for now).
-    ///
-    /// Emits: `"slash"` event with { market_id, bond_amount }.
-    pub fn slash_bond(env: Env, market_id: u32) {
-        let admin: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::Admin)
-            .expect("Not initialised");
-        admin.require_auth();
-
-        let market_key = DataKey::Market(market_id);
-        let mut market: Market = env
-            .storage()
-            .persistent()
-            .get(&market_key)
-            .expect("Market not found");
-
-        if market.bond == 0 {
-            panic!("No bond to slash");
-        }
-
-        let bond = market.bond;
-        market.bond = 0;
-        env.storage()
-            .persistent()
-            .set(&market_key, &market);
-
-        // Credit bond to admin's escrow (or send directly).
-        let admin_bal = Self::get_escrow_bal(&env, &admin);
-        env.storage()
-            .persistent()
-            .set(&DataKey::EscrowBal(admin.clone()), &(admin_bal + bond));
-
-        env.events()
-            .publish((symbol_short!("slash"), admin), (market_id, bond));
-    }
-
-    // ── Release Creator Bond ──────────────────────────────────────────────────
-
-    /// Return the creator's bond after a successful resolution + dispute window.
-    /// Called by the creator after `dispute_end` has passed.
-    ///
-    /// Emits: `"bond_ret"` event with { creator, market_id, bond }.
-    pub fn release_bond(env: Env, creator: Address, market_id: u32) {
-        creator.require_auth();
-
-        let market_key = DataKey::Market(market_id);
-        let mut market: Market = env
-            .storage()
-            .persistent()
-            .get(&market_key)
-            .expect("Market not found");
-
-        if market.creator != creator {
-            panic!("Caller is not the market creator");
-        }
-        if market.status != MarketStatus::Resolved {
-            panic!("Market is not resolved");
-        }
-        let now = env.ledger().timestamp();
-        if now < market.dispute_end {
-            panic!("Dispute window still open");
-        }
-        if market.bond == 0 {
-            panic!("Bond already released or slashed");
-        }
-
-        let bond = market.bond;
-        market.bond = 0;
-        env.storage()
-            .persistent()
-            .set(&market_key, &market);
-
-        let bal = Self::get_escrow_bal(&env, &creator);
-        env.storage()
-            .persistent()
-            .set(&DataKey::EscrowBal(creator.clone()), &(bal + bond));
-
-        env.events()
-            .publish((symbol_short!("bond_ret"), creator), (market_id, bond));
-    }
 
     // ── Query helpers ─────────────────────────────────────────────────────────
 

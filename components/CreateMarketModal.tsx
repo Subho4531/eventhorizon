@@ -21,7 +21,7 @@ export default function CreateMarketModal({
   const [description, setDescription] = useState("");
   const [oracle, setOracle] = useState(userPublicKey); // Default to self
   const [closeDate, setCloseDate] = useState("");
-  const [bond, setBond] = useState("10"); // Default 10 XLM
+  const [category, setCategory] = useState("Crypto");
   
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<"form" | "tx" | "indexing" | "success" | "error">("form");
@@ -30,7 +30,7 @@ export default function CreateMarketModal({
   if (!isOpen) return null;
 
   async function handleCreate() {
-    if (!title || !closeDate || !bond || !oracle) {
+    if (!title || !closeDate || !oracle) {
       setErrorMsg("Please fill all required fields.");
       return;
     }
@@ -41,18 +41,17 @@ export default function CreateMarketModal({
 
     try {
       const closeTimeUnix = Math.floor(new Date(closeDate).getTime() / 1000);
-      const bondNum = parseFloat(bond);
 
-      // Step 0: Get Current Count to Predic ID
-      const currentCount = await getOnchainMarketCount();
-      const predictedId = currentCount + 1;
+      // Enforce Soroban Symbol restrictions: max 32 chars, [a-zA-Z0-9_]
+      const validSymbol = title
+        .replace(/[^a-zA-Z0-9_]/g, "_")
+        .slice(0, 32);
 
       // Step 1: Build Unsigned XDR
       const res = await createMarket(
         userPublicKey,
-        title,
+        validSymbol,
         closeTimeUnix,
-        bondNum,
         oracle
       );
 
@@ -70,7 +69,11 @@ export default function CreateMarketModal({
       }
 
       // Step 3: Submit to Soroban RPC
-      await submitSignedXdr(signRes.signedTxXdr);
+      const txResult = await submitSignedXdr(signRes.signedTxXdr);
+      const onChainMarketId = txResult.returnValue;
+      if (typeof onChainMarketId !== "number") {
+        console.warn("Could not retrieve market ID from Blockchain natively, fallback required");
+      }
 
       // Step 4: Index in Database
       setStep("indexing");
@@ -78,12 +81,12 @@ export default function CreateMarketModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contractMarketId: predictedId,
-          title,
+          contractMarketId: onChainMarketId,
+          title: validSymbol,
           description,
           creatorId: userPublicKey,
           closeDate: new Date(closeDate).toISOString(),
-          bondAmount: bondNum
+          category
         }),
       });
 
@@ -142,10 +145,12 @@ export default function CreateMarketModal({
                 <input 
                   type="text" 
                   value={title}
-                  onChange={(e) => setTitle(e.target.value.toUpperCase().replace(/\s/g, "_"))}
-                  placeholder="E.G. MARS_LANDING_2026"
+                  maxLength={32}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="BTC touching 3000 ?"
                   className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder:text-white/10 focus:outline-none focus:border-blue-500/50 transition-colors font-sans text-sm tracking-wider"
                 />
+                <p className="text-[10px] text-white/40 pl-1">Max 32 chars, uppercase letters, numbers, and underscores only.</p>
               </div>
 
               <div className="space-y-2">
@@ -181,17 +186,21 @@ export default function CreateMarketModal({
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex justify-between items-center pl-1">
-                  <label className="text-[10px] text-white/30 uppercase font-black tracking-widest">Creator Bond (XLM)</label>
-                  <span className="text-[9px] text-blue-400 font-bold">Locked until resolution</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] text-white/30 uppercase font-black tracking-widest pl-1">Category</label>
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full bg-[#111111] border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-blue-500/50 transition-colors font-sans text-sm h-[54px]"
+                  >
+                    <option value="Crypto">Crypto</option>
+                    <option value="Politics">Politics</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Science">Science</option>
+                  </select>
                 </div>
-                <input 
-                  type="number" 
-                  value={bond}
-                  onChange={(e) => setBond(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-blue-500/50 transition-colors font-sans text-sm"
-                />
               </div>
 
               {errorMsg && (
@@ -234,7 +243,7 @@ export default function CreateMarketModal({
                 </h3>
                 <p className="text-xs text-white/40 uppercase tracking-widest leading-relaxed">
                   {step === "tx" 
-                    ? "Please sign the transaction in your Freighter wallet to lock the creator bond." 
+                    ? "Please sign the transaction in your Freighter wallet to propose the horizon." 
                     : "Finalizing the cosmic consensus in our global ledger."}
                 </p>
               </div>

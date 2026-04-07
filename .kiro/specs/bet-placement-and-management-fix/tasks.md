@@ -89,7 +89,7 @@
   - [x] 3.3 Enhance /api/bets endpoint with GET handler and validation
     - Add validation to POST handler:
       - Verify market exists and is OPEN before creating bet record
-      - Return specific error messages ("Market not found", "Market is closed")
+      - Return specific error messages ("", "Market is closed")
     - Implement GET /api/bets handler with query parameters:
       - `marketId` (optional): Filter bets by market
       - `userPublicKey` (optional): Filter bets by user

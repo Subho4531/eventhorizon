@@ -1,0 +1,40 @@
+   Compiling prediction_market v0.1.0 (D:\Steller\gravityflow\contracts\prediction_market)
+warning: unused imports: `Events` and `IntoVal`
+ --> src\test.rs:7:31
+  |
+7 |     testutils::{Address as _, Events, Ledger, LedgerInfo},
+  |                               ^^^^^^
+8 |     token, Address, BytesN, Env, IntoVal, Symbol,
+  |                                  ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+error[E0277]: the trait bound `soroban_sdk::xdr::ScVal: TryFrom<&core::option::Option<types::Outcome>>` is not satisfied
+  --> src\types.rs:28:1
+   |
+28 | #[contracttype]
+   | ^^^^^^^^^^^^^^^ the trait `From<types::Outcome>` is not implemented for `soroban_sdk::xdr::ScVal`
+   |
+   = help: the following other types implement trait `From<T>`:
+             `&soroban_sdk::xdr::ScVal` implements `From<soroban_env_common::object::ScValObjRef<'_>>`
+             `soroban_sdk::xdr::ScVal` implements `From<&()>`
+             `soroban_sdk::xdr::ScVal` implements `From<&Fp2>`
+             `soroban_sdk::xdr::ScVal` implements `From<&Fr>`
+             `soroban_sdk::xdr::ScVal` implements `From<&G1Affine>`
+             `soroban_sdk::xdr::ScVal` implements `From<&G2Affine>`
+             `soroban_sdk::xdr::ScVal` implements `From<&bool>`
+             `soroban_sdk::xdr::ScVal` implements `From<&core::option::Option<T>>`
+           and 48 others
+   = note: required for `types::Outcome` to implement `Into<soroban_sdk::xdr::ScVal>`
+   = note: required for `soroban_sdk::xdr::ScVal` to implement `From<&core::option::Option<types::Outcome>>`
+   = note: 1 redundant requirement hidden
+   = note: required for `&core::option::Option<types::Outcome>` to implement `Into<soroban_sdk::xdr::ScVal>`
+   = note: required for `soroban_sdk::xdr::ScVal` to implement `TryFrom<&core::option::Option<types::Outcome>>`
+   = note: required for `&core::option::Option<types::Outcome>` to implement `TryInto<soroban_sdk::xdr::ScVal>`
+   = note: this error originates in the attribute macro `contracttype` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+For more information about this error, try `rustc --explain E0277`.
+error: could not compile `prediction_market` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+warning: `prediction_market` (lib test) generated 1 warning
+error: could not compile `prediction_market` (lib test) due to 1 previous error; 1 warning emitted

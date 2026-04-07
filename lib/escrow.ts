@@ -112,7 +112,7 @@ async function buildSorobanCall(
     networkPassphrase: "Test SDF Network ; September 2015",
   })
     .addOperation(contract.call(method, ...scArgs))
-    .setTimeout(30)
+    .setTimeout(300)
     .build();
 
   console.log(`[escrow] Simulating ${method}...`);
@@ -133,7 +133,7 @@ async function buildSorobanCall(
  */
 export async function submitSignedXdr(
   signedXdr: string
-): Promise<{ hash: string }> {
+): Promise<{ hash: string; returnValue?: any }> {
   const { TransactionBuilder, Networks, rpc } = await import(
     "@stellar/stellar-sdk"
   );
@@ -152,13 +152,21 @@ export async function submitSignedXdr(
     if (
       status.status ===
       rpc.Api.GetTransactionStatus.SUCCESS
-    )
-      return { hash: send.hash };
+    ) {
+      let returnValue;
+      if (status.returnValue) {
+        const { scValToNative } = await import("@stellar/stellar-sdk");
+        returnValue = scValToNative(status.returnValue);
+      }
+      return { hash: send.hash, returnValue };
+    }
     if (
       status.status ===
       rpc.Api.GetTransactionStatus.FAILED
-    )
-      throw new Error("Transaction failed on-chain");
+    ) {
+      console.error("Transation failed on-chain details:", JSON.stringify(status, null, 2));
+      throw new Error(`Transaction failed on-chain. Details: ${status.resultMetaXdr?.toXDR("base64") || JSON.stringify(status)}`);
+    }
   }
   throw new Error("Confirmation timeout");
 }
@@ -239,7 +247,6 @@ export async function createMarket(
   publicKey: string,
   title: string,
   closeTime: number,
-  bondXlm: number,
   oracle: string
 ): Promise<EscrowResult> {
   if (!CONTRACT_ID) {
@@ -250,14 +257,12 @@ export async function createMarket(
 
   try {
     const { Address, nativeToScVal } = await import("@stellar/stellar-sdk");
-    const stroops = BigInt(xlmToStroops(bondXlm));
 
     const args = [
       new Address(publicKey).toScVal(),
       new Address(oracle).toScVal(),
       nativeToScVal(title, { type: "symbol" }),
       nativeToScVal(closeTime, { type: "u64" }),
-      nativeToScVal(stroops, { type: "i128" }),
     ];
 
     const unsignedXdr = await buildSorobanCall(publicKey, "create_market", args);
@@ -289,17 +294,13 @@ export async function resolveMarket(
   try {
     const { Address, nativeToScVal, xdr } = await import("@stellar/stellar-sdk");
 
-    // `Outcome` is a #[contracttype] unit-variant enum (Yes=0, No=1).
-    // Soroban encodes these as ScVal::Vec([ScVal::Symbol("Yes"|"No")]),
-    // NOT as a raw u32 — that encoding is only for non-contracttype C-style enums.
-    const outcomeScVal = xdr.ScVal.scvVec([
-      xdr.ScVal.scvSymbol(outcome === "YES" ? "Yes" : "No"),
-    ]);
+    // Contract takes `outcome: u32` — 0 = YES, 1 = NO (see types.rs OUTCOME_YES/NO)
+    const outcomeU32 = outcome === "YES" ? 0 : 1;
 
     const args = [
       new Address(oraclePubKey).toScVal(),
       nativeToScVal(marketId, { type: "u32" }),
-      outcomeScVal,
+      nativeToScVal(outcomeU32, { type: "u32" }),
       nativeToScVal(payoutBps, { type: "u32" }),
     ];
 

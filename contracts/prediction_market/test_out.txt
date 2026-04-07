@@ -1,0 +1,66 @@
+   Compiling prediction_market v0.1.0 (D:\Steller\gravityflow\contracts\prediction_market)
+warning: unused imports: `Events` and `IntoVal`
+ --> src\test.rs:7:31
+  |
+7 |     testutils::{Address as _, Events, Ledger, LedgerInfo},
+  |                               ^^^^^^
+8 |     token, Address, BytesN, Env, IntoVal, Symbol,
+  |                                  ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+error[E0277]: the trait bound `soroban_sdk::xdr::ScVal: TryFrom<&core::option::Option<types::Outcome>>` is not satisfied
+  --> src\types.rs:28:1
+   |
+28 | #[contracttype]
+   | ^^^^^^^^^^^^^^^ the trait `From<types::Outcome>` is not implemented for `soroban_sdk::xdr::ScVal`
+   |
+   = help: the following other types implement trait `From<T>`:
+             `&soroban_sdk::xdr::ScVal` implements `From<soroban_env_common::object::ScValObjRef<'_>>`
+             `soroban_sdk::xdr::ScVal` implements `From<&()>`
+             `soroban_sdk::xdr::ScVal` implements `From<&Fp2>`
+             `soroban_sdk::xdr::ScVal` implements `From<&Fr>`
+             `soroban_sdk::xdr::ScVal` implements `From<&G1Affine>`
+             `soroban_sdk::xdr::ScVal` implements `From<&G2Affine>`
+             `soroban_sdk::xdr::ScVal` implements `From<&bool>`
+             `soroban_sdk::xdr::ScVal` implements `From<&core::option::Option<T>>`
+           and 48 others
+   = note: required for `types::Outcome` to implement `Into<soroban_sdk::xdr::ScVal>`
+   = note: required for `soroban_sdk::xdr::ScVal` to implement `From<&core::option::Option<types::Outcome>>`
+   = note: 1 redundant requirement hidden
+   = note: required for `&core::option::Option<types::Outcome>` to implement `Into<soroban_sdk::xdr::ScVal>`
+   = note: required for `soroban_sdk::xdr::ScVal` to implement `TryFrom<&core::option::Option<types::Outcome>>`
+   = note: required for `&core::option::Option<types::Outcome>` to implement `TryInto<soroban_sdk::xdr::ScVal>`
+   = note: this error originates in the attribute macro `contracttype` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no method named `address` found for struct `StellarAssetClient<'a>` in the current scope
+  --> src\test.rs:80:60
+   |
+80 |         let xlm_client = token::Client::new(&env, &xlm_sac.address());
+   |                                                            ^^^^^^^-- help: remove the arguments
+   |                                                            |
+   |                                                            field, not a method
+
+warning: use of deprecated method `soroban_sdk::Env::register_contract`: use `register`
+  --> src\test.rs:82:31
+   |
+82 |         let contract_id = env.register_contract(None, ZKPredictionMarket);
+   |                               ^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(deprecated)]` on by default
+
+error[E0599]: no method named `address` found for struct `StellarAssetClient<'a>` in the current scope
+   --> src\test.rs:103:40
+    |
+103 |         contract.init(&admin, &xlm_sac.address());
+    |                                        ^^^^^^^-- help: remove the arguments
+    |                                        |
+    |                                        field, not a method
+
+For more information about this error, try `rustc --explain E0277`.
+error: could not compile `prediction_market` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+Some errors have detailed explanations: E0277, E0599.
+For more information about an error, try `rustc --explain E0277`.
+warning: `prediction_market` (lib test) generated 2 warnings
+error: could not compile `prediction_market` (lib test) due to 3 previous errors; 2 warnings emitted

@@ -21,11 +21,6 @@ export async function GET(
       return NextResponse.json({ error: "Market not found" }, { status: 404 });
     }
 
-    // Override contractMarketId to 3 if OPEN, for custom user-oracle testing
-    if (market.status === "OPEN") {
-      market.contractMarketId = 3;
-    }
-
     return NextResponse.json(market);
   } catch (err) {
     console.error(err);

@@ -21,6 +21,12 @@ import MarketChart from "@/components/MarketChart";
 import { Progress } from "@/components/ui/progress";
 import QualityIndicator from "@/components/QualityIndicator";
 import RiskAlert from "@/components/RiskAlert";
+import {
+  placeBet as placeBetOnChain,
+  submitSignedXdr,
+  getOnchainEscrowBalance,
+  getMarket,
+} from "@/lib/escrow";
 
 interface Market {
   id: string;
@@ -83,6 +89,7 @@ export default function MarketDetailPage({
   const [submitting, setSubmitting] = useState(false);
   const [betError, setBetError] = useState("");
   const [betSuccess, setBetSuccess] = useState(false);
+  const [betStatus, setBetStatus] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -141,18 +148,76 @@ export default function MarketDetailPage({
   const handleBet = async () => {
     if (!publicKey) { setBetError("Connect your wallet first."); return; }
     if (!market) return;
+    if (!market.contractMarketId) { setBetError("Market has no on-chain ID. Cannot place bet."); return; }
     const stake = parseFloat(amount);
     if (isNaN(stake) || stake < 1) { setBetError("Minimum bet is 1 XLM."); return; }
 
     setSubmitting(true);
     setBetError("");
     setBetSuccess(false);
+    setBetStatus("Checking escrow balance…");
 
     try {
-      // commitment = deterministic hash of side+amount+key (simplified for demo)
-      const commitment = `${side}:${stake}:${publicKey}:${Date.now()}`;
+      // 1. Check on-chain escrow balance
+      const escrowBal = await getOnchainEscrowBalance(publicKey);
+      if (escrowBal < stake) {
+        throw new Error(`Insufficient escrow balance. You have ${escrowBal.toFixed(4)} XLM. Deposit more from your Portfolio.`);
+      }
 
-      const res = await fetch("/api/bets", {
+      // 1b. Check on-chain market state
+      const onchainMarket = await getMarket(market.contractMarketId);
+      if (!onchainMarket) {
+        throw new Error("Market not found on-chain.");
+      }
+      
+      // Robust check for MarketStatus::Open (can be 0 or "Open")
+      const isStatusOpen = onchainMarket.status === 0 || onchainMarket.status === "Open";
+      if (!isStatusOpen) {
+        throw new Error(`Market is no longer open for betting (Status: ${onchainMarket.status}).`);
+      }
+
+      // 2. Generate ZK commitment via the SealBet circuit: Poseidon(side, nonce, bettor_key)
+      setBetStatus("Generating ZK commitment…");
+      const sideNum = side === "YES" ? 0 : 1;
+      const nonce = Math.floor(Math.random() * 2 ** 32).toString();
+
+      // Derive a numeric bettor_key from the publicKey (first 8 hex chars → number)
+      const bettorKeyNum = parseInt(publicKey.slice(1, 9), 36).toString();
+
+      // @ts-ignore — snarkjs types
+      const snarkjs = await import("snarkjs");
+      const { proof: sealProof, publicSignals: sealSignals } = await snarkjs.groth16.fullProve(
+        { side: sideNum.toString(), nonce, bettor_key: bettorKeyNum },
+        "/circuit/seal/seal_bet.wasm",
+        "/circuit/seal/seal_0001.zkey"
+      );
+
+      // The seal_bet circuit output is publicSignals[0] = commitment
+      const commitmentHash = sealSignals[0];
+
+      // 3. On-chain place_bet (this deducts from escrow)
+      setBetStatus("Building on-chain transaction…");
+      const res = await placeBetOnChain(publicKey, market.contractMarketId, commitmentHash, stake);
+      if (!res.success || !res.unsignedXdr) throw new Error("Failed to build place_bet transaction");
+
+      // 4. Sign with Freighter
+      setBetStatus("Waiting for Freighter signature…");
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const networkPassphrase = "Test SDF Network ; September 2015";
+      const signResult = await signTransaction(res.unsignedXdr, { networkPassphrase });
+      let signedXdr = "";
+      if (typeof signResult === "string") signedXdr = signResult;
+      else if (signResult && "signedTxXdr" in signResult) signedXdr = (signResult as { signedTxXdr: string }).signedTxXdr;
+      if (!signedXdr) throw new Error("Freighter returned unexpected response");
+
+      // 5. Submit to Soroban
+      setBetStatus("Submitting to Soroban…");
+      const submitRes = await submitSignedXdr(signedXdr);
+      if (!submitRes.hash) throw new Error("Transaction submission failed");
+
+      // 6. Record in DB
+      setBetStatus("Recording bet…");
+      const dbRes = await fetch("/api/bets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -160,16 +225,36 @@ export default function MarketDetailPage({
           userPublicKey: publicKey,
           amount: stake,
           side,
-          commitment,
+          commitment: commitmentHash,
+          txHash: submitRes.hash,
         }),
       });
 
-      if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error || "Bet failed");
+      if (!dbRes.ok) {
+        const d = await dbRes.json();
+        console.error("DB indexing warning:", d.error);
+        // Don't fail — on-chain bet is already placed
       }
 
+      // 7. Store in localStorage for portfolio display
+      const portfolioEntry = {
+        marketId: market.id,
+        contractMarketId: market.contractMarketId,
+        marketTitle: market.title,
+        side: sideNum,
+        nonce,
+        bettorKey: publicKey,
+        commitment: commitmentHash,
+        amount: stake.toString(),
+        txHash: submitRes.hash,
+        status: "SEALED",
+      };
+      const existing = JSON.parse(localStorage.getItem("zk_portfolio") || "[]");
+      existing.push(portfolioEntry);
+      localStorage.setItem("zk_portfolio", JSON.stringify(existing));
+
       setBetSuccess(true);
+      setBetStatus("");
       setAmount("50");
       // Optimistically update pool
       setMarket((prev) =>
@@ -184,7 +269,13 @@ export default function MarketDetailPage({
       );
       setTimeout(() => setBetSuccess(false), 4000);
     } catch (e: any) {
-      setBetError(e.message || "Failed to place bet.");
+      const msg = e.message || "Failed to place bet.";
+      if (msg.toLowerCase().includes("user declined") || msg.toLowerCase().includes("rejected")) {
+        setBetError("Signature rejected in Freighter.");
+      } else {
+        setBetError(msg.length > 120 ? msg.slice(0, 120) + "…" : msg);
+      }
+      setBetStatus("");
     } finally {
       setSubmitting(false);
     }
@@ -486,7 +577,7 @@ export default function MarketDetailPage({
                   </div>
                 </div>
 
-                {/* Error / success */}
+                {/* Error / success / status */}
                 <AnimatePresence>
                   {betError && (
                     <motion.div
@@ -508,8 +599,19 @@ export default function MarketDetailPage({
                     >
                       <CheckCircle2 className="w-4 h-4 shrink-0" />
                       <span className="text-xs font-semibold">
-                        Bet placed — position sealed on-chain ✓
+                        Bet placed — escrow deducted & position sealed on-chain ✓
                       </span>
+                    </motion.div>
+                  )}
+                  {betStatus && !betError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center gap-2 text-blue-400 bg-blue-500/10 border border-blue-500/30 rounded-xl p-3"
+                    >
+                      <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                      <span className="text-xs font-semibold">{betStatus}</span>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -527,7 +629,7 @@ export default function MarketDetailPage({
                   {submitting ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Sealing Bet…
+                      {betStatus || "Sealing Bet…"}
                     </>
                   ) : !publicKey ? (
                     "Connect Wallet to Trade"

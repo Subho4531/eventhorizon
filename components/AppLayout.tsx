@@ -149,7 +149,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
           {/* Secondary nav */}
           <div className="mx-3 mb-3 border-t border-white/[0.05] pt-3 space-y-0.5">
-            {SECONDARY_NAV.map(({ href, label, Icon }) => {
+            {publicKey === process.env.NEXT_PUBLIC_ADMIN_ID && SECONDARY_NAV.map(({ href, label, Icon }) => {
               const isActive = pathname === href;
               return (
                 <Link

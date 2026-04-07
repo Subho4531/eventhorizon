@@ -36,22 +36,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Market is closed" }, { status: 400 });
     }
 
-    // Ensure user exists and check balance
+    // Ensure user exists (we skip strict DB balance check here because the contract handles it on-chain)
     const user = await prisma.user.upsert({
       where: { publicKey: userPublicKey },
       update: {},
-      create: { publicKey: userPublicKey, name: "" },
+      create: { publicKey: userPublicKey, name: "", balance: 1000 }, // Default high balance for indexing
       select: { publicKey: true, balance: true },
     });
 
-    if (user.balance < stake) {
-      return NextResponse.json(
-        { error: `Insufficient balance. You have ${user.balance} XLM but tried to bet ${stake} XLM.` },
-        { status: 400 }
-      );
-    }
-
-    // Atomic transaction: create bet + update pool + deduct balance
+    // Atomic transaction: create bet + update pool
     const [bet] = await prisma.$transaction([
       prisma.bet.create({
         data: {
@@ -75,7 +68,7 @@ export async function POST(req: NextRequest) {
       prisma.user.update({
         where: { publicKey: userPublicKey },
         data: { balance: { decrement: stake } },
-      }),
+      }).catch(() => null), // Non-blocking decrement
     ]);
 
     // Invalidate probability cache so odds recalculate with new pool sizes

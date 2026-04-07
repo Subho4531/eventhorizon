@@ -35,11 +35,10 @@ async function main() {
       description: "Prediction market for XLM reaching $1.",
       creatorId,
       closeDate,
-      bondAmount: 100,
       status: "OPEN",
-      yesPool: 5000,
-      noPool: 3000,
-      totalVolume: 8000
+      yesPool: 50,
+      noPool: 30,
+      totalVolume: 80
     }
   });
 
@@ -54,11 +53,10 @@ async function main() {
       description: "Betting on OpenAI release timeline.",
       creatorId,
       closeDate,
-      bondAmount: 500,
       status: "OPEN",
-      yesPool: 15000,
-      noPool: 2000,
-      totalVolume: 17000
+      yesPool: 15,
+      noPool: 20,
+      totalVolume: 35
     }
   });
 

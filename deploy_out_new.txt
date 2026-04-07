@@ -1,0 +1,1 @@
+Γ¥î error: reading file target\wasm32v1-none\release\prediction_market.wasm: The system cannot find the path specified. (os error 3)

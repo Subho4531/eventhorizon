@@ -77,9 +77,9 @@ impl Fixture {
         env.mock_all_auths();
 
         let (token_admin, xlm_sac) = create_xlm_token(&env);
-        let xlm_client = token::Client::new(&env, &xlm_sac.address());
+        let xlm_client = token::Client::new(&env, &xlm_sac.address);
 
-        let contract_id = env.register_contract(None, ZKPredictionMarket);
+        let contract_id = env.register(ZKPredictionMarket, ());
         // SAFETY: extending lifetime for test convenience.
         let contract = ZKPredictionMarketClient::new(
             unsafe { &*(&env as *const Env) },
@@ -100,7 +100,7 @@ impl Fixture {
         let bob    = Address::generate(&env);
         let oracle = Address::generate(&env);
 
-        contract.init(&admin, &xlm_sac.address());
+        contract.init(&admin, &xlm_sac.address);
 
         // Fund Alice and Bob with 1000 XLM (in stroops: 1 XLM = 10_000_000 stroops).
         let xlm_amount = 1_000 * 10_000_000_i128;
@@ -179,18 +179,12 @@ fn test_over_withdraw_fails() {
 #[test]
 fn test_create_market() {
     let f = Fixture::new();
-    let bond = Fixture::one_xlm() * 10;
     let close = f.env.ledger().timestamp() + 3_600;
 
-    // Admin deposits bond.
-    f.contract.deposit(&f.admin, &bond);
-
     let id = f.contract.create_market(
-        &f.admin,
         &f.oracle,
         &Symbol::new(&f.env, "BTC_OVER_100K"),
         &close,
-        &bond,
     );
 
     assert_eq!(id, 1u32);
@@ -198,24 +192,19 @@ fn test_create_market() {
 
     let market = f.contract.get_market(&id);
     assert_eq!(market.status, MarketStatus::Open);
-    assert_eq!(market.bond, bond);
-    // Bond deducted from admin's escrow.
-    assert_eq!(f.contract.balance_of(&f.admin), 0);
 }
 
 #[test]
 fn test_place_bet() {
     let f = Fixture::new();
-    let bond  = Fixture::one_xlm() * 5;
     let stake = Fixture::one_xlm() * 20;
     let close = f.env.ledger().timestamp() + 3_600;
 
-    f.contract.deposit(&f.admin, &bond);
     f.contract.deposit(&f.alice, &stake);
 
     let id = f.contract.create_market(
-        &f.admin, &f.oracle,
-        &Symbol::new(&f.env, "ETH_FLIP"), &close, &bond,
+        &f.oracle,
+        &Symbol::new(&f.env, "ETH_FLIP"), &close,
     );
 
     let commitment = bytes32(&f.env, 42);
@@ -239,8 +228,8 @@ fn test_duplicate_commitment_fails() {
 
     f.contract.deposit(&f.alice, &(stake * 2));
     let id = f.contract.create_market(
-        &f.admin, &f.oracle,
-        &Symbol::new(&f.env, "DUP_TEST"), &close, &0,
+        &f.oracle,
+        &Symbol::new(&f.env, "DUP_TEST"), &close,
     );
 
     let commitment = bytes32(&f.env, 7);
@@ -253,17 +242,16 @@ fn test_resolve_market() {
     let f = Fixture::new();
     let close = f.env.ledger().timestamp() + 3_600;
 
-    f.contract.deposit(&f.admin, &Fixture::one_xlm());
     let id = f.contract.create_market(
-        &f.admin, &f.oracle,
-        &Symbol::new(&f.env, "RESOLVE_TEST"), &close, &Fixture::one_xlm(),
+        &f.oracle,
+        &Symbol::new(&f.env, "RESOLVE_TEST"), &close,
     );
 
-    f.contract.resolve(&f.oracle, &id, &Outcome::Yes, &20_000u32);
+    f.contract.resolve(&f.oracle, &id, &OUTCOME_YES, &20_000u32);
 
     let market = f.contract.get_market(&id);
     assert_eq!(market.status, MarketStatus::Resolved);
-    assert_eq!(market.outcome, Some(Outcome::Yes));
+    assert_eq!(market.outcome, Some(OUTCOME_YES));
     assert_eq!(market.payout_bps, 20_000);
 }
 
@@ -275,27 +263,29 @@ fn test_resolve_market() {
 fn test_full_claim_lifecycle() {
     let f = Fixture::new();
     let stake     = Fixture::one_xlm() * 50;
-    let bond      = Fixture::one_xlm() * 5;
     let payout_bps: u32 = 20_000; // 2× payout
     let close     = f.env.ledger().timestamp() + 3_600;
 
     // 1. Deposits.
     f.contract.deposit(&f.alice, &stake);
-    f.contract.deposit(&f.admin, &bond);
+    f.contract.deposit(&f.bob, &stake);
 
     // 2. Create market.
     let id = f.contract.create_market(
-        &f.admin, &f.oracle,
-        &Symbol::new(&f.env, "ZK_LIFECYCLE"), &close, &bond,
+        &f.oracle,
+        &Symbol::new(&f.env, "ZK_LIFECYCLE"), &close,
     );
 
     // 3. Alice places ZK bet (commitment = Poseidon(YES, nonce, alice_key) — mocked here).
     let commitment = bytes32(&f.env, 55);
     let nullifier  = bytes32(&f.env, 99);
     f.contract.place_bet(&f.alice, &id, &commitment, &stake);
+    
+    // Bob places a bet too, so the contract has sufficient balance to pay Alice's 2x payout
+    f.contract.place_bet(&f.bob, &id, &bytes32(&f.env, 88), &stake);
 
     // 4. Oracle resolves YES, 2× payout.
-    f.contract.resolve(&f.oracle, &id, &Outcome::Yes, &payout_bps);
+    f.contract.resolve(&f.oracle, &id, &OUTCOME_YES, &payout_bps);
 
     // 5. Advance past dispute window (48 h + 1 s).
     advance_time(&f.env, DISPUTE_WINDOW_SECS + 1);
@@ -325,13 +315,13 @@ fn test_double_claim_fails() {
 
     f.contract.deposit(&f.alice, &stake);
     let id = f.contract.create_market(
-        &f.admin, &f.oracle,
-        &Symbol::new(&f.env, "DOUBLE_CLAIM"), &close, &0,
+        &f.oracle,
+        &Symbol::new(&f.env, "DOUBLE_CLAIM"), &close,
     );
     let commitment = bytes32(&f.env, 1);
     let nullifier  = bytes32(&f.env, 2);
     f.contract.place_bet(&f.alice, &id, &commitment, &stake);
-    f.contract.resolve(&f.oracle, &id, &Outcome::Yes, &20_000u32);
+    f.contract.resolve(&f.oracle, &id, &OUTCOME_YES, &20_000u32);
     advance_time(&f.env, DISPUTE_WINDOW_SECS + 1);
 
     let proof = dummy_proof(&f.env);
@@ -348,38 +338,17 @@ fn test_claim_during_dispute_fails() {
 
     f.contract.deposit(&f.alice, &stake);
     let id = f.contract.create_market(
-        &f.admin, &f.oracle,
-        &Symbol::new(&f.env, "DISPUTE_TEST"), &close, &0,
+        &f.oracle,
+        &Symbol::new(&f.env, "DISPUTE_TEST"), &close,
     );
     let commitment = bytes32(&f.env, 3);
     let nullifier  = bytes32(&f.env, 4);
     f.contract.place_bet(&f.alice, &id, &commitment, &stake);
-    f.contract.resolve(&f.oracle, &id, &Outcome::Yes, &20_000u32);
+    f.contract.resolve(&f.oracle, &id, &OUTCOME_YES, &20_000u32);
 
     // Do NOT advance time — dispute window still open.
     let proof = dummy_proof(&f.env);
     f.contract.claim(&f.alice, &id, &commitment, &nullifier, &proof); // → panic
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Tests — Bond Management
-// ──────────────────────────────────────────────────────────────────────────────
 
-#[test]
-fn test_release_bond() {
-    let f = Fixture::new();
-    let bond  = Fixture::one_xlm() * 10;
-    let close = f.env.ledger().timestamp() + 3_600;
-
-    f.contract.deposit(&f.admin, &bond);
-    let id = f.contract.create_market(
-        &f.admin, &f.oracle,
-        &Symbol::new(&f.env, "BOND_RELEASE"), &close, &bond,
-    );
-
-    f.contract.resolve(&f.oracle, &id, &Outcome::No, &15_000u32);
-    advance_time(&f.env, DISPUTE_WINDOW_SECS + 1);
-
-    f.contract.release_bond(&f.admin, &id);
-    assert_eq!(f.contract.balance_of(&f.admin), bond);
-}

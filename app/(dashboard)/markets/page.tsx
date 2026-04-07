@@ -19,7 +19,7 @@ export default function MarketsPage() {
                   Prediction Markets
                </h1>
              </div>
-             {publicKey && (
+             {/* {publicKey && (
                <button 
                  onClick={() => setIsCreateModalOpen(true)}
                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white text-sm uppercase tracking-widest font-bold border border-blue-400/30 hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 whitespace-nowrap"
@@ -27,7 +27,7 @@ export default function MarketsPage() {
                  <span className="material-symbols-outlined text-base">add</span>
                  Propose Horizon
                </button>
-             )}
+             )} */}
            </div>
            <p className="text-white/60 max-w-2xl text-lg tracking-wide leading-relaxed font-sans">
              Trade on the outcome of real-world events. Using Zero-Knowledge proofs, 

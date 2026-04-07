@@ -1,0 +1,10 @@
+Γä╣∩╕Å  Skipping install because wasm already installed
+Γä╣∩╕Å  Using wasm hash effb751cf47ccbf37768d804e51fdcac56d96df6051b546be457b550dc8caba6
+Γä╣∩╕Å  Simulating deploy transactionΓÇª
+Γä╣∩╕Å  Transaction hash is c67351f1c038a1802947801ee4788c641a0eca94c405790a1e9027fffd8b8ae7
+≡ƒöù https://stellar.expert/explorer/testnet/tx/c67351f1c038a1802947801ee4788c641a0eca94c405790a1e9027fffd8b8ae7
+Γä╣∩╕Å  Signing transaction: c67351f1c038a1802947801ee4788c641a0eca94c405790a1e9027fffd8b8ae7
+≡ƒîÄ Submitting deploy transactionΓÇª
+≡ƒöù https://lab.stellar.org/r/testnet/contract/CBZ32GHUROMKNV7YDSNB656HRWJ6JZRJZWGQFWFMAH42I23YHB3ZRODH
+Γ£à Deployed!
+CBZ32GHUROMKNV7YDSNB656HRWJ6JZRJZWGQFWFMAH42I23YHB3ZRODH

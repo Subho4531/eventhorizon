@@ -297,7 +297,8 @@ export default function AdminPage() {
     );
 
   // ── Render ────────────────────────────────────────────────────────────────────
-  return (
+  {if(publicKey=== process.env.NEXT_PUBLIC_ADMIN_ID){
+    return (
     <div className="max-w-7xl mx-auto py-12 space-y-10">
       {/* ── Page Header ──────────────────────────────────────────────────────── */}
       <header className="flex items-start justify-between gap-6 flex-wrap">
@@ -474,7 +475,7 @@ export default function AdminPage() {
                         <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg ${STATUS_STYLES[m.status] ?? "bg-white/10 text-white/40"}`}>
                           {m.status}
                         </span>
-                        {m.qualityScore !== undefined && (
+                        {m.qualityScore != null && (
                           <span
                             className={`text-[9px] font-bold ${
                               m.qualityScore >= 70
@@ -487,7 +488,7 @@ export default function AdminPage() {
                             Q: {m.qualityScore.toFixed(0)}
                           </span>
                         )}
-                        {m.manipulationScore !== undefined && m.manipulationScore >= 70 && (
+                        {m.manipulationScore != null && m.manipulationScore >= 70 && (
                           <span className="text-[9px] text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-2 py-0.5">
                             ⚠️ Risk {m.manipulationScore.toFixed(0)}
                           </span>
@@ -906,5 +907,13 @@ export default function AdminPage() {
         />
       )}
     </div>
-  );
+  );} 
+  else {
+    return (
+      <div className="text-center text-2xl">
+        <h1>You are not authorized to access this page</h1>
+      </div>
+    )
+  }
+}
 }

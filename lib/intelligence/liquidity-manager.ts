@@ -91,7 +91,7 @@ export async function getIncentiveMultiplier(marketId: string): Promise<number> 
 export async function adjustBondRequirement(marketId: string): Promise<number> {
   const market = await prisma.market.findUnique({
     where: { id: marketId },
-    select: { bondAmount: true }
+    select: { volatility: true }
   })
 
   if (!market) {
@@ -99,7 +99,7 @@ export async function adjustBondRequirement(marketId: string): Promise<number> {
   }
 
   const volatilityData = await getVolatilityData(marketId)
-  let bondRequirement = market.bondAmount
+  let bondRequirement = 100 // base bond
 
   // Increase by 20% if volatility > 0.20/hour
   if (volatilityData.probabilityChangeRate > 0.20) {
@@ -176,7 +176,6 @@ export async function getLiquidityParams(marketId: string): Promise<LiquidityPar
     select: {
       minBetSize: true,
       incentiveMultiplier: true,
-      bondAmount: true,
       updatedAt: true
     }
   })
@@ -188,7 +187,7 @@ export async function getLiquidityParams(marketId: string): Promise<LiquidityPar
   return {
     minBetSize: market.minBetSize,
     incentiveMultiplier: market.incentiveMultiplier,
-    bondRequirement: market.bondAmount,
+    bondRequirement: 100, // Default base bond
     lastUpdated: market.updatedAt
   }
 }

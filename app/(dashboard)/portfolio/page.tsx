@@ -353,10 +353,14 @@ function SealedPositionCard({ position, onClaimed }: { position: SealedPosition;
     getMarket(position.contractMarketId).then(s => { if (s) setMarketState(s); });
   }, [position.contractMarketId]);
 
-  const canClaim = marketState && marketState.status === 2;
-  const isResolved = marketState?.status === 2;
-  const isClosed = marketState?.status === 1;
+  // Robust checks for MarketStatus (can be 0/1/2 or "Open"/"Closed"/"Resolved")
+  const isResolved = marketState?.status === 2 || marketState?.status === "Resolved";
+  const isClosed = marketState?.status === 1 || marketState?.status === "Closed";
   const sideLabel = position.side === 0 ? "YES" : "NO";
+  const isWinner = isResolved ? (marketState.outcome === position.side) : null;
+
+  // We only allow claim if market is resolved AND user is the winner
+  const canClaim = isResolved && isWinner;
 
   const handleClaim = async () => {
     if (!publicKey) return;
@@ -365,8 +369,17 @@ function SealedPositionCard({ position, onClaimed }: { position: SealedPosition;
     try {
       // @ts-ignore
       const snarkjs = await import("snarkjs");
+      // Derive a numeric bettor_key from the publicKey (consistent with sealant logic in handleBet)
+      const bettorKeyNum = parseInt(publicKey.slice(1, 9), 36).toString();
+
       const { proof, publicSignals } = await snarkjs.groth16.fullProve(
-        { side: position.side.toString(), nonce: position.nonce, bettor_key: position.bettorKey, winning_side: marketState.outcome.toString() },
+        { 
+          side: position.side.toString(), 
+          nonce: position.nonce, 
+          bettor_key: bettorKeyNum, 
+          winning_side: marketState.outcome.toString(),
+          commitment: position.commitment
+        },
         "/circuit/reveal/reveal_bet.wasm",
         "/circuit/reveal/reveal_0001.zkey"
       );
@@ -376,6 +389,15 @@ function SealedPositionCard({ position, onClaimed }: { position: SealedPosition;
       const signedXdr = await freighterSign(res.unsignedXdr);
       const submitRes = await submitSignedXdr(signedXdr);
       if (!submitRes.hash) throw new Error("Submission failed");
+
+      // 4. Sync Database
+      await fetch("/api/bets/claim", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ commitment: position.commitment, nullifier, txHash: submitRes.hash }),
+      });
+
+      // 5. Update local storage
       const portfolio = JSON.parse(localStorage.getItem("zk_portfolio") || "[]");
       localStorage.setItem("zk_portfolio", JSON.stringify(
         portfolio.map((p: any) => p.commitment === position.commitment ? { ...p, status: "CLAIMED" } : p)
@@ -445,11 +467,15 @@ function SealedPositionCard({ position, onClaimed }: { position: SealedPosition;
               >
                 {claiming ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Zap className="w-3.5 h-3.5" /> Reveal & Claim</>}
               </motion.button>
+            ) : isResolved && isWinner === false ? (
+              <div className="flex items-center justify-center gap-2 py-2.5 text-red-400 text-[10px] font-bold uppercase tracking-widest bg-red-500/5 rounded-xl border border-red-500/10">
+                <AlertCircle className="w-3.5 h-3.5" /> Position Lost
+              </div>
             ) : (
               <div className="text-center text-[9px] text-white/25 uppercase tracking-widest py-2.5 bg-white/5 rounded-xl border border-white/5">
                 {!marketState ? "Syncing on-chain status…" :
                   isClosed ? "⏳ Awaiting oracle resolution" :
-                  isResolved ? "🔓 Dispute window active" :
+                  isResolved ? "🔓 Checking eligibility..." :
                   "🔒 Market still open"}
               </div>
             )}

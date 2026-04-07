@@ -247,7 +247,7 @@ Assuming our root cause analysis is correct:
 
 1. **Add Validation**: Verify market exists and is OPEN before creating bet record
 
-2. **Add Error Response Details**: Return specific error messages (e.g., "Market not found", "Market is closed") instead of generic "DB error"
+2. **Add Error Response Details**: Return specific error messages (e.g., "", "Market is closed") instead of generic "DB error"
 
 3. **Add GET Handler**: Implement GET /api/bets with query parameters:
    - `marketId` (optional): Filter bets by market
