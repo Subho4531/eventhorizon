@@ -24,7 +24,7 @@ import { Badge } from "@/components/ui/badge";
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Transaction = {
   id: string;
-  type: "DEPOSIT" | "WITHDRAWAL";
+  type: "DEPOSIT" | "WITHDRAWAL" | "BET" | "CLAIM";
   amount: number;
   hash: string;
   createdAt: string;
@@ -294,9 +294,23 @@ function EscrowModal({ isOpen, onClose, onSuccess, mode, currentBalance = 0 }: E
 // ── Transaction Row ────────────────────────────────────────────────────────────
 function TxRow({ tx }: { tx: Transaction }) {
   const isDeposit = tx.type === "DEPOSIT";
+  const isWithdraw = tx.type === "WITHDRAWAL";
+  const isBet = tx.type === "BET";
+  const isClaim = tx.type === "CLAIM";
+
   const date = new Date(tx.createdAt);
   const formatted = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   const time = date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+
+  // Visual mapping
+  const config = {
+    DEPOSIT: { label: "Deposit", icon: ArrowDownCircle, color: "text-blue-400", bg: "bg-blue-600/10 border-blue-600/20", sign: "+" },
+    WITHDRAWAL: { label: "Withdrawal", icon: ArrowUpCircle, color: "text-orange-400", bg: "bg-orange-500/10 border-orange-500/20", sign: "−" },
+    BET: { label: "Bet Placed", icon: TrendingDown, color: "text-red-400", bg: "bg-red-500/10 border-red-500/20", sign: "−" },
+    CLAIM: { label: "Winnings", icon: Trophy, color: "text-green-400", bg: "bg-green-500/10 border-green-500/20", sign: "+" },
+  };
+
+  const { label, icon: Icon, color, bg, sign } = config[tx.type] || config.DEPOSIT;
 
   return (
     <motion.div
@@ -304,11 +318,11 @@ function TxRow({ tx }: { tx: Transaction }) {
       animate={{ opacity: 1, x: 0 }}
       className="flex items-center gap-4 py-3.5 border-b border-white/[0.04] last:border-0 group hover:bg-white/[0.02] -mx-4 px-4 rounded-xl transition-colors"
     >
-      <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 ${isDeposit ? "bg-blue-600/10 border border-blue-600/20" : "bg-orange-500/10 border border-orange-500/20"}`}>
-        {isDeposit ? <ArrowDownCircle className="w-4 h-4 text-blue-400" /> : <ArrowUpCircle className="w-4 h-4 text-orange-400" />}
+      <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 border ${bg}`}>
+        <Icon className={`w-4 h-4 ${color}`} />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-[11px] font-bold text-white uppercase tracking-wider">{isDeposit ? "Deposit" : "Withdrawal"}</div>
+        <div className="text-[11px] font-bold text-white uppercase tracking-wider">{label}</div>
         {tx.hash && (
           <a
             href={`https://stellar.expert/explorer/testnet/tx/${tx.hash}`}
@@ -320,8 +334,8 @@ function TxRow({ tx }: { tx: Transaction }) {
         )}
       </div>
       <div className="text-right shrink-0">
-        <div className={`text-sm font-bold ${isDeposit ? "text-blue-400" : "text-orange-400"}`}>
-          {isDeposit ? "+" : "−"}{tx.amount.toLocaleString(undefined, { maximumFractionDigits: 4 })} XLM
+        <div className={`text-sm font-bold ${color}`}>
+          {sign}{tx.amount.toLocaleString(undefined, { maximumFractionDigits: 4 })} <span className="text-[10px] opacity-40">XLM</span>
         </div>
         <div className="text-[9px] text-white/25 mt-0.5">{formatted} · {time}</div>
       </div>
@@ -391,11 +405,16 @@ function SealedPositionCard({ position, onClaimed }: { position: SealedPosition;
       if (!submitRes.hash) throw new Error("Submission failed");
 
       // 4. Sync Database
-      await fetch("/api/bets/claim", {
+      const dbRes = await fetch("/api/bets/claim", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ commitment: position.commitment, nullifier, txHash: submitRes.hash }),
       });
+
+      if (!dbRes.ok) {
+        const errorData = await dbRes.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to sync claim with database");
+      }
 
       // 5. Update local storage
       const portfolio = JSON.parse(localStorage.getItem("zk_portfolio") || "[]");
@@ -560,7 +579,7 @@ export default function PortfolioPage() {
     if (!publicKey) return;
     setTxLoading(true);
     try {
-      const res = await fetch(`/api/transactions?publicKey=${encodeURIComponent(publicKey)}`);
+      const res = await fetch(`/api/transactions?publicKey=${encodeURIComponent(publicKey)}`, { cache: 'no-store' });
       const data = await res.json();
       setTransactions(data.transactions ?? []);
     } catch (err) {
@@ -614,15 +633,19 @@ export default function PortfolioPage() {
   
   const deposits = transactions.filter(t => t.type === "DEPOSIT").reduce((s, t) => s + t.amount, 0);
   const withdrawals = transactions.filter(t => t.type === "WITHDRAWAL").reduce((s, t) => s + t.amount, 0);
-  const netFlow = deposits - withdrawals;
+  const totalBets = transactions.filter(t => t.type === "BET").reduce((s, t) => s + t.amount, 0);
+  const totalWinnings = transactions.filter(t => t.type === "CLAIM").reduce((s, t) => s + t.amount, 0);
+  
+  // Net Flow represents the delta of funds in the escrow: (In - Out)
+  const netFlow = (deposits + totalWinnings) - (withdrawals + totalBets);
+  
   const claimedPositions = sealedPositions.filter(p => p.status === "CLAIMED");
-  const totalEarnings = claimedPositions.reduce((sum, p) => {
-    // Rough earnings: claimed positions' payout minus original stake
-    return sum + parseFloat(p.amount) * 0.2; // 20% approximate gain — actual payout from contract
-  }, 0);
+  
+  // Open positions value (currently at stake)
   const openPositionsValue = sealedPositions
     .filter(p => p.status === "SEALED")
     .reduce((s, p) => s + parseFloat(p.amount), 0);
+    
   const winRate = sealedPositions.length > 0
     ? Math.round((claimedPositions.length / sealedPositions.length) * 100)
     : 0;
@@ -792,23 +815,23 @@ export default function PortfolioPage() {
         {/* ── Stats Grid ──────────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            label="Total Deposited"
-            value={`${deposits.toFixed(2)} XLM`}
-            sub={`${transactions.filter(t => t.type === "DEPOSIT").length} deposits`}
-            icon={<ArrowDownCircle className="w-4 h-4 text-blue-400" />}
-            accent="from-blue-600/5 to-transparent"
+            label="Total Winnings"
+            value={`${totalWinnings.toFixed(2)} XLM`}
+            sub={`${transactions.filter(t => t.type === "CLAIM").length} claims`}
+            icon={<Trophy className="w-4 h-4 text-emerald-400" />}
+            accent="from-emerald-600/5 to-transparent"
             delay={0.15}
           />
           <StatCard
-            label="Total Withdrawn"
-            value={`${withdrawals.toFixed(2)} XLM`}
-            sub={`${transactions.filter(t => t.type === "WITHDRAWAL").length} withdrawals`}
-            icon={<ArrowUpCircle className="w-4 h-4 text-orange-400" />}
-            accent="from-orange-600/5 to-transparent"
+            label="Total Invested"
+            value={`${totalBets.toFixed(2)} XLM`}
+            sub={`${transactions.filter(t => t.type === "BET").length} positions`}
+            icon={<TrendingDown className="w-4 h-4 text-blue-400" />}
+            accent="from-blue-600/5 to-transparent"
             delay={0.2}
           />
           <StatCard
-            label="Open Positions"
+            label="Open Exposure"
             value={`${openPositionsValue.toFixed(2)} XLM`}
             sub={`${sealedPositions.filter(p => p.status === "SEALED").length} active bets`}
             icon={<Lock className="w-4 h-4 text-violet-400" />}
@@ -816,13 +839,39 @@ export default function PortfolioPage() {
             delay={0.25}
           />
           <StatCard
-            label="Win Rate"
-            value={`${winRate}%`}
-            sub={`${claimedPositions.length} of ${sealedPositions.length} claimed`}
-            icon={<Trophy className="w-4 h-4 text-yellow-400" />}
-            accent="from-yellow-600/5 to-transparent"
+            label="Net Strategy Delta"
+            value={`${(totalWinnings - totalBets).toFixed(2)} XLM`}
+            sub="Profit/Loss from trades"
+            icon={totalWinnings >= totalBets ? <TrendingUp className="w-4 h-4 text-green-400" /> : <TrendingDown className="w-4 h-4 text-red-400" />}
+            accent={totalWinnings >= totalBets ? "from-green-600/5 to-transparent" : "from-red-600/5 to-transparent"}
             delay={0.3}
           />
+        </div>
+
+        {/* ── Funding Stats ────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <ArrowDownCircle className="w-4 h-4 text-blue-400" />
+              </div>
+              <div>
+                <div className="text-[8px] text-white/30 uppercase tracking-widest font-bold">Deposits</div>
+                <div className="text-white font-bold">{deposits.toFixed(2)} <span className="text-[10px] opacity-40">XLM</span></div>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                <ArrowUpCircle className="w-4 h-4 text-orange-400" />
+              </div>
+              <div>
+                <div className="text-[8px] text-white/30 uppercase tracking-widest font-bold">Withdrawals</div>
+                <div className="text-white font-bold">{withdrawals.toFixed(2)} <span className="text-[10px] opacity-40">XLM</span></div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* ── ZK Sealed Positions ─────────────────────────────────────────── */}
@@ -860,7 +909,7 @@ export default function PortfolioPage() {
                 <SealedPositionCard
                   key={`${pos.commitment}-${i}`}
                   position={pos}
-                  onClaimed={() => { loadSealedPositions(); refreshUser(); fetchOnchainBalance(); }}
+                  onClaimed={() => { loadSealedPositions(); refreshUser(); fetchOnchainBalance(); loadTransactions(); }}
                 />
               ))}
             </div>

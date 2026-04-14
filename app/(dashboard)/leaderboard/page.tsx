@@ -8,6 +8,7 @@ interface User {
   name: string;
   pfpUrl: string;
   balance: number;
+  totalWinnings: number;
   updatedAt: string;
 }
 
@@ -63,9 +64,9 @@ export default function LeaderboardPage() {
           </div>
           <div className="w-px h-10 bg-white/10"></div>
           <div className="text-center">
-            <p className="font-sans uppercase tracking-[0.2em] text-[8px] text-white/40 mb-1 font-bold">Total Flow</p>
+            <p className="font-sans uppercase tracking-[0.2em] text-[8px] text-white/40 mb-1 font-bold">Total Winnings</p>
             <span className="text-2xl font-sans font-bold text-orange-500 tracking-tighter">
-              {users.reduce((sum, u) => sum + u.balance, 0).toLocaleString()} <span className="text-[10px] opacity-60">XLM</span>
+              {users.reduce((sum, u) => sum + u.totalWinnings, 0).toLocaleString()} <span className="text-[10px] opacity-60">XLM</span>
             </span>
           </div>
         </div>
@@ -92,8 +93,8 @@ export default function LeaderboardPage() {
               </h3>
               <p className="font-sans uppercase tracking-[0.2em] text-[10px] text-blue-500 mb-4 font-black">PLATINUM TIER</p>
               <div className="text-center">
-                <p className="font-sans text-2xl font-bold tracking-tighter text-white">{top3[1].balance.toLocaleString()}</p>
-                <p className="font-sans uppercase tracking-[0.2em] text-[8px] text-white/40 font-bold">XLM DEPOSIT</p>
+                <p className="font-sans text-2xl font-bold tracking-tighter text-white">{top3[1].totalWinnings.toLocaleString()}</p>
+                <p className="font-sans uppercase tracking-[0.2em] text-[8px] text-white/40 font-bold">XLM WON</p>
               </div>
             </div>
           </div>
@@ -121,8 +122,8 @@ export default function LeaderboardPage() {
               </h3>
               <p className="font-sans uppercase tracking-[0.3em] text-[10px] text-orange-500 font-black mb-6">CELESTIAL GRANDMASTER</p>
               <div className="text-center">
-                <p className="font-sans text-4xl font-extrabold tracking-tighter text-white">{top3[0].balance.toLocaleString()}</p>
-                <p className="font-sans uppercase tracking-[0.2em] text-[10px] text-white/40 font-bold">TOTAL ESCROW</p>
+                <p className="font-sans text-4xl font-extrabold tracking-tighter text-white">{top3[0].totalWinnings.toLocaleString()}</p>
+                <p className="font-sans uppercase tracking-[0.2em] text-[10px] text-white/40 font-bold">TOTAL WINNINGS</p>
               </div>
             </div>
           </div>
@@ -147,7 +148,8 @@ export default function LeaderboardPage() {
               </h3>
               <p className="font-sans uppercase tracking-[0.2em] text-[10px] text-purple-400 mb-2 font-black">GOLD TIER</p>
               <div className="text-center">
-                <p className="font-sans text-xl font-bold tracking-tighter text-white">{top3[2].balance.toLocaleString()}</p>
+                <p className="font-sans text-xl font-bold tracking-tighter text-white">{top3[2].totalWinnings.toLocaleString()}</p>
+                <p className="font-sans uppercase tracking-[0.2em] text-[8px] text-white/40 font-bold">XLW WON</p>
               </div>
             </div>
           </div>
@@ -159,7 +161,7 @@ export default function LeaderboardPage() {
         <div className="px-8 py-6 border-b border-white/5 flex flex-col sm:flex-row justify-between items-center bg-white/3 gap-4">
           <h2 className="font-sans font-bold tracking-widest text-[10px] uppercase text-white/60">Global Ranking Directory</h2>
           <div className="flex gap-4">
-            <button className="px-4 py-1.5 rounded-full bg-blue-500/10 text-[9px] font-sans font-bold tracking-widest uppercase border border-blue-500/30 text-blue-400">Total Assets</button>
+            <button className="px-4 py-1.5 rounded-full bg-blue-500/10 text-[9px] font-sans font-bold tracking-widest uppercase border border-blue-500/30 text-blue-400">Total Winnings</button>
           </div>
         </div>
         
@@ -171,7 +173,7 @@ export default function LeaderboardPage() {
                 <th className="px-8 py-4 font-sans uppercase tracking-[0.2em] text-[8px] text-white/40 font-bold">User Identity</th>
                 <th className="px-8 py-4 font-sans uppercase tracking-[0.2em] text-[8px] text-white/40 font-bold">Status</th>
                 <th className="px-8 py-4 font-sans uppercase tracking-[0.2em] text-[8px] text-white/40 font-bold">Trust Score</th>
-                <th className="px-8 py-4 font-sans uppercase tracking-[0.2em] text-[8px] text-white/40 text-right font-bold">Horizon Balance</th>
+                <th className="px-8 py-4 font-sans uppercase tracking-[0.2em] text-[8px] text-white/40 text-right font-bold">Total Winnings</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -217,7 +219,7 @@ export default function LeaderboardPage() {
                       </div>
                     </td>
                     <td className="px-8 py-5 text-right font-sans font-bold text-lg tabular-nums text-white tracking-tighter">
-                      {user.balance.toLocaleString()} <span className="text-[10px] opacity-40">XLM</span>
+                      {user.totalWinnings.toLocaleString()} <span className="text-[10px] opacity-40">XLM</span>
                     </td>
                   </tr>
                 );

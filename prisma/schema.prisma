@@ -6,37 +6,28 @@ datasource db {
   provider = "postgresql"
 }
 
-enum MarketStatus {
-  OPEN
-  CLOSED
-  RESOLVED
-  DISPUTED
-}
-
 model User {
-  publicKey String   @id
-  name      String   @default("")
-  bio       String   @default("")
-  pfpUrl    String   @default("")
-  links     Json     @default("[]")
-  balance   Float    @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Intelligence fields
-  reputationScore     Int    @default(500)
-  reputationTier      String @default("Intermediate")
+  publicKey           String             @id
+  name                String             @default("")
+  bio                 String             @default("")
+  pfpUrl              String             @default("")
+  links               Json               @default("[]")
+  balance             Float              @default(0)
+  totalWinnings       Float              @default(0)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  reputationScore     Int                @default(500)
+  reputationTier      String             @default("Intermediate")
   oracleReliability   Float?
-  totalResolutions    Int    @default(0)
-  disputedResolutions Int    @default(0)
+  totalResolutions    Int                @default(0)
+  disputedResolutions Int                @default(0)
   avgResolutionTime   Float?
-
-  transactions     Transaction[]
-  createdMarkets   Market[]           @relation("MarketCreator")
-  bets             Bet[]
-  challenges       DisputeChallenge[]
-  votes            DisputeVote[]
-  liquidityRewards LiquidityReward[]
+  bets                Bet[]
+  challenges          DisputeChallenge[]
+  votes               DisputeVote[]
+  liquidityRewards    LiquidityReward[]
+  createdMarkets      Market[]           @relation("MarketCreator")
+  transactions        Transaction[]
 
   @@index([reputationScore])
 }
@@ -44,75 +35,60 @@ model User {
 model Transaction {
   id            String   @id @default(cuid())
   userPublicKey String
-  type          String // "DEPOSIT" | "WITHDRAWAL"
+  type          String
   amount        Float
   hash          String   @default("")
   createdAt     DateTime @default(now())
-
-  user User @relation(fields: [userPublicKey], references: [publicKey])
+  user          User     @relation(fields: [userPublicKey], references: [publicKey])
 }
 
 model Market {
-  id          String  @id @default(cuid())
-  title       String
-  description String? @default("")
-  creatorId   String
-  creator     User    @relation("MarketCreator", fields: [creatorId], references: [publicKey])
-
-  // Dates
-  openDate  DateTime @default(now())
-  closeDate DateTime
-
-  // Prediction Logic
-  outcome     String? // "YES", "NO", or null if not resolved
-  yesPool     Float   @default(0)
-  noPool      Float   @default(0)
-  totalVolume Float   @default(0)
-  category    String  @default("Crypto")
-
-  contractMarketId Int?         @unique
-  status           MarketStatus @default(OPEN)
-  oracleAddress    String?
-
-  // Intelligence fields
+  id                  String               @id @default(cuid())
+  title               String
+  description         String?              @default("")
+  creatorId           String
+  openDate            DateTime             @default(now())
+  closeDate           DateTime
+  outcome             String?
+  yesPool             Float                @default(0)
+  noPool              Float                @default(0)
+  totalVolume         Float                @default(0)
+  contractMarketId    Int?                 @unique
+  status              MarketStatus         @default(OPEN)
   qualityScore        Float?
-  manipulationScore   Float  @default(0)
-  minBetSize          Float  @default(10)
-  incentiveMultiplier Float  @default(1.0)
-  volatility          Float  @default(0)
-
-  bets               Bet[]
-  probabilityHistory ProbabilityHistory[]
-  challenges         DisputeChallenge[]
-  riskFlags          ManipulationAlert[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  manipulationScore   Float                @default(0)
+  minBetSize          Float                @default(10)
+  incentiveMultiplier Float                @default(1.0)
+  volatility          Float                @default(0)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  category            String               @default("Crypto")
+  oracleAddress       String?
+  payoutBps           Int?                 @default(10000)
+  bets                Bet[]
+  challenges          DisputeChallenge[]
+  riskFlags           ManipulationAlert[]
+  creator             User                 @relation("MarketCreator", fields: [creatorId], references: [publicKey])
+  probabilityHistory  ProbabilityHistory[]
 
   @@index([creatorId])
   @@index([status])
 }
 
 model Bet {
-  id       String @id @default(cuid())
-  marketId String
-  market   Market @relation(fields: [marketId], references: [id])
-
+  id            String    @id @default(cuid())
+  marketId      String
   userPublicKey String
-  user          User   @relation(fields: [userPublicKey], references: [publicKey])
-
-  amount Float
-
-  // ZK Primitives
-  commitment String  @unique
-  nullifier  String? @unique
-  revealed   Boolean @default(false)
-
-  txHash    String?
-  claimedAt DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  amount        Float
+  commitment    String    @unique
+  nullifier     String?   @unique
+  revealed      Boolean   @default(false)
+  txHash        String?
+  claimedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  market        Market    @relation(fields: [marketId], references: [id])
+  user          User      @relation(fields: [userPublicKey], references: [publicKey])
 
   @@index([marketId])
   @@index([userPublicKey])
@@ -124,31 +100,28 @@ model Bet {
 model ProbabilityHistory {
   id          String   @id @default(cuid())
   marketId    String
-  market      Market   @relation(fields: [marketId], references: [id])
   probability Float
   confidence  Float
   sources     Json
   createdAt   DateTime @default(now())
+  market      Market   @relation(fields: [marketId], references: [id])
 
   @@index([marketId, createdAt])
 }
 
 model DisputeChallenge {
-  id           String @id @default(cuid())
-  marketId     String
-  market       Market @relation(fields: [marketId], references: [id])
-  challengerId String
-  challenger   User   @relation(fields: [challengerId], references: [publicKey])
-
-  evidence        String // JSON: { description, urls }
-  proposedOutcome String // "YES" | "NO"
-  bond            Float  @default(100)
-  status          String @default("PENDING") // PENDING | ACCEPTED | REJECTED
-
-  votingEndsAt DateTime
-  createdAt    DateTime @default(now())
-
-  votes DisputeVote[]
+  id              String        @id @default(cuid())
+  marketId        String
+  challengerId    String
+  evidence        String
+  proposedOutcome String
+  bond            Float         @default(100)
+  status          String        @default("PENDING")
+  votingEndsAt    DateTime
+  createdAt       DateTime      @default(now())
+  challenger      User          @relation(fields: [challengerId], references: [publicKey])
+  market          Market        @relation(fields: [marketId], references: [id])
+  votes           DisputeVote[]
 
   @@index([marketId])
   @@index([status])
@@ -157,44 +130,41 @@ model DisputeChallenge {
 model DisputeVote {
   id        String           @id @default(cuid())
   disputeId String
-  dispute   DisputeChallenge @relation(fields: [disputeId], references: [id])
   voterId   String
-  voter     User             @relation(fields: [voterId], references: [publicKey])
-
-  outcome   String // "YES" | "NO" | "ORIGINAL"
+  outcome   String
   stake     Float
   weight    Float
-  createdAt DateTime @default(now())
+  createdAt DateTime         @default(now())
+  dispute   DisputeChallenge @relation(fields: [disputeId], references: [id])
+  voter     User             @relation(fields: [voterId], references: [publicKey])
 
   @@unique([disputeId, voterId])
   @@index([disputeId])
 }
 
 model ManipulationAlert {
-  id       String @id @default(cuid())
-  marketId String
-  market   Market @relation(fields: [marketId], references: [id])
-
-  flagType  String // "rapid_betting" | "volume_spike" | "wash_trading" | "sybil_cluster"
-  severity  String // "INFO" | "WARNING" | "CRITICAL"
+  id        String   @id @default(cuid())
+  marketId  String
+  flagType  String
+  severity  String
   details   Json
   resolved  Boolean  @default(false)
   createdAt DateTime @default(now())
+  market    Market   @relation(fields: [marketId], references: [id])
 
   @@index([marketId])
   @@index([severity, resolved])
 }
 
 model LiquidityReward {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [publicKey])
-
+  id        String   @id @default(cuid())
+  userId    String
   weekStart DateTime
   points    Float
   reward    Float?
   claimed   Boolean  @default(false)
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [publicKey])
 
   @@index([userId, weekStart])
 }
@@ -203,7 +173,7 @@ model WalletRelationship {
   id           String   @id @default(cuid())
   sourceWallet String
   targetWallet String
-  relationship String // "funded_by" | "co_bets"
+  relationship String
   confidence   Float
   createdAt    DateTime @default(now())
 
@@ -216,8 +186,8 @@ model WalletRelationship {
 
 model SystemAlert {
   id        String   @id @default(cuid())
-  type      String // "manipulation" | "dispute" | "oracle_delay" | "liquidity"
-  severity  String // "INFO" | "WARNING" | "CRITICAL"
+  type      String
+  severity  String
   message   String
   metadata  Json
   resolved  Boolean  @default(false)
@@ -225,4 +195,11 @@ model SystemAlert {
 
   @@index([severity, resolved])
   @@index([createdAt])
+}
+
+enum MarketStatus {
+  OPEN
+  CLOSED
+  RESOLVED
+  DISPUTED
 }

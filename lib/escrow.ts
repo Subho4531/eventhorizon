@@ -460,14 +460,19 @@ export async function getMarket(marketId: number): Promise<any | null> {
       .setTimeout(0)
       .build();
       
-    const sim = await server.simulateTransaction(tx);
-    if (rpc.Api.isSimulationSuccess(sim) && sim.result?.retval) {
-      const market = scValToNative(sim.result.retval);
+    const simResult = await server.simulateTransaction(tx);
+    
+    if (rpc.Api.isSimulationSuccess(simResult) && simResult.result?.retval) {
+      const market = scValToNative(simResult.result.retval);
       return market;
+    } else {
+      // Detailed logging for why simulation failed (trap, host error, etc.)
+      const errStr = simResult.error || "Simulation failed";
+      console.warn(`[escrow] getMarket(${marketId}) simulation failed:`, errStr);
+      return null;
     }
-    return null;
   } catch (err) {
-    console.error("getMarket failed:", err);
+    console.error(`[escrow] getMarket(${marketId}) error:`, err);
     return null;
   }
 }

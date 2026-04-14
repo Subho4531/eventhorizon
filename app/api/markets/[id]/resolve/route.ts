@@ -34,8 +34,7 @@ export async function PATCH(
       data: {
         status: "RESOLVED",
         outcome: outcome, // "YES" or "NO"
-        // bondAmount is already set, but if we wanted to record payoutBps:
-        // we'd need a field in the schema. For now status + outcome is enough.
+        payoutBps: payoutBps, // Saving the payout bps provided by oracle
       },
     });
 

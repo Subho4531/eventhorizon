@@ -4,13 +4,14 @@ import prisma from "@/lib/db";
 export async function GET() {
   try {
     const users = await prisma.user.findMany({
-      orderBy: { balance: "desc" },
+      orderBy: { totalWinnings: "desc" },
       take: 50,
       select: {
         publicKey: true,
         name: true,
         pfpUrl: true,
         balance: true,
+        totalWinnings: true,
         updatedAt: true,
       }
     });

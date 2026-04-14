@@ -167,7 +167,7 @@ export default function MarketDetailPage({
       // 1b. Check on-chain market state
       const onchainMarket = await getMarket(market.contractMarketId);
       if (!onchainMarket) {
-        throw new Error("Market not found on-chain.");
+        throw new Error(`Market not found on the smart contract (ID: ${market.contractMarketId}). This usually means the market is archived or from an older version of the contract.`);
       }
       
       // Robust check for MarketStatus::Open (can be 0 or "Open")
@@ -292,11 +292,14 @@ export default function MarketDetailPage({
   if (!market) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <AlertCircle className="w-10 h-10 text-white/20" />
-        <p className="text-white/40 uppercase tracking-widest text-sm">Market not found</p>
+        <AlertCircle className="w-10 h-10 text-red-500/40" />
+        <div className="text-center">
+          <p className="text-white font-bold tracking-widest text-sm uppercase mb-1">Market Not Found</p>
+          <p className="text-white/30 text-xs max-w-xs mx-auto">This market may have been archived or deleted due to a contract synchronization update.</p>
+        </div>
         <button
           onClick={() => router.push("/markets")}
-          className="text-xs text-blue-400 hover:text-blue-300 underline"
+          className="mt-4 px-6 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white/60 hover:bg-white/10 hover:text-white transition-all"
         >
           ← Back to markets
         </button>

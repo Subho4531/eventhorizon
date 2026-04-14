@@ -16,10 +16,10 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "commitment is required" }, { status: 400 });
     }
 
-    // Find the bet by commitment
+    // 1. Fetch the bet by commitment
     const bet = await prisma.bet.findUnique({
       where: { commitment },
-      include: { market: { select: { id: true, title: true, status: true, outcome: true } } },
+      include: { market: { select: { id: true, title: true, status: true, outcome: true, payoutBps: true } } },
     });
 
     if (!bet) {
@@ -30,16 +30,35 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Bet already claimed" }, { status: 400 });
     }
 
-    // Mark as revealed + claimed
-    const updatedBet = await prisma.bet.update({
-      where: { commitment },
-      data: {
-        revealed: true,
-        claimedAt: new Date(),
-        nullifier: nullifier ?? null,
-        txHash: txHash ?? bet.txHash,
-      },
-    });
+    // 2. Mark as revealed + claimed + record transaction + update balance
+    const payout = (bet.amount * (bet.market.payoutBps || 10000)) / 10000;
+
+    const [updatedBet] = await prisma.$transaction([
+      prisma.bet.update({
+        where: { commitment },
+        data: {
+          revealed: true,
+          claimedAt: new Date(),
+          nullifier: nullifier ?? null,
+          txHash: txHash ?? bet.txHash,
+        },
+      }),
+      prisma.user.update({
+        where: { publicKey: bet.userPublicKey },
+        data: { 
+          balance: { increment: payout },
+          totalWinnings: { increment: payout }
+        },
+      }),
+      prisma.transaction.create({
+        data: {
+          userPublicKey: bet.userPublicKey,
+          type: "CLAIM",
+          amount: payout,
+          hash: txHash ?? "",
+        },
+      }),
+    ]);
 
     return NextResponse.json({ success: true, bet: updatedBet });
   } catch (err) {

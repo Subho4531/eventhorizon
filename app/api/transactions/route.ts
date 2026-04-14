@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/transactions?publicKey=...
 export async function GET(req: NextRequest) {
   const publicKey = req.nextUrl.searchParams.get("publicKey");
@@ -29,7 +31,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "publicKey, type, amount required" }, { status: 400 });
     }
 
-    const balanceDelta = type === "DEPOSIT" ? amount : -amount;
+    const isPositive = type === "DEPOSIT" || type === "CLAIM";
+    const balanceDelta = isPositive ? amount : -amount;
 
     const [transaction] = await prisma.$transaction([
       prisma.transaction.create({

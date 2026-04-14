@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       select: { publicKey: true, balance: true },
     });
 
-    // Atomic transaction: create bet + update pool
+    // Atomic transaction: create bet + update pool + record transaction
     const [bet] = await prisma.$transaction([
       prisma.bet.create({
         data: {
@@ -65,10 +65,18 @@ export async function POST(req: NextRequest) {
           totalVolume: { increment: stake },
         },
       }),
+      prisma.transaction.create({
+        data: {
+          userPublicKey,
+          type: "BET",
+          amount: stake,
+          hash: txHash ?? "",
+        },
+      }),
       prisma.user.update({
         where: { publicKey: userPublicKey },
         data: { balance: { decrement: stake } },
-      }).catch(() => null), // Non-blocking decrement
+      }),
     ]);
 
     // Invalidate probability cache so odds recalculate with new pool sizes
