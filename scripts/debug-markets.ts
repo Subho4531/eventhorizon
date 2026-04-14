@@ -2,13 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 require("dotenv").config();
 
 async function main() {
-  const prisma = new PrismaClient({
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL
-      }
-    }
-  });
+  const prisma = new PrismaClient();
 
   try {
     const markets = await prisma.market.findMany({

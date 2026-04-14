@@ -465,12 +465,12 @@ export async function getMarket(marketId: number): Promise<any | null> {
     if (rpc.Api.isSimulationSuccess(simResult) && simResult.result?.retval) {
       const market = scValToNative(simResult.result.retval);
       return market;
-    } else {
-      // Detailed logging for why simulation failed (trap, host error, etc.)
-      const errStr = simResult.error || "Simulation failed";
-      console.warn(`[escrow] getMarket(${marketId}) simulation failed:`, errStr);
-      return null;
     }
+    
+    // Detailed logging for why simulation failed (trap, host error, etc.)
+    const errStr = rpc.Api.isSimulationError(simResult) ? simResult.error : "Simulation failed";
+    console.warn(`[escrow] getMarket(${marketId}) simulation failed:`, errStr);
+    return null;
   } catch (err) {
     console.error(`[escrow] getMarket(${marketId}) error:`, err);
     return null;
