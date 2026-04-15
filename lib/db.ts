@@ -1,21 +1,28 @@
-import { neonConfig } from "@neondatabase/serverless";
-import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "@prisma/client";
-import ws from "ws";
 
-// Required for WebSocket connections in Node.js (not needed in edge runtime)
-neonConfig.webSocketConstructor = ws;
+// In Prisma 7, the connection URL is passed directly to PrismaClient
+// via `datasourceUrl` (not via schema.prisma or adapter).
+// This ensures the DATABASE_URL env var from Vercel/Netlify is picked up at runtime.
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
 function createPrismaClient() {
-  const connectionString = process.env.DATABASE_URL!;
-  // PrismaNeon takes a PoolConfig, which accepts { connectionString }
-  const adapter = new PrismaNeon({ connectionString });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return new PrismaClient({ adapter } as any);
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error(
+      "DATABASE_URL environment variable is not set. " +
+        "Add it to your Vercel/Netlify environment variables."
+    );
+  }
+  return new PrismaClient({
+    datasourceUrl: url,
+    log:
+      process.env.NODE_ENV === "development"
+        ? ["query", "error", "warn"]
+        : ["error"],
+  });
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();

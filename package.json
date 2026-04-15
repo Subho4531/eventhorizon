@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build --webpack",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest --run",
@@ -12,15 +12,12 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.0.2",
-    "@prisma/adapter-neon": "^7.6.0",
     "@prisma/client": "^7.6.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
     "@react-three/postprocessing": "^3.0.4",
     "@stellar/freighter-api": "^6.0.1",
     "@stellar/stellar-sdk": "^14.6.1",
-    "@types/ws": "^8.18.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "lenis": "^1.3.21",
@@ -31,8 +28,7 @@
     "recharts": "^3.8.1",
     "snarkjs": "^0.7.6",
     "tailwind-merge": "^3.5.0",
-    "three": "^0.183.2",
-    "ws": "^8.20.0"
+    "three": "^0.183.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
