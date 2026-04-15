@@ -1,17 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   TrendingUp,
   Clock,
   AlertCircle,
-  Loader2,
   Brain,
-  Sparkles,
   ArrowRight,
-  Filter,
 } from "lucide-react";
 import QualityIndicator from "./QualityIndicator";
 import RiskAlert from "./RiskAlert";
@@ -36,9 +33,9 @@ interface MarketIntelligence {
   qualityScore?: number;
   manipulationScore?: number;
   riskFlags?: string[];
+  confidence?: number;
+  sources?: string[];
 }
-
-const CATEGORIES = ["All", "Crypto", "Finance", "Technology", "Politics", "Sports"];
 
 const CATEGORY_COLORS: Record<string, string> = {
   Crypto: "text-blue-400 bg-blue-500/10 border-blue-500/30",
@@ -48,12 +45,24 @@ const CATEGORY_COLORS: Record<string, string> = {
   Sports: "text-rose-400 bg-rose-500/10 border-rose-500/30",
 };
 
+/* Expose active-category setter so the sidebar can drive the filter */
+let _setCategory: ((c: string) => void) | null = null;
+export function setActiveMarketCategory(cat: string) {
+  _setCategory?.(cat);
+}
+
 export default function MarketsGrid() {
   const router = useRouter();
   const [markets, setMarkets] = useState<Market[]>([]);
   const [intelligence, setIntelligence] = useState<Record<string, MarketIntelligence>>({});
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All");
+
+  // Expose the setter for the sidebar
+  useEffect(() => {
+    _setCategory = setActiveCategory;
+    return () => { _setCategory = null; };
+  }, []);
 
   useEffect(() => {
     async function fetchMarkets() {
@@ -90,6 +99,8 @@ export default function MarketsGrid() {
 
           intelligenceData[market.id] = {
             probability: probData?.probability,
+            confidence: probData?.confidence,
+            sources: probData?.sources,
             qualityScore: qualityData?.score,
             manipulationScore: riskData?.score,
             riskFlags: riskData?.flags?.map((f: { type: string }) => f.type) ?? [],
@@ -117,26 +128,42 @@ export default function MarketsGrid() {
       ? markets
       : markets.filter((m) => m.category === activeCategory);
 
+  /* ── Helper: render AI badge only when there's a meaningful signal ── */
+  const renderAIBadge = (market: Market, intel: MarketIntelligence) => {
+    const prob = intel.probability;
+    const confidence = intel.confidence ?? 0;
+    const sources = intel.sources ?? [];
+
+    // Only show when we have a real signal — not just the pool fallback
+    const hasRealSignal = sources.includes("historical") || sources.includes("external");
+    if (prob === undefined || prob === null) return null;
+
+    // If only "fallback" source (= pool ratio), show a different label
+    const isPoolOnly = !hasRealSignal && sources.includes("fallback");
+
+    const pct = Math.round(prob * 100);
+    // Don't show if it exactly equals the YES pool ratio AND is pool-only (duplicates the bar)
+    const odds = calculateOdds(market.yesPool, market.noPool);
+    if (isPoolOnly && pct === odds.yes) return null;
+
+    return (
+      <div className="flex items-center gap-2 text-[10px] text-purple-400 bg-purple-500/10 border border-purple-500/25 rounded-lg px-3 py-1.5 relative z-10 w-fit">
+        <Brain className="w-3.5 h-3.5 shrink-0" />
+        <span className="font-bold uppercase tracking-widest">
+          {isPoolOnly ? "Pool" : "AI"}:
+        </span>
+        <span className="font-bold">{pct}%</span>
+        {confidence > 0 && !isPoolOnly && (
+          <span className="text-purple-400/50 font-medium">
+            · {Math.round(confidence * 100)}% conf
+          </span>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
-      {/* Category Filter Tabs */}
-      <div className="flex items-center gap-2 mb-8 flex-wrap">
-        <Filter className="w-4 h-4 text-white/30 mr-1" />
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest border transition-all ${
-              activeCategory === cat
-                ? "bg-white text-black border-white"
-                : "border-white/10 text-white/50 hover:border-white/30 hover:text-white/80"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
@@ -211,13 +238,13 @@ export default function MarketsGrid() {
                         )}
                         {market.status}
                       </span>
-                      {intel.qualityScore !== undefined && (
+                      {/* {intel.qualityScore !== undefined && (
                         <QualityIndicator
                           score={intel.qualityScore}
                           size="sm"
                           showLabel={false}
                         />
-                      )}
+                      )} */}
                     </div>
 
                     <span className="flex items-center gap-1 text-xs text-white/40 shrink-0">
@@ -226,8 +253,8 @@ export default function MarketsGrid() {
                     </span>
                   </div>
 
-                  {/* Title */}
-                  <h3 className="text-sm font-semibold text-white leading-snug group-hover:text-white transition-colors relative z-10 line-clamp-3">
+                  {/* Title — full text, no clamp */}
+                  <h3 className="text-sm font-semibold text-white leading-snug group-hover:text-white transition-colors relative z-10">
                     {market.title}
                   </h3>
 
@@ -240,16 +267,8 @@ export default function MarketsGrid() {
                     </div>
                   )}
 
-                  {/* AI probability badge */}
-                  {intel.probability !== undefined && (
-                    <div className="flex items-center gap-2 text-[10px] text-purple-400 bg-purple-500/10 border border-purple-500/30 rounded-lg px-3 py-1.5 relative z-10 w-fit">
-                      <Brain className="w-3.5 h-3.5" />
-                      <span className="font-bold uppercase tracking-widest">AI:</span>
-                      <span className="font-bold">
-                        {(intel.probability * 100).toFixed(1)}%
-                      </span>
-                    </div>
-                  )}
+                  {/* AI probability badge — only shown when meaningful */}
+                  {renderAIBadge(market, intel)}
 
                   {/* Probability bars */}
                   <div className="space-y-2 mt-auto relative z-10">

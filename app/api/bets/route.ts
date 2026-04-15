@@ -36,6 +36,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Market is closed" }, { status: 400 });
     }
 
+    // Enforce one bet per user per market
+    const existingBet = await prisma.bet.findFirst({
+      where: { marketId, userPublicKey },
+      select: { id: true },
+    });
+    if (existingBet) {
+      return NextResponse.json(
+        { error: "You have already placed a bet on this market. Only one position per market is allowed." },
+        { status: 409 }
+      );
+    }
+
     // Ensure user exists (we skip strict DB balance check here because the contract handles it on-chain)
     const user = await prisma.user.upsert({
       where: { publicKey: userPublicKey },
@@ -79,10 +91,13 @@ export async function POST(req: NextRequest) {
       }),
     ]);
 
-    // Invalidate probability cache so odds recalculate with new pool sizes
+    // Invalidate probability + quality cache so scores recalculate with new data
     try {
       const { invalidateCache } = await import("@/lib/intelligence/probability-model");
       invalidateCache(marketId);
+      // Also clear quality score cache (bet count affects activity score)
+      const { intelligenceCache } = await import("@/lib/cache/intelligence-cache");
+      intelligenceCache.delete(`quality:${marketId}`);
     } catch {
       // Cache invalidation is non-critical
     }

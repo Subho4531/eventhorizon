@@ -106,10 +106,16 @@ export async function calculateRiskScore(marketId: string): Promise<number> {
   })
 
   let score = 0
+  const seenTypes = new Set<string>()
 
   for (const alert of alerts) {
     const details = alert.details as any
-    switch (details.type) {
+    const type = details.type
+    
+    if (seenTypes.has(type)) continue
+    seenTypes.add(type)
+
+    switch (type) {
       case 'rapid_betting':
         score += 10
         break
@@ -281,7 +287,16 @@ export async function getMarketRisk(marketId: string): Promise<MarketRisk> {
     orderBy: { createdAt: 'desc' },
   })
 
-  const flags: RiskFlag[] = alerts.map((alert) => alert.details as RiskFlag)
+  const uniqueFlagsMap = new Map<string, RiskFlag>()
+  
+  for (const alert of alerts) {
+    const flag = alert.details as RiskFlag
+    if (!uniqueFlagsMap.has(flag.type)) {
+      uniqueFlagsMap.set(flag.type, flag)
+    }
+  }
+
+  const flags = Array.from(uniqueFlagsMap.values())
 
   return {
     score,
@@ -294,6 +309,19 @@ export async function getMarketRisk(marketId: string): Promise<MarketRisk> {
  * Creates a manipulation alert record
  */
 async function createManipulationAlert(marketId: string, flag: RiskFlag): Promise<void> {
+  // Prevent spam: check if an unresolved alert of this type already exists
+  const existing = await prisma.manipulationAlert.findFirst({
+    where: {
+      marketId,
+      flagType: flag.type,
+      resolved: false
+    }
+  })
+  
+  if (existing) {
+    return;
+  }
+
   let severity: 'INFO' | 'WARNING' | 'CRITICAL' = 'INFO'
 
   // Determine severity based on flag type

@@ -82,7 +82,7 @@ export default function CreateMarketModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contractMarketId: onChainMarketId,
-          title: validSymbol,
+          title: title, // Store actual human-readable title
           description,
           creatorId: userPublicKey,
           closeDate: new Date(closeDate).toISOString(),
@@ -145,12 +145,12 @@ export default function CreateMarketModal({
                 <input 
                   type="text" 
                   value={title}
-                  maxLength={32}
+                  maxLength={128}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="BTC touching 3000 ?"
                   className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder:text-white/10 focus:outline-none focus:border-blue-500/50 transition-colors font-sans text-sm tracking-wider"
                 />
-                <p className="text-[10px] text-white/40 pl-1">Max 32 chars, uppercase letters, numbers, and underscores only.</p>
+               
               </div>
 
               <div className="space-y-2">

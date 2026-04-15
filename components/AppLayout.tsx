@@ -11,12 +11,15 @@ import {
   Trophy,
   Shield,
   TrendingUp,
-  Zap,
-  Clock,
-  Star,
+  Globe,
+  Cpu,
+  Landmark,
+  Dumbbell,
+  Layers,
 } from "lucide-react";
 import Navbar from "./Navbar";
 import OnboardingModal from "./OnboardingModal";
+import { setActiveMarketCategory } from "./MarketsGrid";
 
 /* ─── Sidebar nav items ─────────────────────────────────────── */
 const MAIN_NAV = [
@@ -31,12 +34,12 @@ const SECONDARY_NAV = [
 
 /* ─── Category quick-filters shown in markets sidebar ───────── */
 const CATEGORIES = [
-  { label: "All", color: "text-white/60" },
-  { label: "Crypto", color: "text-blue-400" },
-  { label: "Finance", color: "text-emerald-400" },
-  { label: "Technology", color: "text-purple-400" },
-  { label: "Politics", color: "text-amber-400" },
-  { label: "Sports", color: "text-rose-400" },
+  { label: "All",        Icon: Layers,   color: "text-white/60",   active: "text-white bg-white/10 border-white/20" },
+  { label: "Crypto",     Icon: TrendingUp, color: "text-blue-400", active: "text-blue-300 bg-blue-500/15 border-blue-500/30" },
+  { label: "Finance",    Icon: Landmark, color: "text-emerald-400", active: "text-emerald-300 bg-emerald-500/15 border-emerald-500/30" },
+  { label: "Technology", Icon: Cpu,      color: "text-purple-400", active: "text-purple-300 bg-purple-500/15 border-purple-500/30" },
+  { label: "Politics",   Icon: Globe,    color: "text-amber-400",  active: "text-amber-300 bg-amber-500/15 border-amber-500/30" },
+  { label: "Sports",     Icon: Dumbbell, color: "text-rose-400",   active: "text-rose-300 bg-rose-500/15 border-rose-500/30" },
 ];
 
 function formatKey(key: string) {
@@ -46,8 +49,19 @@ function formatKey(key: string) {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { publicKey } = useWallet();
+  const [activeCategory, setActiveCategory] = React.useState("All");
 
   const inMarkets = pathname === "/markets" || pathname.startsWith("/markets/");
+  const onMarketsIndex = pathname === "/markets";
+
+  function handleCategoryClick(label: string) {
+    setActiveCategory(label);
+    setActiveMarketCategory(label);
+    // If not on the markets index, navigate there
+    if (!onMarketsIndex) {
+      window.location.href = "/markets";
+    }
+  }
 
   return (
     <>
@@ -56,42 +70,37 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-h-screen pt-[60px]">
         {/* ── SIDEBAR ── */}
-        <aside className="hidden md:flex flex-col w-[220px] border-r border-white/[0.06] bg-black/30 backdrop-blur-xl sticky top-[60px] h-[calc(100vh-60px)] overflow-y-auto no-scrollbar shrink-0">
-          
+        <aside className="hidden md:flex flex-col w-[230px] border-r border-white/[0.06] bg-black/40 backdrop-blur-xl sticky top-[60px] h-[calc(100vh-60px)] overflow-y-auto no-scrollbar shrink-0">
+
           {/* Wallet mini-card */}
-          {publicKey ? (
-            <div className="mx-3 mt-4 mb-1 bg-white/[0.04] border border-white/[0.06] rounded-xl p-3">
-              <div className="text-[9px] uppercase tracking-[0.18em] text-white/30 font-bold mb-1.5">
-                Connected
-              </div>
-              <div className="font-mono text-[12px] text-white/70 font-semibold truncate mb-2.5">
-                {formatKey(publicKey)}
-              </div>
-              <div className="flex gap-2 text-[10px]">
-                <div className="flex-1 bg-white/[0.04] rounded-lg p-2 text-center">
-                  <div className="text-white/30 mb-0.5">Volume</div>
-                  <div className="text-white font-bold">—</div>
+          <div className="px-3 pt-4 pb-2">
+            {publicKey ? (
+              <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/[0.08] rounded-xl p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <div className="text-[9px] uppercase tracking-[0.18em] text-emerald-400/80 font-bold">
+                    Connected
+                  </div>
                 </div>
-                <div className="flex-1 bg-white/[0.04] rounded-lg p-2 text-center">
-                  <div className="text-white/30 mb-0.5">P&amp;L</div>
-                  <div className="text-emerald-400 font-bold">—</div>
+                <div className="font-mono text-[12px] text-white/70 font-semibold truncate">
+                  {formatKey(publicKey)}
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="mx-3 mt-4 mb-1 bg-blue-600/[0.08] border border-blue-500/20 rounded-xl p-3">
-              <div className="text-[10px] text-blue-400 font-semibold mb-1">Not connected</div>
-              <p className="text-[10px] text-white/30 leading-relaxed">
-                Connect your Stellar wallet to trade.
-              </p>
-            </div>
-          )}
+            ) : (
+              <div className="bg-blue-600/[0.06] border border-blue-500/20 rounded-xl p-3">
+                <div className="text-[10px] text-blue-400 font-semibold mb-1">Not connected</div>
+                <p className="text-[10px] text-white/30 leading-relaxed">
+                  Connect your Stellar wallet to trade.
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Divider */}
-          <div className="mx-3 my-3 border-t border-white/[0.05]" />
+          <div className="mx-4 my-2 border-t border-white/[0.05]" />
 
           {/* Main nav */}
-          <nav className="px-3 space-y-0.5">
+          <nav className="px-2 space-y-0.5">
             {MAIN_NAV.map(({ href, label, Icon }) => {
               const active = pathname === href || (href !== "/markets" && pathname.startsWith(href));
               const marketsActive = href === "/markets" && inMarkets;
@@ -100,14 +109,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all ${
                     isActive
-                      ? "bg-blue-600/15 text-white border border-blue-500/20"
-                      : "text-white/45 hover:text-white hover:bg-white/[0.04]"
+                      ? "bg-blue-600/12 text-white border border-blue-500/20"
+                      : "text-white/40 hover:text-white/80 hover:bg-white/[0.04]"
                   }`}
                 >
-                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-blue-400" : "text-white/25"}`} />
-                  {label}
+                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-blue-400" : "text-white/20"}`} />
+                  <span>{label}</span>
                   {isActive && (
                     <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400" />
                   )}
@@ -116,7 +125,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          {/* Markets quick-filters — only show on markets routes */}
+          {/* Markets category filters — functional, only shown on markets routes */}
           <AnimatePresence>
             {inMarkets && (
               <motion.div
@@ -125,19 +134,33 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden"
               >
-                <div className="mx-3 mt-4 mb-1 border-t border-white/[0.05] pt-4">
-                  <div className="text-[9px] uppercase tracking-[0.18em] text-white/25 font-bold px-1 mb-2">
-                    Categories
-                  </div>
-                  <div className="space-y-0.5">
-                    {CATEGORIES.map(({ label, color }) => (
-                      <button
-                        key={label}
-                        className={`w-full text-left px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all hover:bg-white/[0.04] ${color} hover:text-white`}
-                      >
-                        {label}
-                      </button>
-                    ))}
+                <div className="mx-3 mt-4 mb-1">
+                  <div className="border-t border-white/[0.05] pt-4">
+                    <div className="text-[9px] uppercase tracking-[0.18em] text-white/25 font-bold px-2 mb-2">
+                      Filter by Category
+                    </div>
+                    <div className="space-y-0.5">
+                      {CATEGORIES.map(({ label, Icon, color, active: activeStyle }) => {
+                        const isSelected = activeCategory === label;
+                        return (
+                          <button
+                            key={label}
+                            onClick={() => handleCategoryClick(label)}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-medium transition-all border ${
+                              isSelected
+                                ? `${activeStyle} border-current/20`
+                                : `${color} border-transparent hover:bg-white/[0.04] hover:border-white/10`
+                            }`}
+                          >
+                            <Icon className="w-3.5 h-3.5 shrink-0" />
+                            <span>{label}</span>
+                            {isSelected && (
+                              <span className="ml-auto w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -147,28 +170,29 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Secondary nav */}
-          <div className="mx-3 mb-3 border-t border-white/[0.05] pt-3 space-y-0.5">
-            {publicKey === process.env.NEXT_PUBLIC_ADMIN_ID && SECONDARY_NAV.map(({ href, label, Icon }) => {
-              const isActive = pathname === href;
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[12px] font-medium transition-all ${
-                    isActive
-                      ? "bg-white/[0.06] text-white"
-                      : "text-white/30 hover:text-white hover:bg-white/[0.04]"
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5 shrink-0" />
-                  {label}
-                </Link>
-              );
-            })}
+          {/* Secondary nav + testnet badge */}
+          <div className="px-2 mb-3 border-t border-white/[0.05] pt-3 space-y-1">
+            {publicKey === process.env.NEXT_PUBLIC_ADMIN_ID &&
+              SECONDARY_NAV.map(({ href, label, Icon }) => {
+                const isActive = pathname === href;
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-xl text-[12px] font-medium transition-all ${
+                      isActive
+                        ? "bg-white/[0.06] text-white"
+                        : "text-white/30 hover:text-white hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    {label}
+                  </Link>
+                );
+              })}
 
             {/* Testnet badge */}
-            <div className="mt-3 px-3 py-2.5 bg-emerald-500/[0.06] border border-emerald-500/20 rounded-lg">
+            <div className="mt-2 mx-1 px-3 py-2.5 bg-emerald-500/[0.05] border border-emerald-500/20 rounded-xl">
               <div className="flex items-center gap-1.5 mb-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-[0.15em]">

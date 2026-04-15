@@ -46,7 +46,7 @@ export default function RiskAlert({ score, flags = [], onDismiss }: RiskAlertPro
                   key={i}
                   className="text-[8px] px-2 py-1 rounded-lg bg-white/5 border border-white/10 uppercase tracking-wider"
                 >
-                  {flag}
+                  {flag.replace(/_/g, " ")}
                 </span>
               ))}
             </div>

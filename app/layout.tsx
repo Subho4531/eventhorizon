@@ -23,16 +23,16 @@ export const metadata: Metadata = {
   description: "Experience the next generation of prediction markets with Zero-Knowledge privacy on Stellar Testnet. Trade outcomes with deep liquidity and total anonymity.",
   keywords: ["stellar", "prediction market", "zero-knowledge", "zk-proofs", "soroban", "crypto", "betting"],
   openGraph: {
-    title: "GravityFlow | ZK Prediction Market",
+    title: "Event Horizon",
     description: "Privacy-first prediction markets on Stellar.",
-    url: "https://gravityflow.stellar",
-    siteName: "GravityFlow",
+    url: "https://eventhorizon-pied.vercel.app/",
+    siteName: "Event Horizon",
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "GravityFlow | ZK Prediction Market",
+    title: "Event Horizon | ZK Prediction Market",
     description: "The cosmic event horizon of ZK-prediction markets on Stellar.",
   },
 };

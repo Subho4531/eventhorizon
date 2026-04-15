@@ -48,6 +48,8 @@ interface MarketIntelligence {
   qualityScore?: number;
   manipulationScore?: number;
   riskFlags?: string[];
+  confidence?: number;
+  sources?: string[];
 }
 
 interface Activity {
@@ -90,6 +92,7 @@ export default function MarketDetailPage({
   const [betError, setBetError] = useState("");
   const [betSuccess, setBetSuccess] = useState(false);
   const [betStatus, setBetStatus] = useState("");
+  const [hasBet, setHasBet] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -108,8 +111,12 @@ export default function MarketDetailPage({
         ]);
 
         const intel: MarketIntelligence = {};
-        if (probRes.status === "fulfilled" && probRes.value.ok)
-          intel.probability = (await probRes.value.json()).probability;
+        if (probRes.status === "fulfilled" && probRes.value.ok) {
+          const p = await probRes.value.json();
+          intel.probability = p.probability;
+          intel.confidence = p.confidence;
+          intel.sources = p.sources;
+        }
         if (qualityRes.status === "fulfilled" && qualityRes.value.ok)
           intel.qualityScore = (await qualityRes.value.json()).score;
         if (riskRes.status === "fulfilled" && riskRes.value.ok) {
@@ -119,8 +126,15 @@ export default function MarketDetailPage({
         }
         setIntelligence(intel);
 
-        if (betsRes.status === "fulfilled" && betsRes.value.ok)
-          setActivity((await betsRes.value.json()).bets ?? []);
+        if (betsRes.status === "fulfilled" && betsRes.value.ok) {
+          const betsData = await betsRes.value.json();
+          const bets = betsData.bets ?? [];
+          setActivity(bets);
+          // Check if current user already has a bet
+          if (publicKey) {
+            setHasBet(bets.some((b: { userPublicKey: string }) => b.userPublicKey === publicKey));
+          }
+        }
       } catch {
         // market stays null → error state
       } finally {
@@ -148,6 +162,7 @@ export default function MarketDetailPage({
   const handleBet = async () => {
     if (!publicKey) { setBetError("Connect your wallet first."); return; }
     if (!market) return;
+    if (hasBet) { setBetError("You already have an open position on this market."); return; }
     if (!market.contractMarketId) { setBetError("Market has no on-chain ID. Cannot place bet."); return; }
     const stake = parseFloat(amount);
     if (isNaN(stake) || stake < 1) { setBetError("Minimum bet is 1 XLM."); return; }
@@ -232,8 +247,14 @@ export default function MarketDetailPage({
 
       if (!dbRes.ok) {
         const d = await dbRes.json();
-        console.error("DB indexing warning:", d.error);
-        // Don't fail — on-chain bet is already placed
+        if (dbRes.status === 409) {
+          // Already bet — treat gracefully since on-chain tx went through
+          setHasBet(true);
+        } else {
+          console.error("DB indexing warning:", d.error);
+        }
+      } else {
+        setHasBet(true);
       }
 
       // 7. Store in localStorage for portfolio display
@@ -410,20 +431,32 @@ export default function MarketDetailPage({
               transition={{ delay: 0.12 }}
               className="grid grid-cols-1 sm:grid-cols-2 gap-4"
             >
-              {intelligence.probability !== undefined && (
-                <div className="bg-purple-500/8 border border-purple-500/20 rounded-2xl p-4 flex items-center gap-4">
-                  <Brain className="w-8 h-8 text-purple-400 shrink-0" />
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-purple-400 mb-1">
-                      AI Probability
-                    </p>
-                    <p className="text-2xl font-bold text-white">
-                      {(intelligence.probability * 100).toFixed(1)}%
-                    </p>
-                    <p className="text-[10px] text-white/40">YES likelihood</p>
+              {intelligence.probability !== undefined && intelligence.probability > 0 && (() => {
+                const prob = intelligence.probability!;
+                const confidence = (intelligence as any).confidence ?? 0;
+                const sources: string[] = (intelligence as any).sources ?? [];
+                const isPoolOnly = !sources.includes("historical") && !sources.includes("external");
+                const pct = (prob * 100).toFixed(1);
+                const label = isPoolOnly ? "Pool-weighted" : "AI Probability";
+                return (
+                  <div className="bg-purple-500/8 border border-purple-500/20 rounded-2xl p-4 flex items-center gap-4">
+                    <Brain className="w-8 h-8 text-purple-400 shrink-0" />
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-purple-400 mb-1">
+                        {label}
+                      </p>
+                      <p className="text-2xl font-bold text-white">
+                        {pct}%
+                      </p>
+                      <p className="text-[10px] text-white/40">
+                        {isPoolOnly
+                          ? "Based on current pool ratio"
+                          : `YES likelihood · ${Math.round(confidence * 100)}% confidence`}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
               {intelligence.manipulationScore !== undefined && intelligence.manipulationScore >= 50 && (
                 <RiskAlert
                   score={intelligence.manipulationScore}
@@ -503,6 +536,13 @@ export default function MarketDetailPage({
               <Zap className="w-3.5 h-3.5" />
               Place Trade
             </h2>
+
+            {hasBet && market.status === "OPEN" && (
+              <div className="flex items-center gap-2 text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-xl p-3">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span className="text-xs font-semibold">You already have a position on this market.</span>
+              </div>
+            )}
 
             {market.status !== "OPEN" ? (
               <div className="text-center py-8 space-y-2">
@@ -622,9 +662,11 @@ export default function MarketDetailPage({
                 {/* Submit */}
                 <button
                   onClick={handleBet}
-                  disabled={submitting || !publicKey}
+                  disabled={submitting || !publicKey || hasBet}
                   className={`w-full py-4 rounded-xl text-sm font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 ${
-                    side === "YES"
+                    hasBet
+                      ? "bg-white/5 text-white/30 border border-white/10 cursor-not-allowed"
+                      : side === "YES"
                       ? "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30"
                       : "bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30"
                   } disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97]`}
@@ -634,6 +676,8 @@ export default function MarketDetailPage({
                       <Loader2 className="w-4 h-4 animate-spin" />
                       {betStatus || "Sealing Bet…"}
                     </>
+                  ) : hasBet ? (
+                    "Position Already Open"
                   ) : !publicKey ? (
                     "Connect Wallet to Trade"
                   ) : (
