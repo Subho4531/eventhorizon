@@ -1,23 +1,22 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-// In Prisma 7, the connection URL is passed directly to PrismaClient
-// via `datasourceUrl` (not via schema.prisma or adapter).
-// This ensures the DATABASE_URL env var from Vercel/Netlify is picked up at runtime.
-
+// Prisma 7 requires a driver adapter to pass the connection URL at runtime.
+// datasourceUrl was removed from the PrismaClient constructor in v7.
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
 function createPrismaClient() {
-  const url = process.env.DATABASE_URL;
-  if (!url) {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
     throw new Error(
-      "DATABASE_URL environment variable is not set. " +
-        "Add it to your Vercel/Netlify environment variables."
+      "DATABASE_URL is not set. Add it to your Vercel/Netlify environment variables."
     );
   }
+  const adapter = new PrismaPg({ connectionString });
   return new PrismaClient({
-    datasourceUrl: url,
+    adapter,
     log:
       process.env.NODE_ENV === "development"
         ? ["query", "error", "warn"]
