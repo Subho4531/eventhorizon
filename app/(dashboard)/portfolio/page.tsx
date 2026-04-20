@@ -342,19 +342,19 @@ function TxRow({ tx }: { tx: Transaction }) {
     </motion.div>
   );
 }
-
 // ── Sealed Position Types & Card ───────────────────────────────────────────────
 interface SealedPosition {
   marketId: string;
   contractMarketId: number;
-  marketTitle: string;
-  side: 0 | 1;
+  marketTitle?: string;
+  side: number;
   nonce: string;
   bettorKey: string;
   commitment: string;
   amount: string;
-  txHash: string;
+  txHash?: string;
   status: "SEALED" | "CLAIMED" | "EXPIRED";
+  isLocalMissing?: boolean; // New: indicates if secret nonce is missing from this browser
 }
 
 function SealedPositionCard({ position, onClaimed }: { position: SealedPosition; onClaimed: () => void }) {
@@ -374,10 +374,10 @@ function SealedPositionCard({ position, onClaimed }: { position: SealedPosition;
   const isWinner = isResolved ? (marketState.outcome === position.side) : null;
 
   // We only allow claim if market is resolved AND user is the winner
-  const canClaim = isResolved && isWinner;
+  const canClaim = isResolved && isWinner && !position.isLocalMissing;
 
   const handleClaim = async () => {
-    if (!publicKey) return;
+    if (!publicKey || position.isLocalMissing) return;
     setClaiming(true);
     setError("");
     try {
@@ -449,9 +449,9 @@ function SealedPositionCard({ position, onClaimed }: { position: SealedPosition;
       <div className="relative">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <div className={`inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border mb-2 ${position.side === 0 ? "text-blue-400 border-blue-500/30 bg-blue-500/10" : "text-red-400 border-red-500/30 bg-red-500/10"}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${position.side === 0 ? "bg-blue-400" : "bg-red-400"}`} />
-              {sideLabel} Position
+            <div className={`inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border mb-2 ${position.isLocalMissing ? "text-white/30 border-white/10 bg-white/5" : (position.side === 0 ? "text-blue-400 border-blue-500/30 bg-blue-500/10" : "text-red-400 border-red-500/30 bg-red-500/10")}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${position.isLocalMissing ? "bg-white/20" : (position.side === 0 ? "bg-blue-400" : "bg-red-400")}`} />
+              {position.isLocalMissing ? "Secret Sealed" : sideLabel} Position
             </div>
             <h4 className="text-sm font-bold text-white leading-snug max-w-[160px] line-clamp-2">
               {position.marketTitle || "Syncing…"}
@@ -460,6 +460,22 @@ function SealedPositionCard({ position, onClaimed }: { position: SealedPosition;
           <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg border ${statusColors[position.status]}`}>
             {position.status}
           </span>
+        </div>
+
+        <div className="flex gap-2 mb-4">
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5 border border-white/10 group-hover:bg-blue-500/10 group-hover:border-blue-500/30 transition-all">
+            <Activity className="w-3 h-3 text-white/40 group-hover:text-blue-400" />
+            <span className="text-[10px] text-white/40 font-mono group-hover:text-blue-300">
+              {position.commitment.slice(0, 8)}…
+            </span>
+          </div>
+          {position.isLocalMissing && (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <span className="text-[9px] text-amber-400 font-bold uppercase tracking-widest">
+                Secret Missing
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-4">
@@ -489,6 +505,10 @@ function SealedPositionCard({ position, onClaimed }: { position: SealedPosition;
             ) : isResolved && isWinner === false ? (
               <div className="flex items-center justify-center gap-2 py-2.5 text-red-400 text-[10px] font-bold uppercase tracking-widest bg-red-500/5 rounded-xl border border-red-500/10">
                 <AlertCircle className="w-3.5 h-3.5" /> Position Lost
+              </div>
+            ) : position.isLocalMissing ? (
+              <div className="flex items-center justify-center gap-2 py-2.5 text-amber-400 text-[10px] font-bold uppercase tracking-widest bg-amber-500/5 rounded-xl border border-amber-500/10">
+                <AlertCircle className="w-3.5 h-3.5" /> Data missing locally
               </div>
             ) : (
               <div className="text-center text-[9px] text-white/25 uppercase tracking-widest py-2.5 bg-white/5 rounded-xl border border-white/5">
@@ -566,12 +586,64 @@ export default function PortfolioPage() {
     }
   }, [publicKey]);
 
-  const loadSealedPositions = useCallback(() => {
+  const loadSealedPositions = useCallback(async () => {
     if (!publicKey) return;
-    const stored = localStorage.getItem("zk_portfolio");
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      setSealedPositions(parsed.filter((p: any) => p.bettorKey === publicKey));
+    
+    try {
+      // 1. Load from localStorage
+      const stored = localStorage.getItem("zk_portfolio");
+      let localPositions: SealedPosition[] = [];
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          localPositions = Array.isArray(parsed) 
+            ? parsed.filter((p: any) => p.bettorKey === publicKey)
+            : [];
+        } catch (e) {
+          console.error("Failed to parse zk_portfolio", e);
+        }
+      }
+
+      // 2. Load from API (fallback/sync)
+      let remotePositions: SealedPosition[] = [];
+      try {
+        const res = await fetch(`/api/bets?userPublicKey=${encodeURIComponent(publicKey)}`);
+        if (res.ok) {
+          const data = await res.json();
+          remotePositions = (data.bets || []).map((b: any) => ({
+            marketId: b.marketId,
+            contractMarketId: b.market?.contractMarketId ?? 0,
+            marketTitle: b.market?.title,
+            side: 0, // We don't know the side without local secret
+            nonce: "",
+            bettorKey: b.userPublicKey,
+            commitment: b.commitment,
+            amount: b.amount.toString(),
+            txHash: b.txHash,
+            status: b.revealed ? "CLAIMED" : "SEALED",
+            isLocalMissing: true,
+          }));
+        }
+      } catch (e) {
+        console.error("Failed to fetch remote bets", e);
+      }
+
+      // 3. Merge: Prioritize local storage (has nonces)
+      const mergedMap = new Map<string, SealedPosition>();
+      
+      // Add remote ones first as placeholders
+      remotePositions.forEach(p => mergedMap.set(p.commitment, p));
+      
+      // Overwrite/Add local ones (these are the "real" ones with secrets)
+      localPositions.forEach(p => {
+        mergedMap.set(p.commitment, { ...p, isLocalMissing: false });
+      });
+
+      const finalPositions = Array.from(mergedMap.values());
+      console.log(`[portfolio] Loaded ${finalPositions.length} positions (${localPositions.length} local, ${remotePositions.length} remote)`);
+      setSealedPositions(finalPositions);
+    } catch (err) {
+      console.error("Critical error in loadSealedPositions:", err);
     }
   }, [publicKey]);
 
