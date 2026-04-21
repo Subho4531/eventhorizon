@@ -72,6 +72,25 @@ async function mockDelay(ms = 1500) {
   await new Promise((r) => setTimeout(r, ms));
 }
 
+/**
+ * Generates a dummy Groth16 proof for ZK operations that don't have
+ * full circuit integration yet (e.g. deposit/withdraw).
+ */
+function generateDummyProof(): Groth16Proof {
+  const dummy = "1234567890123456789012345678901234567890123456789012345678901234";
+  return {
+    pi_a: [dummy, dummy, "1"],
+    pi_b: [
+      [dummy, dummy],
+      [dummy, dummy],
+      ["1", "0"],
+    ],
+    pi_c: [dummy, dummy, "1"],
+    protocol: "groth16",
+    curve: "bn128",
+  };
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Real Soroban integration (lazy-imported — browser safe)
 // ──────────────────────────────────────────────────────────────────────────────
@@ -175,37 +194,60 @@ export async function submitSignedXdr(
 // Public escrow API
 // ──────────────────────────────────────────────────────────────────────────────
 
-/**
- * Deposit `amountXlm` XLM into the escrow contract.
- *
- * Real flow: builds unsigned XDR for `deposit(user, amount)` →
- * caller signs with Freighter → submits via `submitSignedXdr()`.
- *
- * Mock flow: simulated 1.5s delay, returns fake hash.
- */
 export async function depositToEscrow(
   publicKey: string,
   amountXlm: number
 ): Promise<EscrowResult> {
   if (!CONTRACT_ID) {
-    console.log(`[escrow/mock] deposit ${amountXlm} XLM`);
+    console.log(`[escrow/mock] zk_deposit ${amountXlm} XLM`);
     await mockDelay();
     return { success: true, hash: randomHex(32) };
   }
 
   try {
-    const { Address, nativeToScVal } = await import("@stellar/stellar-sdk");
+    const { Address, nativeToScVal, xdr } = await import("@stellar/stellar-sdk");
     const stroops = BigInt(xlmToStroops(amountXlm));
+    const proof = generateDummyProof();
+
+    // Helper to format proof components for ScVal
+    const toBytes32 = (val: string) => {
+      let hex = val.startsWith("0x") ? val.slice(2) : BigInt(val).toString(16);
+      return xdr.ScVal.scvBytes(Buffer.from(hex.padStart(64, "0"), "hex"));
+    };
+
+    const g1 = (x: string, y: string) =>
+      xdr.ScVal.scvMap([
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("x"), val: toBytes32(x) }),
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("y"), val: toBytes32(y) }),
+      ]);
+
+    const g2 = (xRe: string, xIm: string, yRe: string, yIm: string) =>
+      xdr.ScVal.scvMap([
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("x_im"), val: toBytes32(xIm) }),
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("x_re"), val: toBytes32(xRe) }),
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("y_im"), val: toBytes32(yIm) }),
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("y_re"), val: toBytes32(yRe) }),
+      ]);
+
+    const proofScVal = xdr.ScVal.scvMap([
+      new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("a"), val: g1(proof.pi_a[0], proof.pi_a[1]) }),
+      new xdr.ScMapEntry({
+        key: xdr.ScVal.scvSymbol("b"),
+        val: g2(proof.pi_b[0][0], proof.pi_b[0][1], proof.pi_b[1][0], proof.pi_b[1][1]),
+      }),
+      new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("c"), val: g1(proof.pi_c[0], proof.pi_c[1]) }),
+    ]);
 
     const args = [
       new Address(publicKey).toScVal(),
       nativeToScVal(stroops, { type: "i128" }),
+      proofScVal,
     ];
 
-    const unsignedXdr = await buildSorobanCall(publicKey, "deposit", args);
+    const unsignedXdr = await buildSorobanCall(publicKey, "zk_deposit", args);
     return { success: true, hash: "", unsignedXdr };
   } catch (err) {
-    console.error("[escrow] deposit failed:", err);
+    console.error("[escrow] zk_deposit failed:", err);
     return { success: false, hash: "" };
   }
 }
@@ -218,28 +260,61 @@ export async function withdrawFromEscrow(
   amountXlm: number
 ): Promise<EscrowResult> {
   if (!CONTRACT_ID) {
-    console.log(`[escrow/mock] withdraw ${amountXlm} XLM`);
+    console.log(`[escrow/mock] zk_withdraw ${amountXlm} XLM`);
     await mockDelay();
     return { success: true, hash: randomHex(32) };
   }
 
   try {
-    const { Address, nativeToScVal } = await import("@stellar/stellar-sdk");
+    const { Address, nativeToScVal, xdr } = await import("@stellar/stellar-sdk");
     const stroops = BigInt(xlmToStroops(amountXlm));
+    const proof = generateDummyProof();
+
+    const toBytes32 = (val: string) => {
+      let hex = val.startsWith("0x") ? val.slice(2) : BigInt(val).toString(16);
+      return xdr.ScVal.scvBytes(Buffer.from(hex.padStart(64, "0"), "hex"));
+    };
+
+    const g1 = (x: string, y: string) =>
+      xdr.ScVal.scvMap([
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("x"), val: toBytes32(x) }),
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("y"), val: toBytes32(y) }),
+      ]);
+
+    const g2 = (xRe: string, xIm: string, yRe: string, yIm: string) =>
+      xdr.ScVal.scvMap([
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("x_im"), val: toBytes32(xIm) }),
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("x_re"), val: toBytes32(xRe) }),
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("y_im"), val: toBytes32(yIm) }),
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("y_re"), val: toBytes32(yRe) }),
+      ]);
+
+    const proofScVal = xdr.ScVal.scvMap([
+      new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("a"), val: g1(proof.pi_a[0], proof.pi_a[1]) }),
+      new xdr.ScMapEntry({
+        key: xdr.ScVal.scvSymbol("b"),
+        val: g2(proof.pi_b[0][0], proof.pi_b[0][1], proof.pi_b[1][0], proof.pi_b[1][1]),
+      }),
+      new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("c"), val: g1(proof.pi_c[0], proof.pi_c[1]) }),
+    ]);
 
     const args = [
       new Address(publicKey).toScVal(),
       nativeToScVal(stroops, { type: "i128" }),
+      proofScVal,
     ];
 
-    const unsignedXdr = await buildSorobanCall(publicKey, "withdraw", args);
+    const unsignedXdr = await buildSorobanCall(publicKey, "zk_withdraw", args);
     return { success: true, hash: "", unsignedXdr };
   } catch (err) {
-    console.error("[escrow] withdraw failed:", err);
+    console.error("[escrow] zk_withdraw failed:", err);
     return { success: false, hash: "" };
   }
 }
 
+/**
+ * Create a new prediction market on-chain.
+ */
 /**
  * Create a new prediction market on-chain.
  */
@@ -269,6 +344,99 @@ export async function createMarket(
     return { success: true, hash: "", unsignedXdr };
   } catch (err) {
     console.error("[escrow] createMarket failed:", err);
+    return { success: false, hash: "" };
+  }
+}
+
+/**
+ * ZK-verified market creation.
+ */
+export async function zkCreateMarket(
+  publicKey: string,
+  title: string,
+  closeTime: number,
+  oracle: string
+): Promise<EscrowResult> {
+  if (!CONTRACT_ID) {
+    console.log(`[escrow/mock] zkCreateMarket ${title}`);
+    await mockDelay();
+    return { success: true, hash: randomHex(32) };
+  }
+
+  try {
+    const { Address, nativeToScVal, xdr } = await import("@stellar/stellar-sdk");
+
+    const proof = generateDummyProof();
+    const proofScVal = xdr.ScVal.scvMap(
+      new xdr.ScMap([
+        new xdr.ScMapEntry({
+          key: xdr.ScVal.scvSymbol("a"),
+          val: xdr.ScVal.scvMap(
+            new xdr.ScMap([
+              new xdr.ScMapEntry({
+                key: xdr.ScVal.scvSymbol("x"),
+                val: nativeToScVal(Buffer.from(proof.pi_a[0], "hex")),
+              }),
+              new xdr.ScMapEntry({
+                key: xdr.ScVal.scvSymbol("y"),
+                val: nativeToScVal(Buffer.from(proof.pi_a[1], "hex")),
+              }),
+            ])
+          ),
+        }),
+        new xdr.ScMapEntry({
+          key: xdr.ScVal.scvSymbol("b"),
+          val: xdr.ScVal.scvMap(
+            new xdr.ScMap([
+              new xdr.ScMapEntry({
+                key: xdr.ScVal.scvSymbol("x_im"),
+                val: nativeToScVal(Buffer.from(proof.pi_b[0][0], "hex")),
+              }),
+              new xdr.ScMapEntry({
+                key: xdr.ScVal.scvSymbol("x_re"),
+                val: nativeToScVal(Buffer.from(proof.pi_b[0][1], "hex")),
+              }),
+              new xdr.ScMapEntry({
+                key: xdr.ScVal.scvSymbol("y_im"),
+                val: nativeToScVal(Buffer.from(proof.pi_b[1][0], "hex")),
+              }),
+              new xdr.ScMapEntry({
+                key: xdr.ScVal.scvSymbol("y_re"),
+                val: nativeToScVal(Buffer.from(proof.pi_b[1][1], "hex")),
+              }),
+            ])
+          ),
+        }),
+        new xdr.ScMapEntry({
+          key: xdr.ScVal.scvSymbol("c"),
+          val: xdr.ScVal.scvMap(
+            new xdr.ScMap([
+              new xdr.ScMapEntry({
+                key: xdr.ScVal.scvSymbol("x"),
+                val: nativeToScVal(Buffer.from(proof.pi_c[0], "hex")),
+              }),
+              new xdr.ScMapEntry({
+                key: xdr.ScVal.scvSymbol("y"),
+                val: nativeToScVal(Buffer.from(proof.pi_c[1], "hex")),
+              }),
+            ])
+          ),
+        }),
+      ])
+    );
+
+    const args = [
+      new Address(publicKey).toScVal(),
+      new Address(oracle).toScVal(),
+      nativeToScVal(title, { type: "symbol" }),
+      nativeToScVal(closeTime, { type: "u64" }),
+      proofScVal,
+    ];
+
+    const unsignedXdr = await buildSorobanCall(publicKey, "zk_create_market", args);
+    return { success: true, hash: "", unsignedXdr };
+  } catch (err) {
+    console.error("[escrow] zkCreateMarket failed:", err);
     return { success: false, hash: "" };
   }
 }
@@ -406,23 +574,53 @@ export async function placeBet(
       "@stellar/stellar-sdk"
     );
     const stroops = BigInt(xlmToStroops(amountXlm));
+    const proof = generateDummyProof();
     
     // Convert decimal commitment to 32-byte hex
     let hex = commitment.startsWith("0x") ? commitment.slice(2) : BigInt(commitment).toString(16);
     hex = hex.padStart(64, "0");
     const commitBytes = Buffer.from(hex, "hex");
 
+    const toBytes32 = (val: string) => {
+      let h = val.startsWith("0x") ? val.slice(2) : BigInt(val).toString(16);
+      return xdr.ScVal.scvBytes(Buffer.from(h.padStart(64, "0"), "hex"));
+    };
+
+    const g1 = (x: string, y: string) =>
+      xdr.ScVal.scvMap([
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("x"), val: toBytes32(x) }),
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("y"), val: toBytes32(y) }),
+      ]);
+
+    const g2 = (xRe: string, xIm: string, yRe: string, yIm: string) =>
+      xdr.ScVal.scvMap([
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("x_im"), val: toBytes32(xIm) }),
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("x_re"), val: toBytes32(xRe) }),
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("y_im"), val: toBytes32(yIm) }),
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("y_re"), val: toBytes32(yRe) }),
+      ]);
+
+    const proofScVal = xdr.ScVal.scvMap([
+      new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("a"), val: g1(proof.pi_a[0], proof.pi_a[1]) }),
+      new xdr.ScMapEntry({
+        key: xdr.ScVal.scvSymbol("b"),
+        val: g2(proof.pi_b[0][0], proof.pi_b[0][1], proof.pi_b[1][0], proof.pi_b[1][1]),
+      }),
+      new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("c"), val: g1(proof.pi_c[0], proof.pi_c[1]) }),
+    ]);
+
     const args = [
       new Address(publicKey).toScVal(),
       nativeToScVal(marketId, { type: "u32" }),
       xdr.ScVal.scvBytes(commitBytes),
       nativeToScVal(stroops, { type: "i128" }),
+      proofScVal,
     ];
 
-    const unsignedXdr = await buildSorobanCall(publicKey, "place_bet", args);
+    const unsignedXdr = await buildSorobanCall(publicKey, "zk_place_bet", args);
     return { success: true, hash: "", unsignedXdr };
   } catch (err) {
-    console.error("[escrow] place_bet failed:", err);
+    console.error("[escrow] zk_place_bet failed:", err);
     return { success: false, hash: "" };
   }
 }

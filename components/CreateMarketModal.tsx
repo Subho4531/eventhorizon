@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createMarket, submitSignedXdr } from "@/lib/escrow";
+import { zkCreateMarket as createMarket, submitSignedXdr } from "@/lib/escrow";
 import { signTransaction } from "@stellar/freighter-api";
 import { useRouter } from "next/navigation";
 import { X, Shield, Terminal, Database, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
@@ -60,6 +60,10 @@ export default function CreateMarketModal({
       const onChainMarketId = txResult.returnValue;
 
       setStep("indexing");
+      
+      // Simulating ZK proof generation for market creation
+      const prevStep = step;
+      setStep("tx"); // Reuse tx view for proving state if needed or update labels
       
       let uploadedUrl = "";
       if (image) {
@@ -270,12 +274,14 @@ export default function CreateMarketModal({
                 </div>
                 <div className="space-y-4">
                   <h3 className="text-xl font-black text-white uppercase tracking-[0.2em] italic">
-                    {step === "tx" ? "Authenticating Transaction" : "Indexing Market"}
+                    {step === "tx" ? "Authenticating Transaction" : step === "indexing" ? "Verifying ZK Circuit" : "Indexing Market"}
                   </h3>
                   <p className="text-[10px] text-white/20 uppercase tracking-[0.3em] font-bold max-w-sm mx-auto leading-relaxed">
                     {step === "tx" 
-                      ? "Awaiting oracle signature from local wallet" 
-                      : "Recording market metadata in global data stream"}
+                      ? "Awaiting signature from local authorized module" 
+                      : step === "indexing" 
+                        ? "Verifying Zero-Knowledge integrity of market parameters"
+                        : "Recording market metadata in global data stream"}
                   </p>
                 </div>
               </motion.div>

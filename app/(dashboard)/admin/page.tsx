@@ -338,14 +338,14 @@ export default function AdminPage() {
             onClick={() => setShowDashboard(!showDashboard)}
             className="px-6 py-3 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all"
           >
-            {showDashboard ? "HIDE_INTEL_MODULE" : "SHOW_INTEL_MODULE"}
+            {showDashboard ? "Hide Intelligence Module" : "Show Intelligence Module"}
           </button>
           <button
             onClick={() => setIsCreateModalOpen(true)}
             className="flex items-center gap-3 px-8 py-3 bg-[#FF8C00] text-black text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white transition-all shadow-xl shadow-[#FF8C00]/10"
           >
             <Plus className="w-4 h-4" />
-            INIT_NEW_HORIZON
+            Initialize New Horizon
           </button>
         </div>
       </header>
@@ -359,10 +359,10 @@ export default function AdminPage() {
       {/* ── Summary Stats ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {[
-          { label: "TOTAL_MARKETS", value: allMarkets.length, color: "text-white" },
-          { label: "OPEN_SLOTS", value: allMarkets.filter((m) => m.status === "OPEN").length, color: "text-[#FF8C00]" },
-          { label: "PENDING_VERDICT", value: openMarkets.length, color: "text-blue-400" },
-          { label: "ARCHIVED_DATA", value: allMarkets.filter((m) => m.status === "RESOLVED").length, color: "text-[#00C853]" },
+          { label: "Total Markets", value: allMarkets.length, color: "text-white" },
+          { label: "Open Slots", value: allMarkets.filter((m) => m.status === "OPEN").length, color: "text-[#FF8C00]" },
+          { label: "Pending Verdict", value: openMarkets.length, color: "text-blue-400" },
+          { label: "Archived Data", value: allMarkets.filter((m) => m.status === "RESOLVED").length, color: "text-[#00C853]" },
         ].map((s) => (
           <div key={s.label} className="bg-[#0D0D0D] border border-white/10 p-6 group hover:border-white/20 transition-all">
             <div className="text-[9px] text-white/20 font-black uppercase tracking-widest mb-3">{s.label}</div>
@@ -377,9 +377,9 @@ export default function AdminPage() {
       {/* ── Tabs ─────────────────────────────────────────────────────────────── */}
       <div className="flex gap-4 border-b border-white/10 overflow-x-auto no-scrollbar">
         {[
-          { id: "resolution", label: "MARKET_RESOLUTION" },
-          { id: "markets", label: "GLOBAL_INVENTORY" },
-          { id: "bets", label: "TRANSACTION_LOGS" },
+          { id: "resolution", label: "Market Resolution" },
+          { id: "markets", label: "Global Inventory" },
+          { id: "bets", label: "Transaction Logs" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -405,8 +405,8 @@ export default function AdminPage() {
         <div className="space-y-8">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-[#0D0D0D] border border-white/10 p-8">
             <div>
-              <h2 className="text-xl font-black text-white uppercase tracking-[0.1em]">VERDICT PARAMETERS</h2>
-              <p className="text-[9px] text-white/20 uppercase tracking-[0.3em] mt-1 font-bold">SET GLOBAL OUTCOME FOR BATCH PROCESSING</p>
+              <h2 className="text-xl font-black text-white uppercase tracking-[0.1em]">Verdict Parameters</h2>
+              <p className="text-[9px] text-white/20 uppercase tracking-[0.3em] mt-1 font-bold">Set global outcome for batch processing</p>
             </div>
 
             <div className="flex items-center gap-6">
@@ -484,7 +484,7 @@ export default function AdminPage() {
                       disabled={resolvingId === m.id}
                       className="px-10 py-5 bg-white text-black text-[11px] font-black uppercase tracking-[0.3em] hover:bg-[#FF8C00] transition-all disabled:opacity-20 shrink-0"
                     >
-                      {resolvingId === m.id ? "EXECUTING..." : "COMMIT_VERDICT"}
+                      {resolvingId === m.id ? "Executing..." : "Commit Verdict"}
                     </button>
                   </div>
                 </div>
@@ -606,14 +606,14 @@ export default function AdminPage() {
         <div className="space-y-8">
           <div className="flex items-center justify-between bg-[#0D0D0D] border border-white/10 p-8">
             <div>
-              <h2 className="text-xl font-black text-white uppercase tracking-[0.1em]">SYSTEM TX STREAM</h2>
-              <p className="text-[9px] text-white/20 uppercase tracking-[0.3em] mt-1 font-bold">MONITOR REALTIME SEALED COMMITMENTS</p>
+              <h2 className="text-xl font-black text-white uppercase tracking-[0.1em]">System Transaction Stream</h2>
+              <p className="text-[9px] text-white/20 uppercase tracking-[0.3em] mt-1 font-bold">Monitor realtime sealed commitments</p>
             </div>
             <button
               onClick={() => setShowBetForm(!showBetForm)}
               className="px-8 py-3 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all"
             >
-              {showBetForm ? "ABORT_MANUAL_ENTRY" : "INIT_MANUAL_BET"}
+              {showBetForm ? "Abort Manual Entry" : "Initialize Manual Bet"}
             </button>
           </div>
 
@@ -622,14 +622,14 @@ export default function AdminPage() {
               <form onSubmit={handleCreateBet} className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div>
-                    <label className="text-[8px] text-white/20 uppercase font-black tracking-widest mb-2 block">SELECT_TARGET_HORIZON</label>
+                    <label className="text-[8px] text-white/20 uppercase font-black tracking-widest mb-2 block">Select Target Horizon</label>
                     <select
                       value={betFormData.marketId}
                       onChange={(e) => setBetFormData({ ...betFormData, marketId: e.target.value })}
                       required
                       className="w-full bg-black border border-white/10 px-4 py-4 text-white text-[11px] font-black uppercase focus:outline-none focus:border-[#FF8C00]/50 appearance-none"
                     >
-                      <option value="">-- SELECT_MARKET --</option>
+                      <option value="">-- SELECT MARKET --</option>
                       {allMarkets.map((m) => (
                         <option key={m.id} value={m.id}>[{m.status}] {m.title.toUpperCase()}</option>
                       ))}
@@ -671,7 +671,7 @@ export default function AdminPage() {
                   </div>
                   <div className="flex gap-4 pt-4">
                     <button type="submit" disabled={creatingBet} className="flex-1 bg-[#FF8C00] text-black text-[11px] font-black uppercase tracking-[0.2em] py-4 hover:bg-white transition-all disabled:opacity-20">
-                      {creatingBet ? "INJECTING..." : "EXEC_INJECTION"}
+                      {creatingBet ? "Injecting..." : "Execute Injection"}
                     </button>
                   </div>
                 </div>

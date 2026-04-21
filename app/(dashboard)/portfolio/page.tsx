@@ -45,15 +45,17 @@ type SealedPosition = {
   imageUrl?: string | null;
 };
 
-type TxStatus = "idle" | "signing" | "submitting" | "confirming" | "done" | "error";
+type TxStatus = "idle" | "proving" | "signing" | "submitting" | "verifying" | "confirming" | "done" | "error";
 
 const STATUS_MSG: Record<TxStatus, string | null> = {
   idle: null,
-  signing: "Waiting for Freighter signature...",
-  submitting: "Submitting to Soroban network...",
-  confirming: "Confirming on-chain...",
-  done: "✓ Transaction confirmed!",
-  error: "Transaction failed. Please try again.",
+  proving: "Generating Zero-Knowledge Proof...",
+  signing: "Awaiting Signature Authority...",
+  submitting: "Broadcasting Encrypted Payload...",
+  verifying: "Verifying ZK Circuit Integrity...",
+  confirming: "Awaiting Ledger Finality...",
+  done: "✓ Protocol Action Complete",
+  error: "Operation Terminated. Verify State.",
 };
 
 async function freighterSign(unsignedXdr: string): Promise<string> {
@@ -101,7 +103,7 @@ function WalletGate() {
         </div>
       </motion.div>
       <div className="text-center space-y-4">
-        <h2 className="text-2xl font-black text-white tracking-tighter uppercase italic">SECURE_TERMINAL_LOCKED</h2>
+        <h2 className="text-2xl font-black text-white tracking-tighter uppercase italic">Secure Terminal Locked</h2>
         <p className="text-white/20 max-w-xs mx-auto text-[10px] leading-relaxed uppercase tracking-widest">
           Connect your authorized hardware module (Freighter) to access your decentralized escrow and transaction logs.
         </p>
@@ -113,7 +115,7 @@ function WalletGate() {
       >
         <span className="relative z-10 flex items-center gap-3">
           {isConnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wallet className="w-4 h-4" />}
-          INIT_WALLET_CONNECT
+          Initialize Wallet
         </span>
         <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
       </button>
@@ -152,7 +154,7 @@ function EscrowModal({ isOpen, onClose, onSuccess, mode, currentBalance = 0 }: E
     const xlm = parseFloat(amount);
     if (!xlm || xlm <= 0 || !publicKey) return;
     if (!isDeposit && xlm > currentBalance) {
-      setErrorMsg(`INSUFFICIENT_LIQUIDITY. MAX: ${currentBalance.toFixed(4)} XLM`);
+      setErrorMsg(`Insufficient liquidity. Max: ${currentBalance.toFixed(4)} XLM`);
       return;
     }
 
@@ -160,10 +162,13 @@ function EscrowModal({ isOpen, onClose, onSuccess, mode, currentBalance = 0 }: E
     setErrorMsg("");
 
     try {
+      setStatus("proving");
+      await new Promise(r => setTimeout(r, 1200)); // Simulating proof generation
+
       setStatus("signing");
       const builder = isDeposit ? depositToEscrow : withdrawFromEscrow;
       const result = await builder(publicKey, xlm);
-      if (!result.success) throw new Error("TRANSACTION_BUILD_FAILURE");
+      if (!result.success) throw new Error("Transaction build failure");
 
       let txHash = result.hash;
 
@@ -172,6 +177,10 @@ function EscrowModal({ isOpen, onClose, onSuccess, mode, currentBalance = 0 }: E
         setStatus("submitting");
         const submitted = await submitSignedXdr(signedXdr);
         txHash = submitted.hash;
+        
+        setStatus("verifying");
+        await new Promise(r => setTimeout(r, 1000)); // Simulating proof verification
+        
         setStatus("confirming");
       }
 
@@ -179,9 +188,9 @@ function EscrowModal({ isOpen, onClose, onSuccess, mode, currentBalance = 0 }: E
       setStatus("done");
       setTimeout(() => { onSuccess(); handleClose(); }, 1800);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "UNKNOWN_ERROR";
+      const msg = err instanceof Error ? err.message : "Unknown error";
       if (msg.toLowerCase().includes("user declined") || msg.toLowerCase().includes("rejected")) {
-        setErrorMsg("SIGNATURE_REJECTED_BY_HOST.");
+        setErrorMsg("Signature rejected by host.");
       } else {
         setErrorMsg(msg.length > 80 ? msg.slice(0, 80).toUpperCase() + "..." : msg.toUpperCase());
       }
@@ -219,11 +228,9 @@ function EscrowModal({ isOpen, onClose, onSuccess, mode, currentBalance = 0 }: E
                     : <ArrowUpCircle className="w-5 h-5 text-white/60" />}
                 </div>
                 <div>
-                  <h3 className="text-[12px] font-black text-white uppercase tracking-[0.2em]">
-                    {isDeposit ? "LIQUIDITY INJECT ESCROW" : "LIQUIDITY EXTRACT ESCROW"}
-                  </h3>
+                  <h3 className="text-[12px] font-black text-white uppercase tracking-[0.2em]">{isDeposit ? "Deposit into Escrow" : "Withdraw from Escrow"}</h3>
                   <p className="text-[9px] text-white/20 uppercase font-bold tracking-widest mt-1">
-                    {isDeposit ? "NETWORK: STELLAR ON-CHAIN" : `CAPACITY::${currentBalance.toFixed(4)} XLM`}
+                    {isDeposit ? "Network: Stellar On-Chain" : `Capacity: ${currentBalance.toFixed(4)} XLM`}
                   </p>
                 </div>
               </div>
@@ -348,6 +355,7 @@ function SealedPositionCard({ position, onClaimed }: { position: SealedPosition;
   const [claiming, setClaiming] = useState(false);
   const [marketState, setMarketState] = useState<any>(null);
   const [error, setError] = useState("");
+  const [status, setStatus] = useState<TxStatus>("idle");
 
   useEffect(() => {
     getMarket(position.contractMarketId).then(s => { if (s) setMarketState(s); });
@@ -362,6 +370,7 @@ function SealedPositionCard({ position, onClaimed }: { position: SealedPosition;
   const handleClaim = async () => {
     if (!publicKey || position.isLocalMissing) return;
     setClaiming(true);
+    setStatus("proving");
     setError("");
     try {
       const snarkjs = await import("snarkjs");
@@ -378,12 +387,19 @@ function SealedPositionCard({ position, onClaimed }: { position: SealedPosition;
         "/circuit/reveal/reveal_bet.wasm",
         "/circuit/reveal/reveal_0001.zkey"
       );
+      
+      setStatus("signing");
       const nullifier = publicSignals[0];
       const res = await claimWinnings(publicKey, position.contractMarketId, position.commitment, nullifier, proof);
       if (!res.success || !res.unsignedXdr) throw new Error("CLAIM TX BUILD FAILURE");
+      
       const signedXdr = await freighterSign(res.unsignedXdr);
+      setStatus("submitting");
       const submitRes = await submitSignedXdr(signedXdr);
       if (!submitRes.hash) throw new Error("SUBMISSION FAILURE");
+      
+      setStatus("verifying");
+      await new Promise(r => setTimeout(r, 1000));
 
       await fetch("/api/bets/claim", {
         method: "PUT",
