@@ -30,7 +30,8 @@ jobs:
       - name: Install Stellar CLI
         run: |
           if ! command -v stellar &> /dev/null; then
-            cargo install --locked stellar-cli --features opt
+            curl -fsSL https://github.com/stellar/stellar-cli/raw/main/install.sh | sh
+            echo "$HOME/.stellar/bin" >> $GITHUB_PATH
           fi
 
       - name: Run Contract Tests
