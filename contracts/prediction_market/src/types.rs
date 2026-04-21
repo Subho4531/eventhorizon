@@ -13,7 +13,9 @@ pub enum MarketStatus {
     Disputed = 3,
 }
 
+#[allow(dead_code)]
 pub const OUTCOME_YES: u32 = 0;
+#[allow(dead_code)]
 pub const OUTCOME_NO: u32 = 1;
 
 // ──────────────────────────────────────────────────────────────────────────────

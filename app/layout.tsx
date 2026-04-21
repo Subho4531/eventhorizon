@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Outfit } from "next/font/google";
+import { Space_Grotesk, Outfit, JetBrains_Mono, Michroma } from "next/font/google";
 import "./globals.css";
 import SmoothScroll from "@/components/LenisProvider";
 
@@ -10,6 +10,17 @@ const spaceGrotesk = Space_Grotesk({
 
 const outfit = Outfit({
   variable: "--font-outfit",
+  subsets: ["latin"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains",
+  subsets: ["latin"],
+});
+
+const michroma = Michroma({
+  variable: "--font-michroma",
+  weight: "400",
   subsets: ["latin"],
 });
 
@@ -45,7 +56,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${outfit.variable} antialiased`}
+      className={`${spaceGrotesk.variable} ${outfit.variable} ${jetbrainsMono.variable} ${michroma.variable} antialiased`}
     >
       <head>
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />

@@ -1,31 +1,30 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   TrendingUp, 
   Activity, 
   Zap, 
   BarChart3, 
   ArrowUpRight, 
-  Users, 
+  Layers, 
   Clock, 
-  LayoutGrid, 
   ShieldCheck,
   ChevronRight,
   ChevronLeft,
-  Lock,
-  Globe
+  Globe,
+  Database,
+  Cpu,
+  BarChart2
 } from "lucide-react";
 import {
   AreaChart,
   Area,
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  Cell,
-  XAxis,
   Tooltip,
+  XAxis,
+  YAxis
 } from "recharts";
 import { useRouter } from "next/navigation";
 
@@ -44,28 +43,41 @@ interface Market {
 export default function LaunchDashboard() {
   const router = useRouter();
   const [trendingMarkets, setTrendingMarkets] = useState<Market[]>([]);
-  const [categories, setCategories] = useState<{ name: string; volume: number }[]>([]);
-  const [recentLogs, setRecentLogs] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState({
+    totalVolume: 0,
+    activeMarkets: 0,
+    totalLiquidity: 0,
+    change24h: 0
+  });
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     fetchDashboardData();
-    const interval = setInterval(fetchDashboardData, 15000);
+    const interval = setInterval(fetchDashboardData, 30000);
     return () => clearInterval(interval);
   }, []);
 
   const fetchDashboardData = async () => {
     try {
-      const [marketsRes, logsRes] = await Promise.all([
-        fetch("/api/markets"),
-        fetch("/api/transactions?limit=10")
-      ]);
+      const marketsRes = await fetch("/api/markets");
 
       if (marketsRes.ok) {
         const data = await marketsRes.json();
         const allMarkets: Market[] = data.markets || [];
         
+        // Metrics calculation
+        const totalVol = allMarkets.reduce((sum, m) => sum + m.totalVolume, 0);
+        const active = allMarkets.filter(m => m.status === 'active').length;
+        const liquidity = allMarkets.reduce((sum, m) => sum + m.yesPool + m.noPool, 0);
+        
+        setMetrics({
+          totalVolume: totalVol,
+          activeMarkets: active,
+          totalLiquidity: liquidity,
+          change24h: 5.2 // Mocked for now
+        });
+
         // Top 5 by volume
         const topMarkets = [...allMarkets].sort((a, b) => b.totalVolume - a.totalVolume).slice(0, 5);
         
@@ -85,18 +97,6 @@ export default function LaunchDashboard() {
         }));
 
         setTrendingMarkets(marketsWithHistory);
-
-        // Category showdown
-        const catMap: Record<string, number> = {};
-        allMarkets.forEach(m => {
-          catMap[m.category] = (catMap[m.category] || 0) + m.totalVolume;
-        });
-        setCategories(Object.entries(catMap).map(([name, volume]) => ({ name, volume })));
-      }
-
-      if (logsRes.ok) {
-        const data = await logsRes.json();
-        setRecentLogs(data.transactions || []);
       }
     } catch (err) {
       console.error("Dashboard fetch error:", err);
@@ -117,10 +117,10 @@ export default function LaunchDashboard() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <div className="relative">
-          <Zap className="w-12 h-12 text-[#FF8C00] animate-pulse" />
-          <div className="absolute inset-0 bg-[#FF8C00]/20 blur-xl animate-pulse" />
+          <Cpu className="w-12 h-12 text-[#00F2FF] animate-spin" />
+          <div className="absolute inset-0 bg-[#00F2FF]/20 blur-2xl animate-pulse" />
         </div>
-        <span className="mt-8 text-[10px] font-black uppercase tracking-[1em] text-white/30">Horizon Protocol Online</span>
+        <span className="mt-8 text-[10px] font-medium uppercase tracking-[1em] text-[#00F2FF]/50">Initializing Quantum Protocol</span>
       </div>
     );
   }
@@ -128,252 +128,230 @@ export default function LaunchDashboard() {
   const featured = trendingMarkets[currentIndex];
 
   return (
-    <div className="space-y-12 pb-20">
-      {/* ── HERO HEADING ── */}
-      <section className="text-center py-10 space-y-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="inline-flex items-center gap-2 px-3 py-1 border border-[#FF8C00]/30 bg-[#FF8C00]/5 rounded-full"
-        >
-          <Lock className="w-3 h-3 text-[#FF8C00]" />
-          <span className="text-[9px] font-black text-[#FF8C00] uppercase tracking-widest">Zero Knowledge Shielded</span>
-        </motion.div>
-        <motion.h1 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8 }}
-          className="text-7xl font-black text-white tracking-[-0.05em] uppercase italic leading-none"
-        >
-          EVENT <span className="text-[#FF8C00] text-shadow-glow">HORIZON</span>
-        </motion.h1>
-        <motion.p 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-white/40 text-sm font-bold uppercase tracking-[0.4em]"
-        >
-          Privacy Prediction Markets on Stellar
-        </motion.p>
+    <div className="space-y-8 pb-20 max-w-[1400px] mx-auto">
+      {/* ── METRICS BAR ── */}
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/5 border border-white/5 backdrop-blur-xl overflow-hidden">
+        {[
+          { label: "PROTOCOL VOLUME", value: metrics.totalVolume.toLocaleString() + " XLM", icon: Database },
+          { label: "ACTIVE MARKETS", value: metrics.activeMarkets, icon: Layers },
+          { label: "SYSTEM LIQUIDITY", value: metrics.totalLiquidity.toLocaleString() + " XLM", icon: Activity },
+          { label: "24H MOMENTUM", value: "+" + metrics.change24h + "%", icon: TrendingUp, color: "text-emerald-400" },
+        ].map((item, i) => (
+          <div key={i} className="p-6 bg-[#050505]/80 hover:bg-white/[0.02] transition-colors relative group">
+            <div className="flex items-center gap-3 mb-2">
+              <item.icon className="w-3 h-3 text-[#00F2FF]/40 group-hover:text-[#00F2FF] transition-colors" />
+              <span className="text-[10px] font-jetbrains font-medium text-white/30 uppercase tracking-[0.2em]">{item.label}</span>
+            </div>
+            <div className={`text-xl font-jetbrains font-medium tracking-tight ${item.color || "text-white"}`}>
+              {item.value}
+            </div>
+            <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#00F2FF]/40 group-hover:w-full transition-all duration-500" />
+          </div>
+        ))}
       </section>
 
-      {/* ── FEATURED SWIPER ── */}
-      <section className="relative">
-        <div className="absolute top-1/2 -left-12 -translate-y-1/2 z-20">
-          <button onClick={prevSlide} className="p-3 border border-white/5 hover:border-[#FF8C00]/40 text-white/20 hover:text-[#FF8C00] transition-all bg-[#0D0D0D]">
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-        </div>
-        <div className="absolute top-1/2 -right-12 -translate-y-1/2 z-20">
-          <button onClick={nextSlide} className="p-3 border border-white/5 hover:border-[#FF8C00]/40 text-white/20 hover:text-[#FF8C00] transition-all bg-[#0D0D0D]">
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        </div>
-
+      {/* ── FEATURED TERMINAL ── */}
+      <section className="relative group">
         <AnimatePresence mode="wait">
           {featured && (
             <motion.div
               key={featured.id}
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.5, ease: "circOut" }}
-              className="grid grid-cols-1 lg:grid-cols-2 bg-[#0D0D0D] border border-white/5 overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.5)]"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="relative aspect-[21/9] min-h-[400px] bg-[#050505] border border-white/5 overflow-hidden"
             >
-              {/* Left: Info */}
-              <div className="p-12 space-y-8 flex flex-col justify-center border-r border-white/5">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <span className="px-2 py-0.5 border border-[#FF8C00]/30 text-[#FF8C00] text-[9px] font-black uppercase tracking-widest">{featured.category}</span>
-                    <span className="text-[9px] text-white/20 font-black uppercase tracking-widest">Market ID: {featured.id.slice(0,8)}</span>
-                  </div>
-                  <h2 className="text-4xl font-black text-white uppercase italic leading-[0.95] tracking-tighter">
-                    {featured.title}
-                  </h2>
-                </div>
-
-                <div className="grid grid-cols-3 gap-8">
-                  <div>
-                    <div className="text-[24px] font-black text-white tracking-tighter">{featured.totalVolume.toLocaleString()}</div>
-                    <div className="text-[9px] text-white/30 font-black uppercase tracking-widest">Protocol Vol</div>
-                  </div>
-                  <div>
-                    <div className="text-[24px] font-black text-[#00C853] tracking-tighter">
-                      {Math.round((featured.yesPool / (featured.yesPool + featured.noPool || 1)) * 100)}%
-                    </div>
-                    <div className="text-[9px] text-white/30 font-black uppercase tracking-widest">YES Momentum</div>
-                  </div>
-                  <div>
-                    <div className="text-[24px] font-black text-blue-400 tracking-tighter">
-                       {(featured.yesPool + featured.noPool).toLocaleString()}
-                    </div>
-                    <div className="text-[9px] text-white/30 font-black uppercase tracking-widest">Liquidity</div>
-                  </div>
-                </div>
-
-                <div className="pt-4">
-                  <button 
-                    onClick={() => router.push(`/markets/${featured.id}`)}
-                    className="group flex items-center gap-3 px-8 py-4 bg-[#FF8C00] text-black font-black uppercase text-xs tracking-widest hover:brightness-110 transition-all"
-                  >
-                    Enter Position <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                  </button>
-                </div>
+              {/* Poster Background */}
+              <div className="absolute inset-0">
+                <img 
+                  src={featured.imageUrl || `https://source.unsplash.com/featured/?${featured.category},future`} 
+                  alt="" 
+                  className="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 transition-all duration-1000 scale-105 group-hover:scale-100"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/60 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#050505] to-transparent" />
               </div>
 
-              {/* Right: Graph */}
-              <div className="bg-[#0A0A0A] p-8 flex flex-col min-h-[400px] relative">
-                 <div className="flex items-center justify-between mb-8 relative z-10">
-                   <div className="flex items-center gap-2">
-                     <Activity className="w-4 h-4 text-[#FF8C00] animate-pulse" />
-                     <span className="text-[10px] text-white font-black uppercase tracking-widest">Probability Horizon</span>
-                   </div>
-                   <div className="text-[9px] text-white/20 font-black uppercase tracking-widest">Live Signal Feed</div>
-                 </div>
+              {/* Content Overlay */}
+              <div className="relative h-full flex items-center p-12 lg:p-20">
+                <div className="max-w-2xl space-y-8">
+                  <div className="space-y-4">
+                    <motion.div 
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="inline-flex items-center gap-3 px-3 py-1 bg-[#00F2FF]/10 border border-[#00F2FF]/20 text-[#00F2FF] text-[10px] font-jetbrains font-medium uppercase tracking-[0.2em]"
+                    >
+                      <Zap className="w-3 h-3 animate-pulse" />
+                      Featured Prediction
+                    </motion.div>
+                    <motion.h2 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-5xl lg:text-6xl font-michroma font-normal text-white tracking-tight leading-[1.1] uppercase"
+                    >
+                      {featured.title}
+                    </motion.h2>
+                  </div>
 
-                 <div className="flex-1 w-full h-full min-h-[250px]">
-                    {featured.history && featured.history.length > 1 ? (
+                  <div className="flex items-center gap-12">
+                    <div>
+                      <div className="text-[10px] font-jetbrains text-white/30 font-medium uppercase tracking-[0.2em] mb-1">Market Pool</div>
+                      <div className="text-2xl font-jetbrains font-medium text-white">{(featured.yesPool + featured.noPool).toLocaleString()} <span className="text-xs text-white/40">XLM</span></div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-jetbrains text-white/30 font-medium uppercase tracking-[0.2em] mb-1">Confidence Index</div>
+                      <div className="text-2xl font-jetbrains font-medium text-[#00F2FF]">
+                        {Math.round((featured.yesPool / (featured.yesPool + featured.noPool || 1)) * 100)}%
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <button 
+                      onClick={() => router.push(`/markets/${featured.id}`)}
+                      className="px-10 py-4 bg-[#00F2FF] text-black font-jetbrains font-medium text-xs uppercase tracking-[0.2em] hover:bg-white transition-all duration-300"
+                    >
+                      EXECUTE ORDER
+                    </button>
+                    <button 
+                      onClick={() => router.push(`/markets/${featured.id}`)}
+                      className="px-10 py-4 border border-white/10 text-white font-jetbrains font-medium text-xs uppercase tracking-[0.2em] hover:bg-white hover:text-black transition-all duration-300"
+                    >
+                      ANALYSIS
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right Side: High-Tech Graph Overlay */}
+                <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 w-1/3 h-2/3 pr-20 opacity-60">
+                   <div className="h-full w-full relative">
+                      <div className="absolute inset-0 bg-[#00F2FF]/5 blur-3xl rounded-full" />
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={featured.history}>
                           <defs>
-                            <linearGradient id="featuredGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#FF8C00" stopOpacity={0.4} />
-                              <stop offset="95%" stopColor="#FF8C00" stopOpacity={0} />
+                            <linearGradient id="techGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#00F2FF" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#00F2FF" stopOpacity={0} />
                             </linearGradient>
                           </defs>
-                          <Tooltip 
-                            contentStyle={{ backgroundColor: '#0D0D0D', border: '1px solid rgba(255,255,255,0.1)', fontSize: '10px', fontWeight: 900 }}
-                            itemStyle={{ color: '#FF8C00' }}
-                          />
                           <Area 
                             type="stepAfter" 
                             dataKey="p" 
-                            stroke="#FF8C00" 
-                            strokeWidth={4}
+                            stroke="#00F2FF" 
+                            strokeWidth={2}
                             fillOpacity={1} 
-                            fill="url(#featuredGrad)" 
-                            animationDuration={1500}
+                            fill="url(#techGrad)" 
+                            animationDuration={2000}
                           />
                         </AreaChart>
                       </ResponsiveContainer>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-full opacity-20">
-                        <BarChart3 className="w-12 h-12 mb-4 animate-bounce" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Awaiting Historical Data...</span>
+                      <div className="absolute top-0 right-0 text-[10px] text-[#00F2FF] font-jetbrains font-medium uppercase tracking-widest flex items-center gap-2">
+                        <Activity className="w-3 h-3" />
+                        Probability Horizon
                       </div>
-                    )}
-                 </div>
+                   </div>
+                </div>
+              </div>
 
-                 {/* Corner Decoration */}
-                 <div className="absolute bottom-0 right-0 p-4 opacity-5">
-                   <Globe className="w-32 h-32" />
-                 </div>
+              {/* Navigation Controls */}
+              <div className="absolute bottom-10 right-10 flex gap-2">
+                <button onClick={prevSlide} className="p-4 border border-white/10 bg-[#050505]/40 backdrop-blur-md text-white hover:bg-[#00F2FF] hover:text-black transition-all">
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button onClick={nextSlide} className="p-4 border border-white/10 bg-[#050505]/40 backdrop-blur-md text-white hover:bg-[#00F2FF] hover:text-black transition-all">
+                  <ChevronRight className="w-5 h-5" />
+                </button>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
+      </section>
 
-        {/* Indicators */}
-        <div className="flex justify-center gap-2 mt-6">
-          {trendingMarkets.map((_, i) => (
-            <button 
-              key={i} 
-              onClick={() => setCurrentIndex(i)}
-              className={`w-12 h-1 transition-all ${i === currentIndex ? "bg-[#FF8C00]" : "bg-white/10 hover:bg-white/20"}`}
-            />
+      {/* ── LIVE SIGNAL STREAM ── */}
+      <section className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <BarChart2 className="w-4 h-4 text-[#00F2FF]" />
+            <h3 className="text-xs font-jetbrains font-medium text-white uppercase tracking-[0.4em]">Signal Stream</h3>
+          </div>
+          <button 
+            onClick={() => router.push('/markets')}
+            className="text-[10px] font-jetbrains font-medium text-white/30 hover:text-[#00F2FF] transition-colors uppercase tracking-[0.2em]"
+          >
+            Access Terminal
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {trendingMarkets.slice(0, 6).map((market, i) => (
+            <motion.div
+              key={market.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              onClick={() => router.push(`/markets/${market.id}`)}
+              className="group cursor-pointer bg-white/[0.02] border border-white/5 p-6 hover:bg-white/[0.04] hover:border-[#00F2FF]/30 transition-all relative overflow-hidden"
+            >
+              {/* Background Glow */}
+              <div className="absolute top-0 right-0 w-24 h-24 bg-[#00F2FF]/5 blur-3xl group-hover:bg-[#00F2FF]/10 transition-all" />
+              
+              <div className="relative space-y-4">
+                <div className="flex justify-between items-start">
+                  <span className="text-[9px] font-jetbrains font-medium text-[#00F2FF] bg-[#00F2FF]/10 px-2 py-0.5 border border-[#00F2FF]/20 uppercase tracking-widest">
+                    {market.category}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[9px] text-white/20 font-jetbrains font-medium uppercase tracking-widest">Live</span>
+                  </div>
+                </div>
+
+                <h4 className="text-lg font-medium text-white/90 group-hover:text-white transition-colors leading-tight">
+                  {market.title}
+                </h4>
+
+                {/* Yes/No Probability Graph */}
+                <div className="h-16 w-full opacity-40 group-hover:opacity-100 transition-opacity">
+                  {market.history && market.history.length > 1 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={market.history}>
+                        <Area 
+                          type="stepAfter" 
+                          dataKey="p" 
+                          stroke="#00F2FF" 
+                          strokeWidth={2}
+                          fill="transparent" 
+                          animationDuration={1000}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-[9px] text-white/10 uppercase tracking-widest">
+                      Gathering Intel...
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <div className="text-[10px] font-jetbrains text-white/30 font-medium uppercase tracking-widest">
+                    Vol: {market.totalVolume.toLocaleString()}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-jetbrains font-medium text-[#00F2FF]">
+                    Analyze <ArrowUpRight className="w-3 h-3" />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           ))}
         </div>
       </section>
 
-      {/* ── SHOWDOWN & LOGS ── */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {/* Category Showdown */}
-        <div className="bg-[#0D0D0D] border border-white/5 p-10 group">
-          <div className="flex items-center justify-between mb-10">
-            <div className="flex items-center gap-3">
-              <LayoutGrid className="w-5 h-5 text-blue-400" />
-              <h3 className="text-lg font-black text-white uppercase tracking-[0.2em] italic">Market Sectors</h3>
-            </div>
-            <div className="text-[9px] text-white/20 font-black uppercase tracking-widest">Comparative Volume</div>
-          </div>
-
-          <div className="space-y-6">
-            {categories.sort((a,b) => b.volume - a.volume).map((cat, i) => {
-               const maxVol = Math.max(...categories.map(c => c.volume));
-               const width = (cat.volume / (maxVol || 1)) * 100;
-               return (
-                 <div key={cat.name} className="space-y-2">
-                   <div className="flex justify-between items-end">
-                     <span className="text-[11px] font-black text-white/60 uppercase tracking-widest">{cat.name}</span>
-                     <span className="text-[11px] font-black text-white uppercase tracking-tighter">{cat.volume.toLocaleString()} <span className="text-white/20 ml-1">XLM</span></span>
-                   </div>
-                   <div className="h-1.5 bg-white/5 w-full relative overflow-hidden">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${width}%` }}
-                        transition={{ duration: 1, delay: i * 0.1 }}
-                        className="absolute h-full bg-blue-500" 
-                      />
-                   </div>
-                 </div>
-               );
-            })}
-          </div>
-        </div>
-
-        {/* Live Logs */}
-        <div className="bg-[#0D0D0D] border border-white/5 p-10 flex flex-col h-[480px]">
-          <div className="flex items-center justify-between mb-10">
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="w-5 h-5 text-[#00C853]" />
-              <h3 className="text-lg font-black text-white uppercase tracking-[0.2em] italic">Protocol Feed</h3>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#00C853] animate-pulse" />
-              <span className="text-[9px] text-[#00C853] font-black uppercase tracking-widest">Realtime Active</span>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto space-y-4 no-scrollbar pr-2">
-            {recentLogs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full opacity-10">
-                <Clock className="w-10 h-10 mb-4" />
-                <span className="text-[11px] font-black uppercase tracking-widest">Syncing with Ledger...</span>
-              </div>
-            ) : (
-              <AnimatePresence>
-                {recentLogs.map((log, i) => (
-                  <motion.div
-                    key={log.id}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="flex items-center justify-between p-5 border border-white/5 hover:bg-white/[0.02] transition-all group"
-                  >
-                    <div className="flex items-center gap-5">
-                      <div className="text-[10px] font-black text-white/20 group-hover:text-[#FF8C00] transition-colors uppercase">
-                        {log.type.slice(0,3)}
-                      </div>
-                      <div>
-                        <div className="text-[11px] font-black text-white uppercase tracking-tight">
-                          {log.type.replace(/_/g, ' ')}
-                        </div>
-                        <div className="text-[9px] text-white/20 font-bold uppercase truncate max-w-[140px]">
-                          {log.userPublicKey}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[14px] font-black text-[#FF8C00] tracking-tighter">+{log.amount} <span className="text-[10px] ml-0.5">XLM</span></div>
-                      <div className="text-[8px] text-white/20 font-black uppercase tracking-widest">Verified</div>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            )}
-          </div>
-        </div>
-      </section>
+      {/* Background Subtle Elements */}
+      <div className="fixed inset-0 pointer-events-none opacity-20">
+         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#00F2FF]/5 blur-[120px] rounded-full animate-pulse" />
+         <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-[#FF8C00]/5 blur-[150px] rounded-full animate-pulse" />
+      </div>
     </div>
   );
 }

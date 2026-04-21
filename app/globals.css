@@ -10,6 +10,8 @@
   --font-headline: "Space Grotesk", sans-serif;
   --font-body: "Outfit", sans-serif;
   --font-label: "Outfit", sans-serif;
+  --font-michroma: var(--font-michroma);
+  --font-jetbrains: var(--font-jetbrains);
   
   /* Stitch Colors */
   --color-error-dim: #f87171;

@@ -58,7 +58,7 @@ export default function Navbar() {
         className="flex items-center gap-3 px-8 h-full border-r border-white/5 hover:bg-white/[0.02] transition-colors shrink-0"
       >
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="Event Horizon Logo" className="w-7 h-7 object-contain rounded-full shadow-[0_0_15px_rgba(255,255,255,0.1)]" />
+          <img src="/logo.png" alt="Event Horizon Logo" className="w-7 h-7 object-contain rounded-full shadow-[0_0_15px_rgba(255,255,255,0.1)] brightness-0 invert" />
           <span className="text-lg font-black tracking-widest text-white uppercase italic">Horizon</span>
         </div>
       </Link>

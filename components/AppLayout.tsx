@@ -70,7 +70,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-h-screen pt-[64px]">
         {/* ── SIDEBAR EVENT HORIZON REDESIGN ── */}
-        <aside className="hidden md:flex flex-col w-[240px] border-r border-white/5 bg-[#0D0D0D] sticky top-[64px] h-[calc(100vh-64px)] overflow-y-auto no-scrollbar shrink-0">
+        {!["/", "/portfolio"].includes(pathname) && (
+          <aside className="hidden md:flex flex-col w-[240px] border-r border-white/5 bg-[#0D0D0D] sticky top-[64px] h-[calc(100vh-64px)] overflow-y-auto no-scrollbar shrink-0">
           <div className="p-4">
             {publicKey ? (
               <div className="relative group">
@@ -205,6 +206,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </aside>
+        )}
 
         {/* ── MAIN CONTENT ── */}
         <main className="flex-1 min-w-0 bg-[#0A0A0A] relative overflow-hidden">

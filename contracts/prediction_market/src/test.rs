@@ -4,8 +4,8 @@ extern crate std;
 
 use super::*;
 use soroban_sdk::{
-    testutils::{Address as _, Events, Ledger, LedgerInfo},
-    token, Address, BytesN, Env, IntoVal, Symbol,
+    testutils::{Address as _, Ledger, LedgerInfo},
+    token, Address, BytesN, Env, Symbol,
 };
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -13,7 +13,7 @@ use soroban_sdk::{
 // ──────────────────────────────────────────────────────────────────────────────
 
 /// Deploy a mock XLM SAC and return (token_admin, xlm_client).
-fn create_xlm_token(env: &Env) -> (Address, token::StellarAssetClient) {
+fn create_xlm_token(env: &Env) -> (Address, token::StellarAssetClient<'_>) {
     let admin = Address::generate(env);
     let contract_id = env.register_stellar_asset_contract_v2(admin.clone());
     let client = token::StellarAssetClient::new(env, &contract_id.address());
@@ -63,7 +63,7 @@ struct Fixture {
     env: Env,
     contract: ZKPredictionMarketClient<'static>,
     contract_id: Address,
-    xlm_sac: token::StellarAssetClient<'static>,
+    _xlm_sac: token::StellarAssetClient<'static>,
     xlm_client: token::Client<'static>,
     admin: Address,
     alice: Address,
@@ -112,7 +112,7 @@ impl Fixture {
             env,
             contract,
             contract_id,
-            xlm_sac,
+            _xlm_sac: xlm_sac,
             xlm_client,
             admin,
             alice,
@@ -182,6 +182,7 @@ fn test_create_market() {
     let close = f.env.ledger().timestamp() + 3_600;
 
     let id = f.contract.create_market(
+        &f.admin,
         &f.oracle,
         &Symbol::new(&f.env, "BTC_OVER_100K"),
         &close,
@@ -203,8 +204,10 @@ fn test_place_bet() {
     f.contract.deposit(&f.alice, &stake);
 
     let id = f.contract.create_market(
+        &f.admin,
         &f.oracle,
-        &Symbol::new(&f.env, "ETH_FLIP"), &close,
+        &Symbol::new(&f.env, "ETH_FLIP"),
+        &close,
     );
 
     let commitment = bytes32(&f.env, 42);
@@ -228,8 +231,10 @@ fn test_duplicate_commitment_fails() {
 
     f.contract.deposit(&f.alice, &(stake * 2));
     let id = f.contract.create_market(
+        &f.admin,
         &f.oracle,
-        &Symbol::new(&f.env, "DUP_TEST"), &close,
+        &Symbol::new(&f.env, "DUP_TEST"),
+        &close,
     );
 
     let commitment = bytes32(&f.env, 7);
@@ -243,8 +248,10 @@ fn test_resolve_market() {
     let close = f.env.ledger().timestamp() + 3_600;
 
     let id = f.contract.create_market(
+        &f.admin,
         &f.oracle,
-        &Symbol::new(&f.env, "RESOLVE_TEST"), &close,
+        &Symbol::new(&f.env, "RESOLVE_TEST"),
+        &close,
     );
 
     f.contract.resolve(&f.oracle, &id, &OUTCOME_YES, &20_000u32);
@@ -272,8 +279,10 @@ fn test_full_claim_lifecycle() {
 
     // 2. Create market.
     let id = f.contract.create_market(
+        &f.admin,
         &f.oracle,
-        &Symbol::new(&f.env, "ZK_LIFECYCLE"), &close,
+        &Symbol::new(&f.env, "ZK_LIFECYCLE"),
+        &close,
     );
 
     // 3. Alice places ZK bet (commitment = Poseidon(YES, nonce, alice_key) — mocked here).
@@ -315,8 +324,10 @@ fn test_double_claim_fails() {
 
     f.contract.deposit(&f.alice, &stake);
     let id = f.contract.create_market(
+        &f.admin,
         &f.oracle,
-        &Symbol::new(&f.env, "DOUBLE_CLAIM"), &close,
+        &Symbol::new(&f.env, "DOUBLE_CLAIM"),
+        &close,
     );
     let commitment = bytes32(&f.env, 1);
     let nullifier  = bytes32(&f.env, 2);
@@ -338,8 +349,10 @@ fn test_claim_during_dispute_fails() {
 
     f.contract.deposit(&f.alice, &stake);
     let id = f.contract.create_market(
+        &f.admin,
         &f.oracle,
-        &Symbol::new(&f.env, "DISPUTE_TEST"), &close,
+        &Symbol::new(&f.env, "DISPUTE_TEST"),
+        &close,
     );
     let commitment = bytes32(&f.env, 3);
     let nullifier  = bytes32(&f.env, 4);

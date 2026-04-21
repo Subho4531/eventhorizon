@@ -46,7 +46,7 @@ use soroban_sdk::{
 };
 
 // Dispute window: 48 hours in seconds
-const DISPUTE_WINDOW_SECS: u64 = 0; // Instant claims (no dispute window)
+const DISPUTE_WINDOW_SECS: u64 = 172_800; // 48 hours in seconds
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Contract
