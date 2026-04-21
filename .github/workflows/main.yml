@@ -1,0 +1,118 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  contracts:
+    name: Build and Test Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            contracts/prediction_market/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install Stellar CLI
+        run: |
+          if ! command -v stellar &> /dev/null; then
+            cargo install --locked stellar-cli --features opt
+          fi
+
+      - name: Run Contract Tests
+        working-directory: contracts/prediction_market
+        run: cargo test
+
+      - name: Build Contracts
+        working-directory: contracts/prediction_market
+        run: stellar contract build
+
+      - name: Upload Contract WASM
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-wasm
+          path: contracts/prediction_market/target/wasm32v1-none/release/prediction_market.wasm
+
+  frontend:
+    name: Build and Test Frontend
+    runs-on: ubuntu-latest
+    needs: contracts
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: gravityflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Download Contract WASM
+        uses: actions/download-artifact@v4
+        with:
+          name: contract-wasm
+          path: ./contracts/prediction_market/artifacts/
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run Database Migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/gravityflow
+
+      - name: Run Frontend Tests
+        run: npm run test
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/gravityflow
+
+      - name: Build Frontend
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/gravityflow
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: mock_cloud
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [contracts, frontend]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Deployment Gate
+        run: echo "Code integrated and validated. Ready for deployment."
