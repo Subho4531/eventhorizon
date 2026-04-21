@@ -23,17 +23,20 @@ export async function GET() {
 export async function POST(req: NextRequest) {
     try {
       const body = await req.json();
-      const { contractMarketId, title, description, creatorId, closeDate, category } = body;
+      const { contractMarketId, title, description, creatorId, closeDate, category, imageUrl } = body;
 
       if (!contractMarketId || !title || !creatorId || !closeDate) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
       }
 
+      const marketIdNum = typeof contractMarketId === 'string' ? parseInt(contractMarketId, 10) : Number(contractMarketId);
+
       const market = await prisma.market.create({
         data: {
-          contractMarketId,
+          contractMarketId: marketIdNum,
           title,
           description: description ?? "",
+          imageUrl: imageUrl ?? "",
           creator: {
             connectOrCreate: {
               where: { publicKey: creatorId },
@@ -47,8 +50,8 @@ export async function POST(req: NextRequest) {
       });
 
       return NextResponse.json({ market }, { status: 201 });
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      return NextResponse.json({ error: "DB error" }, { status: 500 });
+      return NextResponse.json({ error: `DB error: ${err.message || "Unknown error"}` }, { status: 500 });
     }
   }

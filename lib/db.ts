@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
 // Prisma 7 requires a driver adapter to pass the connection URL at runtime.
 // datasourceUrl was removed from the PrismaClient constructor in v7.
@@ -14,7 +15,13 @@ function createPrismaClient() {
       "DATABASE_URL is not set. Add it to your Vercel/Netlify environment variables."
     );
   }
-  const adapter = new PrismaPg({ connectionString });
+  
+  const pool = new Pool({ 
+    connectionString,
+    ssl: { rejectUnauthorized: false } // Required for Neon DB in some environments
+  });
+  const adapter = new PrismaPg(pool);
+  
   return new PrismaClient({
     adapter,
     log:

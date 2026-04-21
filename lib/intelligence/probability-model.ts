@@ -159,15 +159,22 @@ async function analyzeHistoricalMarkets(
   }
 }
 
+import { getAIMarketScore } from "./ollama-service";
+
 /**
- * Placeholder for external data source integration.
- * Returns null for MVP (will be implemented in future iterations).
+ * AI-driven probability signal using Ollama.
  */
 async function fetchExternalSignals(
-  marketTitle: string
+  marketTitle: string,
+  marketDescription: string
 ): Promise<{ probability: number; confidence: number } | null> {
-  // TODO: Integrate with external APIs (news, social sentiment, etc.)
-  return null;
+  const aiResult = await getAIMarketScore(marketTitle, marketDescription);
+  if (!aiResult) return null;
+
+  return {
+    probability: aiResult.score / 100,
+    confidence: aiResult.confidence,
+  };
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -214,8 +221,8 @@ export async function generateInitialProbability(
       sources.push("historical");
     }
 
-    // Try external signals
-    const external = await fetchExternalSignals(market.title);
+    // Try AI signals via Ollama
+    const external = await fetchExternalSignals(market.title, market.description || "");
     if (external) {
       // Blend with historical if available
       if (sources.includes("historical")) {

@@ -17,13 +17,13 @@ import { WalletProvider } from "@/components/WalletProvider";
 
 export const metadata: Metadata = {
   title: {
-    default: "GravityFlow | ZK Prediction Market",
-    template: "%s | GravityFlow"
+    default: "Event Horizon | ZK Prediction Market",
+    template: "%s | Event Horizon"
   },
   description: "Experience the next generation of prediction markets with Zero-Knowledge privacy on Stellar Testnet. Trade outcomes with deep liquidity and total anonymity.",
   keywords: ["stellar", "prediction market", "zero-knowledge", "zk-proofs", "soroban", "crypto", "betting"],
   openGraph: {
-    title: "Event Horizon",
+    title: "Event Horizon | ZK Prediction Market",
     description: "Privacy-first prediction markets on Stellar.",
     url: "https://eventhorizon-pied.vercel.app/",
     siteName: "Event Horizon",

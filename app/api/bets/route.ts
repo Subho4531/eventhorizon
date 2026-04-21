@@ -159,7 +159,9 @@ export async function GET(req: NextRequest) {
           select: {
             id: true,
             title: true,
-            status: true
+            status: true,
+            imageUrl: true,
+            contractMarketId: true
           }
         },
         user: {

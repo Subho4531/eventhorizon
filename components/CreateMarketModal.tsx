@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { createMarket, submitSignedXdr, getOnchainMarketCount } from "@/lib/escrow";
+import { createMarket, submitSignedXdr } from "@/lib/escrow";
 import { signTransaction } from "@stellar/freighter-api";
 import { useRouter } from "next/navigation";
+import { X, Shield, Terminal, Database, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface CreateMarketModalProps {
   isOpen: boolean;
@@ -19,9 +21,11 @@ export default function CreateMarketModal({
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [oracle, setOracle] = useState(userPublicKey); // Default to self
+  const [oracle, setOracle] = useState(userPublicKey);
   const [closeDate, setCloseDate] = useState("");
-  const [category, setCategory] = useState("Crypto");
+  const [category, setCategory] = useState("CRYPTO");
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<"form" | "tx" | "indexing" | "success" | "error">("form");
@@ -31,7 +35,7 @@ export default function CreateMarketModal({
 
   async function handleCreate() {
     if (!title || !closeDate || !oracle) {
-      setErrorMsg("Please fill all required fields.");
+      setErrorMsg("ERR: MISSING_REQUIRED_PARAMETERS");
       return;
     }
 
@@ -41,57 +45,53 @@ export default function CreateMarketModal({
 
     try {
       const closeTimeUnix = Math.floor(new Date(closeDate).getTime() / 1000);
+      const validSymbol = title.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 32);
 
-      // Enforce Soroban Symbol restrictions: max 32 chars, [a-zA-Z0-9_]
-      const validSymbol = title
-        .replace(/[^a-zA-Z0-9_]/g, "_")
-        .slice(0, 32);
+      const res = await createMarket(userPublicKey, validSymbol, closeTimeUnix, oracle);
+      if (!res.success || !res.unsignedXdr) throw new Error("FAILED_TO_BUILD_XDR_PAYLOAD");
 
-      // Step 1: Build Unsigned XDR
-      const res = await createMarket(
-        userPublicKey,
-        validSymbol,
-        closeTimeUnix,
-        oracle
-      );
-
-      if (!res.success || !res.unsignedXdr) {
-        throw new Error("Failed to build transaction");
-      }
-
-      // Step 2: Sign with Freighter
       const signRes = await signTransaction(res.unsignedXdr, {
         networkPassphrase: "Test SDF Network ; September 2015",
       });
 
-      if (!signRes || !signRes.signedTxXdr) {
-        throw new Error("Transaction signing failed or cancelled.");
-      }
+      if (!signRes || !signRes.signedTxXdr) throw new Error("AUTH_SIGNING_ABORTED");
 
-      // Step 3: Submit to Soroban RPC
       const txResult = await submitSignedXdr(signRes.signedTxXdr);
       const onChainMarketId = txResult.returnValue;
-      if (typeof onChainMarketId !== "number") {
-        console.warn("Could not retrieve market ID from Blockchain natively, fallback required");
+
+      setStep("indexing");
+      
+      let uploadedUrl = "";
+      if (image) {
+        const formData = new FormData();
+        formData.append("file", image);
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          uploadedUrl = uploadData.secure_url;
+        }
       }
 
-      // Step 4: Index in Database
-      setStep("indexing");
       const dbRes = await fetch("/api/markets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contractMarketId: onChainMarketId,
-          title: title, // Store actual human-readable title
+          title: title,
           description,
           creatorId: userPublicKey,
           closeDate: new Date(closeDate).toISOString(),
-          category
+          category,
+          imageUrl: uploadedUrl
         }),
       });
 
       if (!dbRes.ok) {
-        console.warn("On-chain success, but indexing delayed.");
+        const errorData = await dbRes.json();
+        throw new Error(`ON-CHAIN_SYNC_OK // INDEXING_FAILED: ${errorData.error || "UNKNOWN_DB_ERROR"}`);
       }
 
       setStep("success");
@@ -100,8 +100,7 @@ export default function CreateMarketModal({
         router.refresh();
       }, 2000);
     } catch (err: any) {
-      console.error(err);
-      setErrorMsg(err.message || "An error occurred");
+      setErrorMsg(err.message || "SYS_INTERNAL_ERROR");
       setStep("error");
     } finally {
       setLoading(false);
@@ -109,178 +108,221 @@ export default function CreateMarketModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity"
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <motion.div 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        className="absolute inset-0 bg-black/95 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="glass-panel w-full max-w-xl rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden border border-white/10 shadow-2xl animate-in fade-in zoom-in duration-300">
-        {/* Glow Effect */}
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/20 rounded-full blur-[100px]" />
-        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-500/10 rounded-full blur-[100px]" />
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="bg-[#0D0D0D] border border-white/10 w-full max-w-2xl relative overflow-hidden shadow-2xl"
+      >
+        {/* Hardware chassis details */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#FF8C00]/50 to-transparent" />
+        <div className="absolute top-4 left-4 flex gap-1">
+          <div className="w-1 h-1 bg-[#FF8C00] rounded-full animate-pulse" />
+          <div className="w-1 h-1 bg-[#FF8C00]/20 rounded-full" />
+        </div>
 
-        <div className="relative z-10">
-          <div className="flex justify-between items-center mb-10">
-            <div>
-              <span className="text-[10px] text-blue-400 font-black tracking-[0.3em] uppercase mb-2 block">
-                Protocol Access
+        <div className="p-8 md:p-12">
+          <div className="flex justify-between items-start mb-12">
+            <div className="relative">
+              <div className="absolute -left-6 top-0 bottom-0 w-1 bg-[#FF8C00]" />
+              <span className="text-[10px] text-[#FF8C00] font-black tracking-[0.5em] uppercase mb-3 block flex items-center gap-3">
+                <Shield className="w-4 h-4" /> Auth Level: Oracle
               </span>
-              <h2 className="text-3xl font-bold text-white tracking-tight">Propose Horizon</h2>
+              <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic">Create New Market</h2>
+              <p className="text-white/20 text-[9px] mt-2 uppercase tracking-[0.2em] font-bold">Config Module v1.0.4 // Local host secure</p>
             </div>
             <button 
               onClick={onClose}
-              className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors border border-white/10"
+              className="p-3 text-white/20 hover:text-white border border-white/5 hover:border-white/20 transition-all"
             >
-              <span className="material-symbols-outlined text-white/40 text-lg">close</span>
+              <X className="w-5 h-5" />
             </button>
           </div>
 
-          {step === "form" && (
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] text-white/30 uppercase font-black tracking-widest pl-1">Market Title (Symbol)</label>
-                <input 
-                  type="text" 
-                  value={title}
-                  maxLength={128}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="BTC touching 3000 ?"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder:text-white/10 focus:outline-none focus:border-blue-500/50 transition-colors font-sans text-sm tracking-wider"
-                />
-               
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] text-white/30 uppercase font-black tracking-widest pl-1">Detailed Description</label>
-                <textarea 
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Precisely define the resolution criteria..."
-                  rows={3}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder:text-white/10 focus:outline-none focus:border-blue-500/50 transition-colors font-sans text-sm resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] text-white/30 uppercase font-black tracking-widest pl-1">Oracle Address</label>
-                  <input 
-                    type="text" 
-                    value={oracle}
-                    onChange={(e) => setOracle(e.target.value)}
-                    placeholder="G..."
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder:text-white/10 focus:outline-none focus:border-blue-500/50 transition-colors font-mono text-xs"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] text-white/30 uppercase font-black tracking-widest pl-1">Consensus Deadline</label>
-                  <input 
-                    type="datetime-local" 
-                    value={closeDate}
-                    onChange={(e) => setCloseDate(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-blue-500/50 transition-colors font-sans text-sm h-[54px]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] text-white/30 uppercase font-black tracking-widest pl-1">Category</label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full bg-[#111111] border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-blue-500/50 transition-colors font-sans text-sm h-[54px]"
-                  >
-                    <option value="Crypto">Crypto</option>
-                    <option value="Politics">Politics</option>
-                    <option value="Sports">Sports</option>
-                    <option value="Technology">Technology</option>
-                    <option value="Science">Science</option>
-                  </select>
-                </div>
-              </div>
-
-              {errorMsg && (
-                <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-3">
-                  <span className="material-symbols-outlined text-sm">warning</span>
-                  {errorMsg}
-                </div>
-              )}
-
-              <button 
-                onClick={handleCreate}
-                disabled={loading}
-                className="w-full bg-white text-black font-black uppercase tracking-[0.2em] py-5 rounded-2xl hover:bg-blue-400 hover:text-white transition-all transform active:scale-95 disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-3 shadow-xl"
+          <AnimatePresence mode="wait">
+            {step === "form" && (
+              <motion.div 
+                key="form"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="space-y-8"
               >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                    Initializing...
-                  </>
-                ) : (
-                  "Propose Marketplace"
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <label className="text-[9px] text-white/20 uppercase font-black tracking-widest block">Market Title</label>
+                    <input 
+                      type="text" 
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="e.g. BTC Price Target"
+                      className="w-full bg-black border border-white/10 p-4 text-white placeholder:text-white/5 focus:outline-none focus:border-[#FF8C00]/50 transition-all text-[12px] font-black uppercase italic"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[9px] text-white/20 uppercase font-black tracking-widest block">Category</label>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="w-full bg-black border border-white/10 p-4 text-white focus:outline-none focus:border-[#FF8C00]/50 transition-all text-[12px] font-black uppercase appearance-none"
+                    >
+                      {["CRYPTO", "POLITICS", "SPORTS", "TECHNOLOGY", "SCIENCE"].map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    <div className="space-y-3">
+                    <label className="text-[9px] text-white/20 uppercase font-black tracking-widest block">Market Image</label>
+                    <div className="relative group">
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setImage(file);
+                            setImagePreview(URL.createObjectURL(file));
+                          }
+                        }}
+                        className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                      />
+                      <div className="w-full bg-black border border-white/10 p-4 text-white/40 text-[10px] font-black flex items-center justify-between group-hover:border-[#FF8C00]/50 transition-all">
+                        <span>{image ? image.name.toUpperCase() : "Click to upload image..."}</span>
+                        {imagePreview && (
+                          <div className="w-10 h-10 border border-white/10 overflow-hidden">
+                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[9px] text-white/20 uppercase font-black tracking-widest block">Resolution Criteria</label>
+                  <textarea 
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Describe how this market will be resolved..."
+                    rows={4}
+                    className="w-full bg-black border border-white/10 p-4 text-white placeholder:text-white/5 focus:outline-none focus:border-[#FF8C00]/50 transition-all text-[12px] font-black uppercase italic resize-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <label className="text-[9px] text-white/20 uppercase font-black tracking-widest block">Oracle Address</label>
+                    <input 
+                      type="text" 
+                      value={oracle}
+                      onChange={(e) => setOracle(e.target.value)}
+                      className="w-full bg-black border border-white/10 p-4 text-white/40 focus:outline-none focus:border-[#FF8C00]/50 transition-all text-[10px] font-black"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[9px] text-white/20 uppercase font-black tracking-widest block">Closing Date</label>
+                    <input 
+                      type="datetime-local" 
+                      value={closeDate}
+                      onChange={(e) => setCloseDate(e.target.value)}
+                      className="w-full bg-black border border-white/10 p-4 text-white focus:outline-none focus:border-[#FF8C00]/50 transition-all text-[12px] font-black h-[54px]"
+                    />
+                  </div>
+                </div>
+
+                {errorMsg && (
+                  <div className="p-4 bg-red-500/5 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-3">
+                    <AlertTriangle className="w-4 h-4" />
+                    {errorMsg}
+                  </div>
                 )}
-              </button>
-            </div>
-          )}
 
-          {(step === "tx" || step === "indexing") && (
-            <div className="py-20 flex flex-col items-center justify-center text-center space-y-8">
-              <div className="relative">
-                <div className="w-24 h-24 rounded-full border-2 border-white/5 flex items-center justify-center">
-                  <div className="w-16 h-16 border-t-2 border-blue-500 rounded-full animate-spin" />
-                </div>
-                <span className="material-symbols-outlined absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/20 text-3xl">
-                  {step === "tx" ? "account_balance_wallet" : "database"}
-                </span>
-              </div>
-              <div className="space-y-3">
-                <h3 className="text-xl font-bold text-white tracking-wide">
-                  {step === "tx" ? "Authorizing on Stellar" : "Publishing Metadata"}
-                </h3>
-                <p className="text-xs text-white/40 uppercase tracking-widest leading-relaxed">
-                  {step === "tx" 
-                    ? "Please sign the transaction in your Freighter wallet to propose the horizon." 
-                    : "Finalizing the cosmic consensus in our global ledger."}
-                </p>
-              </div>
-            </div>
-          )}
+                <button 
+                  onClick={handleCreate}
+                  disabled={loading}
+                  className="w-full bg-[#FF8C00] text-black font-black uppercase tracking-[0.3em] py-6 hover:bg-white transition-all disabled:opacity-20 flex items-center justify-center gap-4 shadow-xl shadow-[#FF8C00]/10"
+                >
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Terminal className="w-5 h-5" />}
+                  Create Market
+                </button>
+              </motion.div>
+            )}
 
-          {step === "success" && (
-            <div className="py-20 flex flex-col items-center justify-center text-center space-y-8">
-              <div className="w-24 h-24 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center">
-                <span className="material-symbols-outlined text-green-400 text-4xl animate-bounce">check_circle</span>
-              </div>
-              <div className="space-y-3">
-                <h3 className="text-xl font-bold text-white tracking-wide">Horizon Proposed Successfully</h3>
-                <p className="text-xs text-white/40 uppercase tracking-widest">Initial consensus reached. Returning to dashboard.</p>
-              </div>
-            </div>
-          )}
-
-          {step === "error" && (
-            <div className="py-20 flex flex-col items-center justify-center text-center space-y-8">
-              <div className="w-24 h-24 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center">
-                <span className="material-symbols-outlined text-red-500 text-4xl">error</span>
-              </div>
-              <div className="space-y-3">
-                <h3 className="text-xl font-bold text-white tracking-wide">Flow Interrupted</h3>
-                <p className="text-[10px] text-red-400/80 uppercase tracking-widest max-w-xs">{errorMsg}</p>
-              </div>
-              <button 
-                onClick={() => setStep("form")}
-                className="px-8 py-3 rounded-xl bg-white/5 border border-white/10 text-[10px] text-white font-black uppercase tracking-widest hover:bg-white/10 transition-colors"
+            {(step === "tx" || step === "indexing") && (
+              <motion.div 
+                key="loading"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="py-16 flex flex-col items-center justify-center text-center space-y-10"
               >
-                Retry Configuration
-              </button>
-            </div>
-          )}
+                <div className="relative">
+                  <div className="w-32 h-32 border border-white/10 flex items-center justify-center">
+                    <div className="absolute inset-0 border-t-2 border-[#FF8C00] animate-spin" />
+                    {step === "tx" ? <Shield className="w-10 h-10 text-white/20" /> : <Database className="w-10 h-10 text-white/20" />}
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <h3 className="text-xl font-black text-white uppercase tracking-[0.2em] italic">
+                    {step === "tx" ? "Authenticating Transaction" : "Indexing Market"}
+                  </h3>
+                  <p className="text-[10px] text-white/20 uppercase tracking-[0.3em] font-bold max-w-sm mx-auto leading-relaxed">
+                    {step === "tx" 
+                      ? "Awaiting oracle signature from local wallet" 
+                      : "Recording market metadata in global data stream"}
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
+            {step === "success" && (
+              <motion.div 
+                key="success"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="py-16 flex flex-col items-center justify-center text-center space-y-10"
+              >
+                <div className="w-32 h-32 bg-[#00C853]/10 border border-[#00C853]/30 flex items-center justify-center">
+                  <CheckCircle className="w-12 h-12 text-[#00C853] animate-pulse" />
+                </div>
+                <div className="space-y-4">
+                  <h3 className="text-2xl font-black text-white uppercase tracking-[0.2em] italic">Market Created Successfully</h3>
+                  <p className="text-[10px] text-white/20 uppercase tracking-[0.3em] font-bold">Horizon proposed successfully // Relay active</p>
+                </div>
+              </motion.div>
+            )}
+
+            {step === "error" && (
+              <motion.div 
+                key="error"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="py-16 flex flex-col items-center justify-center text-center space-y-10"
+              >
+                <div className="w-32 h-32 bg-red-500/10 border border-red-500/30 flex items-center justify-center">
+                  <AlertTriangle className="w-12 h-12 text-red-500" />
+                </div>
+                <div className="space-y-4">
+                  <h3 className="text-2xl font-black text-white uppercase tracking-[0.2em] italic">Creation Failed</h3>
+                  <p className="text-[10px] text-red-500/80 uppercase tracking-[0.3em] font-bold max-w-md mx-auto">{errorMsg}</p>
+                </div>
+                <button 
+                  onClick={() => setStep("form")}
+                  className="px-10 py-4 border border-white/10 text-[10px] text-white font-black uppercase tracking-[0.4em] hover:bg-white/5 transition-all rounded-full"
+                >
+                  Retry Initialization
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -25,6 +25,7 @@ interface Market {
   totalVolume: number;
   closeDate: string;
   category: string;
+  imageUrl?: string | null;
   contractMarketId?: number | null;
 }
 
@@ -38,11 +39,11 @@ interface MarketIntelligence {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Crypto: "text-blue-400 bg-blue-500/10 border-blue-500/30",
-  Finance: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
-  Technology: "text-purple-400 bg-purple-500/10 border-purple-500/30",
-  Politics: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-  Sports: "text-rose-400 bg-rose-500/10 border-rose-500/30",
+  Crypto: "text-[#FF8C00] border-[#FF8C00]/30 bg-[#FF8C00]/5",
+  Finance: "text-[#00C853] border-[#00C853]/30 bg-[#00C853]/5",
+  Technology: "text-[#2979FF] border-[#2979FF]/30 bg-[#2979FF]/5",
+  Politics: "text-[#FFD700] border-[#FFD700]/30 bg-[#FFD700]/5",
+  Sports: "text-[#F50057] border-[#F50057]/30 bg-[#F50057]/5",
 };
 
 /* Expose active-category setter so the sidebar can drive the filter */
@@ -123,77 +124,77 @@ export default function MarketsGrid() {
     };
   };
 
-  const filteredMarkets =
-    activeCategory === "All"
-      ? markets
-      : markets.filter((m) => m.category === activeCategory);
+  const filteredMarkets = (activeCategory === "All" ? markets : markets.filter((m) => m.category === activeCategory))
+    .sort((a, b) => {
+      if (a.status === "RESOLVED" && b.status !== "RESOLVED") return 1;
+      if (a.status !== "RESOLVED" && b.status === "RESOLVED") return -1;
+      return 0;
+    });
 
-  /* ── Helper: render AI badge only when there's a meaningful signal ── */
+  /* ── Helper: render AI badge as technical tag ── */
   const renderAIBadge = (market: Market, intel: MarketIntelligence) => {
     const prob = intel.probability;
     const confidence = intel.confidence ?? 0;
     const sources = intel.sources ?? [];
 
-    // Only show when we have a real signal — not just the pool fallback
     const hasRealSignal = sources.includes("historical") || sources.includes("external");
     if (prob === undefined || prob === null) return null;
 
-    // If only "fallback" source (= pool ratio), show a different label
     const isPoolOnly = !hasRealSignal && sources.includes("fallback");
-
     const pct = Math.round(prob * 100);
-    // Don't show if it exactly equals the YES pool ratio AND is pool-only (duplicates the bar)
     const odds = calculateOdds(market.yesPool, market.noPool);
     if (isPoolOnly && pct === odds.yes) return null;
 
     return (
-      <div className="flex items-center gap-2 text-[10px] text-purple-400 bg-purple-500/10 border border-purple-500/25 rounded-lg px-3 py-1.5 relative z-10 w-fit">
-        <Brain className="w-3.5 h-3.5 shrink-0" />
-        <span className="font-bold uppercase tracking-widest">
-          {isPoolOnly ? "Pool" : "AI"}:
-        </span>
-        <span className="font-bold">{pct}%</span>
-        {confidence > 0 && !isPoolOnly && (
-          <span className="text-purple-400/50 font-medium">
-            · {Math.round(confidence * 100)}% conf
-          </span>
-        )}
+      <div className="flex items-center gap-2 mt-auto pt-2">
+        <div className={`px-2 py-0.5 border ${isPoolOnly ? "border-white/10 bg-white/5 text-white/30" : "border-blue-500/30 bg-blue-500/5 text-blue-400"} text-[8px] font-black tracking-widest flex items-center gap-1.5`}>
+          <div className={`w-1 h-1 rounded-full ${isPoolOnly ? "bg-white/20" : "bg-blue-400 animate-pulse"}`} />
+          {isPoolOnly ? "Pool Signal" : "AI Signal"}
+        </div>
+        <div className="flex items-baseline gap-1">
+          <span className="text-[11px] font-black text-white">{pct}%</span>
+          {confidence > 0 && !isPoolOnly && (
+            <span className="text-[7px] text-white/20 font-bold uppercase tracking-tighter">
+              [C {Math.round(confidence * 100)}]
+            </span>
+          )}
+        </div>
       </div>
     );
   };
 
   return (
-    <>
+    <div className="">
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
-              className="h-[280px] rounded-3xl bg-white/3 border border-white/5 animate-pulse overflow-hidden relative"
+              className="h-[300px] border border-white/5 bg-[#0D0D0D] overflow-hidden relative"
             >
-              <div className="p-6 space-y-4">
-                <div className="flex justify-between items-center">
-                  <div className="w-16 h-5 bg-white/5 rounded-full" />
-                  <div className="w-20 h-4 bg-white/5 rounded-full" />
+              <div className="absolute top-0 left-0 w-full h-[2px] bg-[#FF8C00]/20 animate-pulse" />
+              <div className="p-5 space-y-4">
+                <div className="flex justify-between items-center opacity-20">
+                  <div className="w-16 h-4 bg-white/20" />
+                  <div className="w-20 h-3 bg-white/20" />
                 </div>
-                <div className="w-3/4 h-8 bg-white/5 rounded-xl" />
+                <div className="w-full h-10 bg-white/5" />
                 <div className="space-y-3 pt-4">
-                  <div className="w-full h-4 bg-white/5 rounded-lg" />
-                  <div className="w-full h-4 bg-white/5 rounded-lg" />
+                  <div className="w-full h-8 bg-white/5" />
+                  <div className="w-full h-8 bg-white/5" />
                 </div>
               </div>
             </div>
           ))}
         </div>
       ) : filteredMarkets.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-20 text-white/40 bg-white/5 rounded-3xl border border-white/5">
-          <AlertCircle className="w-10 h-10 mb-4 opacity-20" />
-          <p className="text-sm uppercase tracking-widest">
-            No markets in this category yet.
-          </p>
+        <div className="flex flex-col items-center justify-center p-20 text-white/20 bg-[#0D0D0D] border border-white/5">
+          <span className="text-xs uppercase tracking-[0.2em] animate-pulse">
+            404: No markets detected
+          </span>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredMarkets.map((market, i) => {
             const odds = calculateOdds(market.yesPool, market.noPool);
             const intel = intelligence[market.id] || {};
@@ -201,107 +202,128 @@ export default function MarketsGrid() {
               intel.manipulationScore && intel.manipulationScore >= 70;
             const categoryColor =
               CATEGORY_COLORS[market.category] ||
-              "text-white/60 bg-white/5 border-white/10";
+              "text-white/40 bg-white/5 border-white/10";
 
             return (
               <motion.div
                 key={market.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.07 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: i * 0.05 }}
                 className="h-full"
               >
                 <div
                   onClick={() => router.push(`/markets/${market.id}`)}
-                  className="cursor-pointer group h-full flex flex-col rounded-2xl border border-white/8 bg-white/3 hover:bg-white/6 hover:border-white/15 transition-all duration-300 p-5 gap-4 relative overflow-hidden"
+                  className="cursor-pointer group h-full flex flex-col border border-white/10 bg-[#0D0D0D] hover:border-[#FF8C00]/40 transition-all duration-300 p-4 gap-4 relative overflow-hidden"
                 >
-                  {/* Subtle glow on hover */}
-                  <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5" />
+                  {/* Grid background pattern */}
+                  <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[radial-gradient(#fff_1px,transparent_1px)] bg-[length:16px_16px]" />
 
-                  {/* Header row */}
+                  {/* Top utility row */}
                   <div className="flex items-center justify-between gap-2 relative z-10">
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
                       <span
-                        className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border ${categoryColor}`}
+                        className={`text-[9px] font-bold uppercase tracking-tight px-2 py-0.5 border ${categoryColor}`}
                       >
                         {market.category}
                       </span>
                       <span
-                        className={`flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full border ${
+                        className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-tight px-2 py-0.5 border ${
                           market.status === "OPEN"
-                            ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/30"
-                            : "text-white/30 bg-white/5 border-white/10"
+                            ? "text-[#00C853] border-[#00C853]/30 bg-[#00C853]/5"
+                            : "text-white/20 bg-white/5 border-white/10"
                         }`}
                       >
                         {market.status === "OPEN" && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="w-1 h-1 bg-[#00C853] animate-pulse" />
                         )}
                         {market.status}
                       </span>
-                      {/* {intel.qualityScore !== undefined && (
-                        <QualityIndicator
-                          score={intel.qualityScore}
-                          size="sm"
-                          showLabel={false}
-                        />
-                      )} */}
                     </div>
 
-                    <span className="flex items-center gap-1 text-xs text-white/40 shrink-0">
-                      <TrendingUp className="w-3 h-3" />
-                      {(market.totalVolume || 0).toLocaleString()} XLM
-                    </span>
+                    <div className="flex items-center gap-1.5 text-[9px] text-white/30 tracking-tighter">
+                      <TrendingUp className="w-2.5 h-2.5" />
+                      Vol: {market.totalVolume?.toLocaleString()}
+                    </div>
                   </div>
 
-                  {/* Title — full text, no clamp */}
-                  <h3 className="text-sm font-semibold text-white leading-snug group-hover:text-white transition-colors relative z-10">
-                    {market.title}
-                  </h3>
-
-                  {showRiskAlert && (
-                    <div className="relative z-10">
-                      <RiskAlert
-                        score={intel.manipulationScore!}
-                        flags={intel.riskFlags}
+                  {/* Image Section */}
+                  {market.imageUrl && (
+                    <div className="relative w-full h-32 mb-2 border border-white/5 overflow-hidden">
+                      <img 
+                        src={market.imageUrl} 
+                        alt={market.title}
+                        className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 opacity-60 group-hover:opacity-100"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-transparent to-transparent" />
+                      
+                      {/* Scanning overlay */}
+                      <div className="absolute top-2 left-2 flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-[#FF8C00] rounded-full animate-pulse" />
+                          <span className="text-[7px] text-[#FF8C00] font-black tracking-widest uppercase">Scanning Signal</span>
+                        </div>
+                      </div>
+
+                      {market.totalVolume > 500 && (
+                        <div className="absolute top-2 right-2 px-2 py-0.5 bg-[#FF8C00] text-black text-[7px] font-black tracking-[0.2em] uppercase italic">
+                          TRENDING
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  {/* AI probability badge — only shown when meaningful */}
+                  {/* Title */}
+                  <h3 className="text-xs font-bold text-white uppercase tracking-tight leading-tight group-hover:text-[#FF8C00] transition-colors relative z-10">
+                    {market.title}
+                  </h3>
+
+
+                  
                   {renderAIBadge(market, intel)}
 
                   {/* Probability bars */}
-                  <div className="space-y-2 mt-auto relative z-10">
+                  <div className="space-y-1.5 mt-auto relative z-10">
                     <Progress
                       value={odds.yes}
                       label="YES"
-                      textClass="text-blue-400"
-                      indicatorClass="bg-blue-500/25"
+                      textClass="text-[#FF8C00]"
+                      indicatorClass="bg-[#FF8C00]/20"
                     />
                     <Progress
                       value={odds.no}
                       label="NO"
-                      textClass="text-rose-400"
-                      indicatorClass="bg-rose-500/25"
+                      textClass="text-white/40"
+                      indicatorClass="bg-white/5"
                     />
                   </div>
 
-                  {/* Footer */}
+                  {/* Sync Status / Footer */}
                   <div className="flex items-center justify-between pt-3 border-t border-white/5 relative z-10">
-                    <span className="flex items-center gap-1.5 text-[10px] text-white/40 uppercase tracking-wider">
-                      <Clock className="w-3.5 h-3.5" />
-                      Closes {new Date(market.closeDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    <span className="flex items-center gap-1.5 text-[8px] text-white/20 uppercase">
+                      <Clock className="w-2.5 h-2.5" />
+                      Closes: {new Date(market.closeDate).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" })}
                     </span>
-                    <span className="flex items-center gap-1 text-[10px] text-white/30 group-hover:text-blue-400 transition-colors uppercase tracking-wider font-semibold">
-                      Trade <ArrowRight className="w-3 h-3" />
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[8px] text-[#FF8C00] animate-pulse uppercase font-black">
+                        Live Sync
+                      </span>
+                      <ArrowRight className="w-3 h-3 text-white/20 group-hover:text-[#FF8C00] transition-colors" />
+                    </div>
                   </div>
+
+                  {/* Corner Accent */}
+                  <div className="absolute top-0 right-0 w-1 h-8 bg-white/5" />
+                  <div className="absolute top-0 left-0 w-8 h-[1px] bg-white/10 group-hover:bg-[#FF8C00]/50 transition-colors" />
+                  
+                  {/* Bottom Glow */}
+                  <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-[#FF8C00]/0 group-hover:bg-[#FF8C00]/5 rounded-full blur-3xl transition-all duration-500" />
                 </div>
               </motion.div>
             );
           })}
         </div>
       )}
-    </>
+    </div>
   );
 }

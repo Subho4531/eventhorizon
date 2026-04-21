@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Copy, Terminal, User, Activity } from "lucide-react";
 
 interface Bet {
   id: string;
@@ -31,200 +32,142 @@ interface BetManagementTableProps {
 export default function BetManagementTable({
   bets,
   loading,
-  onSort,
-  onFilter,
 }: BetManagementTableProps) {
-  const [copiedCommitment, setCopiedCommitment] = useState<string | null>(null);
-  const [copiedPublicKey, setCopiedPublicKey] = useState<string | null>(null);
+  const [copiedText, setCopiedText] = useState<string | null>(null);
 
-  const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return "just now";
-    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? "s" : ""} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
-    return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
-  };
-
-  const copyToClipboard = async (text: string, type: "commitment" | "publicKey") => {
+  const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      if (type === "commitment") {
-        setCopiedCommitment(text);
-        setTimeout(() => setCopiedCommitment(null), 2000);
-      } else {
-        setCopiedPublicKey(text);
-        setTimeout(() => setCopiedPublicKey(null), 2000);
-      }
+      setCopiedText(text);
+      setTimeout(() => setCopiedText(null), 2000);
     } catch (err) {
       console.error("Failed to copy:", err);
     }
   };
 
+  const formatTimestamp = (dateString: string) => {
+    const d = new Date(dateString);
+    return d.toISOString().replace("T", " ").slice(0, 19).toUpperCase();
+  };
+
   if (loading) {
     return (
-      <div className="glass-panel rounded-3xl border border-white/5 overflow-hidden">
-        <div className="p-20 text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400"></div>
-          <p className="text-[10px] text-white/30 uppercase font-bold tracking-widest mt-4">Loading bets...</p>
-        </div>
+      <div className="py-20 text-center border border-white/5 bg-[#0D0D0D] font-mono">
+        <div className="w-8 h-8 border-2 border-[#FF8C00] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <span className="text-[10px] text-white/20 uppercase font-black tracking-[0.4em]">SYNCING TX LOGS...</span>
       </div>
     );
   }
 
   if (bets.length === 0) {
     return (
-      <div className="glass-panel rounded-3xl border border-white/5 overflow-hidden">
-        <div className="p-20 text-center">
-          <span className="material-symbols-outlined text-white/10 text-5xl mb-6">receipt_long</span>
-          <p className="text-[10px] text-white/30 uppercase font-bold tracking-widest italic">No bets found for selected filters</p>
-        </div>
+      <div className="py-24 text-center border border-dashed border-white/10 bg-[#0D0D0D] font-mono">
+        <Terminal className="w-12 h-12 text-white/5 mx-auto mb-6" />
+        <p className="text-[10px] text-white/20 uppercase font-black tracking-[0.4em] italic">NO DATA RECORDS FOUND</p>
       </div>
     );
   }
 
   return (
-    <div className="glass-panel rounded-3xl border border-white/5 overflow-hidden">
-      {/* Desktop Table View */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-white/5 border-b border-white/10">
-            <tr>
-              <th className="text-left px-6 py-4 text-[9px] text-white/50 uppercase font-black tracking-widest">Market</th>
-              <th className="text-left px-6 py-4 text-[9px] text-white/50 uppercase font-black tracking-widest">User</th>
-              <th className="text-right px-6 py-4 text-[9px] text-white/50 uppercase font-black tracking-widest">Amount</th>
-              <th className="text-left px-6 py-4 text-[9px] text-white/50 uppercase font-black tracking-widest">Commitment</th>
-              <th className="text-center px-6 py-4 text-[9px] text-white/50 uppercase font-black tracking-widest">Status</th>
-              <th className="text-right px-6 py-4 text-[9px] text-white/50 uppercase font-black tracking-widest">Timestamp</th>
+    <div className="font-mono bg-[#0D0D0D] border border-white/10">
+      {/* Desktop Table */}
+      <div className="hidden lg:block overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b border-white/10 bg-white/[0.02]">
+              <th className="px-6 py-4 text-[9px] text-white/20 font-black uppercase tracking-widest">SOURCE MARKET</th>
+              <th className="px-6 py-4 text-[9px] text-white/20 font-black uppercase tracking-widest">AUTHENTICATOR</th>
+              <th className="px-6 py-4 text-[9px] text-white/20 font-black uppercase tracking-widest">INJECTION</th>
+              <th className="px-6 py-4 text-[9px] text-white/20 font-black uppercase tracking-widest">COMMIT HASH</th>
+              <th className="px-6 py-4 text-[9px] text-white/20 font-black uppercase tracking-widest text-center">STATE</th>
+              <th className="px-6 py-4 text-right text-[9px] text-white/20 font-black uppercase tracking-widest">TIMESTAMP</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-white/5">
             {bets.map((bet) => (
-              <tr key={bet.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                <td className="px-6 py-4">
-                  <div className="text-sm text-white font-medium max-w-xs truncate">{bet.market.title}</div>
-                  <div className="text-[9px] text-white/40 uppercase tracking-wider">{bet.market.status}</div>
+              <tr key={bet.id} className="hover:bg-white/[0.02] transition-colors group">
+                <td className="px-6 py-6">
+                  <div className="text-[12px] font-black text-white uppercase italic tracking-tighter max-w-[200px] truncate">{bet.market.title}</div>
+                  <div className="text-[8px] text-white/20 font-bold tracking-[0.2em] mt-1">SYSTEM ID: {bet.market.id.slice(0, 8)}</div>
                 </td>
-                <td className="px-6 py-4">
-                  <button
-                    onClick={() => copyToClipboard(bet.user.publicKey, "publicKey")}
-                    className="group relative text-left"
-                    title={bet.user.publicKey}
+                <td className="px-6 py-6">
+                  <button 
+                    onClick={() => copyToClipboard(bet.userPublicKey)}
+                    className="flex flex-col items-start group/btn"
                   >
-                    <div className="text-sm text-white font-mono hover:text-purple-400 transition-colors">
-                      {bet.user.publicKey.slice(0, 8)}...
-                    </div>
-                    {bet.user.name && (
-                      <div className="text-[9px] text-white/40">{bet.user.name}</div>
-                    )}
-                    {copiedPublicKey === bet.user.publicKey && (
-                      <span className="absolute -top-8 left-0 bg-green-500 text-white text-[9px] px-2 py-1 rounded">
-                        Copied!
-                      </span>
-                    )}
+                    <span className="text-[11px] font-black text-blue-400 group-hover/btn:text-white transition-colors">{bet.userPublicKey.slice(0, 12)}...</span>
+                    <span className="text-[8px] text-white/20 font-bold uppercase tracking-widest flex items-center gap-1">
+                      {copiedText === bet.userPublicKey ? "SYNCED TO CLIPBOARD" : "COPY AUTH KEY"}
+                    </span>
                   </button>
                 </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="text-sm text-white font-bold">{bet.amount.toFixed(2)} XLM</div>
-                </td>
-                <td className="px-6 py-4">
-                  <button
-                    onClick={() => copyToClipboard(bet.commitment, "commitment")}
-                    className="group relative"
-                    title={bet.commitment}
+                <td className="px-6 py-6 text-[12px] font-black text-white">{bet.amount.toFixed(2)} XLM</td>
+                <td className="px-6 py-6">
+                  <button 
+                    onClick={() => copyToClipboard(bet.commitment)}
+                    className="flex flex-col items-start group/btn"
                   >
-                    <div className="text-xs text-purple-400 font-mono hover:text-purple-300 transition-colors">
-                      {bet.commitment.slice(0, 12)}...
-                    </div>
-                    {copiedCommitment === bet.commitment && (
-                      <span className="absolute -top-8 left-0 bg-green-500 text-white text-[9px] px-2 py-1 rounded">
-                        Copied!
-                      </span>
-                    )}
+                    <span className="text-[10px] font-black text-[#FF8C00] group-hover/btn:text-white transition-colors uppercase italic">{bet.commitment.slice(0, 16)}...</span>
+                    <span className="text-[8px] text-white/20 font-bold uppercase tracking-widest flex items-center gap-1">
+                      {copiedText === bet.commitment ? "HASH COPIED" : "READ COMMIT HASH"}
+                    </span>
                   </button>
                 </td>
-                <td className="px-6 py-4 text-center">
-                  <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                <td className="px-6 py-6 text-center">
+                  <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 border ${
                     bet.revealed 
-                      ? "bg-green-500/20 text-green-400 border border-green-500/30" 
-                      : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                      ? "text-[#00C853] border-[#00C853]/30 bg-[#00C853]/5" 
+                      : "text-blue-400 border-blue-400/30 bg-blue-400/5"
                   }`}>
-                    {bet.revealed ? "Revealed" : "Sealed"}
+                    {bet.revealed ? "[REVEALED]" : "[SEALED]"}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="text-xs text-white/60">{formatRelativeTime(bet.createdAt)}</div>
-                </td>
+                <td className="px-6 py-6 text-right text-[10px] text-white/40 font-bold">{formatTimestamp(bet.createdAt)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {/* Mobile Card View */}
-      <div className="md:hidden space-y-4 p-4">
+      {/* Mobile/Tablet Card Stack */}
+      <div className="lg:hidden divide-y divide-white/5">
         {bets.map((bet) => (
-          <div key={bet.id} className="bg-white/5 rounded-2xl p-4 space-y-3 border border-white/10">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="text-sm text-white font-medium mb-1">{bet.market.title}</div>
-                <div className="text-[9px] text-white/40 uppercase tracking-wider">{bet.market.status}</div>
+          <div key={bet.id} className="p-6 space-y-6">
+            <div className="flex justify-between items-start">
+              <div className="space-y-1">
+                <div className="text-[12px] font-black text-white uppercase italic tracking-tighter">{bet.market.title}</div>
+                <div className="text-[8px] text-white/20 font-bold tracking-[0.2em] uppercase">SYSTEM_NODE_{bet.id.slice(0, 4)}</div>
               </div>
-              <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+              <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 border ${
                 bet.revealed 
-                  ? "bg-green-500/20 text-green-400 border border-green-500/30" 
-                  : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                  ? "text-[#00C853] border-[#00C853]/30 bg-[#00C853]/5" 
+                  : "text-blue-400 border-blue-400/30 bg-blue-400/5"
               }`}>
-                {bet.revealed ? "Revealed" : "Sealed"}
+                {bet.revealed ? "REVEALED" : "SEALED"}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-4">
               <div>
-                <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">User</div>
-                <button
-                  onClick={() => copyToClipboard(bet.user.publicKey, "publicKey")}
-                  className="relative text-xs text-white font-mono hover:text-purple-400 transition-colors"
-                  title={bet.user.publicKey}
-                >
-                  {bet.user.publicKey.slice(0, 8)}...
-                  {copiedPublicKey === bet.user.publicKey && (
-                    <span className="absolute -top-8 left-0 bg-green-500 text-white text-[9px] px-2 py-1 rounded whitespace-nowrap">
-                      Copied!
-                    </span>
-                  )}
-                </button>
+                <div className="text-[8px] text-white/20 font-black uppercase tracking-widest mb-1">AUTH_KEY</div>
+                <div className="text-[10px] font-black text-blue-400">{bet.userPublicKey.slice(0, 8)}...</div>
               </div>
-
               <div className="text-right">
-                <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Amount</div>
-                <div className="text-sm text-white font-bold">{bet.amount.toFixed(2)} XLM</div>
+                <div className="text-[8px] text-white/20 font-black uppercase tracking-widest mb-1">INJECTION</div>
+                <div className="text-[12px] font-black text-white">{bet.amount.toFixed(2)} XLM</div>
               </div>
             </div>
 
-            <div>
-              <div className="text-[9px] text-white/40 uppercase tracking-widest mb-1">Commitment</div>
-              <button
-                onClick={() => copyToClipboard(bet.commitment, "commitment")}
-                className="relative text-xs text-purple-400 font-mono hover:text-purple-300 transition-colors break-all"
-                title={bet.commitment}
-              >
-                {bet.commitment.slice(0, 20)}...
-                {copiedCommitment === bet.commitment && (
-                  <span className="absolute -top-8 left-0 bg-green-500 text-white text-[9px] px-2 py-1 rounded whitespace-nowrap">
-                    Copied!
-                  </span>
-                )}
-              </button>
+            <div className="bg-white/[0.02] p-4 border border-white/10">
+              <div className="text-[8px] text-white/20 font-black uppercase tracking-widest mb-2">COMMITMENT HASH</div>
+              <div className="text-[9px] font-black text-[#FF8C00] break-all uppercase italic">{bet.commitment}</div>
             </div>
 
-            <div className="text-right">
-              <div className="text-xs text-white/60">{formatRelativeTime(bet.createdAt)}</div>
+            <div className="flex justify-between items-center text-[9px] font-bold text-white/20 uppercase tracking-widest pt-2">
+              <div className="flex items-center gap-2">
+                <Activity className="w-3 h-3" /> VERIFIED
+              </div>
+              <div>{formatTimestamp(bet.createdAt)}</div>
             </div>
           </div>
         ))}

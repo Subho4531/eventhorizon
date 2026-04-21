@@ -5,10 +5,12 @@ import { useWallet } from "@/components/WalletProvider";
 import { resolveMarket, submitSignedXdr } from "@/lib/escrow";
 import { signTransaction } from "@stellar/freighter-api";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import IntelligenceDashboard from "@/components/IntelligenceDashboard";
 import ReputationBadge from "@/components/ReputationBadge";
 import BetManagementTable from "@/components/BetManagementTable";
 import CreateMarketModal from "@/components/CreateMarketModal";
+import { Loader2 } from "lucide-react";
 import {
   Plus,
   Shield,
@@ -32,6 +34,7 @@ interface Market {
   closeDate?: string;
   qualityScore?: number;
   manipulationScore?: number;
+  imageUrl?: string | null;
 }
 
 interface Bet {
@@ -64,10 +67,10 @@ interface BetStats {
 type MarketSortKey = "title" | "status" | "yesPool" | "noPool" | "closeDate" | "contractMarketId";
 
 const STATUS_STYLES: Record<string, string> = {
-  OPEN: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
-  RESOLVED: "bg-blue-500/15 text-blue-400 border border-blue-500/30",
-  CLOSED: "bg-white/10 text-white/40 border border-white/10",
-  DISPUTED: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
+  OPEN: "text-[#FF8C00] border-[#FF8C00]/30 bg-[#FF8C00]/5",
+  RESOLVED: "text-[#00C853] border-[#00C853]/30 bg-[#00C853]/5",
+  CLOSED: "text-white/20 border-white/10 bg-white/5",
+  DISPUTED: "text-red-500 border-red-500/30 bg-red-500/5",
 };
 
 export default function AdminPage() {
@@ -288,111 +291,109 @@ export default function AdminPage() {
   const SortIcon = ({ col }: { col: MarketSortKey }) =>
     marketSortKey === col ? (
       marketSortDir === "asc" ? (
-        <ChevronUp className="w-3 h-3 text-blue-400" />
+        <ChevronUp className="w-3 h-3 text-[#FF8C00]" />
       ) : (
-        <ChevronDown className="w-3 h-3 text-blue-400" />
+        <ChevronDown className="w-3 h-3 text-[#FF8C00]" />
       )
     ) : (
-      <ArrowUpDown className="w-3 h-3 text-white/20" />
+      <ArrowUpDown className="w-3 h-3 text-white/10" />
     );
 
   // ── Render ────────────────────────────────────────────────────────────────────
-  {if(publicKey=== process.env.NEXT_PUBLIC_ADMIN_ID){
+  if (publicKey !== process.env.NEXT_PUBLIC_ADMIN_ID) {
     return (
-    <div className="max-w-7xl mx-auto py-12 space-y-10">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] font-mono gap-6">
+        <Shield className="w-16 h-16 text-red-500/20" />
+        <div className="text-center">
+          <h2 className="text-xl font-black text-white uppercase tracking-[0.2em]">ACCESS_DENIED</h2>
+          <p className="text-[10px] text-white/20 uppercase tracking-widest mt-2">UNAUTHORIZED_CREDENTIALS_DETECTED</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto py-12 px-4 space-y-12 font-mono">
+      
       {/* ── Page Header ──────────────────────────────────────────────────────── */}
-      <header className="flex items-start justify-between gap-6 flex-wrap">
-        <div>
-          <span className="text-[10px] text-blue-400 font-black tracking-[0.3em] uppercase mb-2 block flex items-center gap-2">
-            <Shield className="w-3 h-3 inline" /> Oracle Authority
+      <header className="flex items-start justify-between gap-8 flex-wrap">
+        <div className="relative">
+          <div className="absolute -left-6 top-0 bottom-0 w-1 bg-[#FF8C00]" />
+          <span className="text-[10px] text-[#FF8C00] font-black tracking-[0.5em] uppercase mb-3 block flex items-center gap-3">
+            <Shield className="w-4 h-4" /> SECURE ORACLE TERMINAL
           </span>
-          <h1 className="text-4xl font-bold text-white tracking-tight">Admin Panel</h1>
-          <p className="text-white/40 text-[10px] mt-2 uppercase tracking-widest">
-            Manage markets, resolve horizons, monitor bets
+          <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">ADMIN OVERRIDE</h1>
+          <p className="text-white/20 text-[10px] mt-2 uppercase tracking-[0.2em] font-bold">
+            MANAGE MARKETS // RESOLVE HORIZONS // MONITOR TX FLOW
           </p>
           {oracleReputation && (
-            <div className="mt-4">
+            <div className="mt-6">
               <ReputationBadge score={oracleReputation.score} tier={oracleReputation.tier} size="lg" />
             </div>
           )}
         </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-4 flex-wrap">
           <button
             onClick={() => setShowDashboard(!showDashboard)}
-            className="px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white/5 text-white border border-white/10 hover:bg-white/10 transition-all"
+            className="px-6 py-3 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all"
           >
-            {showDashboard ? "Hide Intel" : "Show Intel"}
+            {showDashboard ? "HIDE_INTEL_MODULE" : "SHOW_INTEL_MODULE"}
           </button>
-          {publicKey && (
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-blue-600 text-white border border-blue-400/30 hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Propose Horizon
-            </button>
-          )}
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-3 px-8 py-3 bg-[#FF8C00] text-black text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white transition-all shadow-xl shadow-[#FF8C00]/10"
+          >
+            <Plus className="w-4 h-4" />
+            INIT_NEW_HORIZON
+          </button>
         </div>
       </header>
 
-      {/* ── Intelligence Dashboard ─────────────────────────────────────────── */}
       {showDashboard && (
-        <div className="mb-4">
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="border border-[#FF8C00]/20 bg-[#FF8C00]/5 p-1">
           <IntelligenceDashboard />
-        </div>
+        </motion.div>
       )}
 
       {/* ── Summary Stats ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {[
-          { label: "Total Markets", value: allMarkets.length, color: "text-white" },
-          {
-            label: "Open Markets",
-            value: allMarkets.filter((m) => m.status === "OPEN").length,
-            color: "text-emerald-400",
-          },
-          {
-            label: "Pending Resolution",
-            value: openMarkets.length,
-            color: "text-amber-400",
-          },
-          {
-            label: "Resolved",
-            value: allMarkets.filter((m) => m.status === "RESOLVED").length,
-            color: "text-blue-400",
-          },
+          { label: "TOTAL_MARKETS", value: allMarkets.length, color: "text-white" },
+          { label: "OPEN_SLOTS", value: allMarkets.filter((m) => m.status === "OPEN").length, color: "text-[#FF8C00]" },
+          { label: "PENDING_VERDICT", value: openMarkets.length, color: "text-blue-400" },
+          { label: "ARCHIVED_DATA", value: allMarkets.filter((m) => m.status === "RESOLVED").length, color: "text-[#00C853]" },
         ].map((s) => (
-          <div
-            key={s.label}
-            className="glass-panel p-5 rounded-2xl border border-white/5 bg-gradient-to-br from-white/3 to-transparent"
-          >
-            <div className="text-[9px] text-white/30 font-bold uppercase tracking-widest mb-2">{s.label}</div>
-            <div className={`text-3xl font-bold ${s.color}`}>{s.value}</div>
+          <div key={s.label} className="bg-[#0D0D0D] border border-white/10 p-6 group hover:border-white/20 transition-all">
+            <div className="text-[9px] text-white/20 font-black uppercase tracking-widest mb-3">{s.label}</div>
+            <div className={`text-3xl font-black ${s.color} tracking-tighter`}>{s.value}</div>
+            <div className="w-full h-1 bg-white/5 mt-4 overflow-hidden">
+               <div className="w-1/3 h-full bg-white/10 animate-scan" />
+            </div>
           </div>
         ))}
       </div>
 
       {/* ── Tabs ─────────────────────────────────────────────────────────────── */}
-      <div className="flex gap-1 border-b border-white/10 pb-0">
-        {(
-          [
-            { id: "resolution", label: "Resolve Markets" },
-            { id: "markets", label: "All Markets" },
-            { id: "bets", label: "Bet Management" },
-          ] as const
-        ).map((tab) => (
+      <div className="flex gap-4 border-b border-white/10 overflow-x-auto no-scrollbar">
+        {[
+          { id: "resolution", label: "MARKET_RESOLUTION" },
+          { id: "markets", label: "GLOBAL_INVENTORY" },
+          { id: "bets", label: "TRANSACTION_LOGS" },
+        ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-5 py-3 text-[11px] font-bold uppercase tracking-widest rounded-t-xl transition-all border-b-2 ${
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative shrink-0 ${
               activeTab === tab.id
-                ? "text-white border-blue-500 bg-white/5"
-                : "text-white/30 border-transparent hover:text-white/60 hover:bg-white/3"
+                ? "text-[#FF8C00]"
+                : "text-white/20 hover:text-white/60"
             }`}
           >
             {tab.label}
+            {activeTab === tab.id && (
+              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-1 bg-[#FF8C00]" />
+            )}
           </button>
         ))}
       </div>
@@ -401,48 +402,39 @@ export default function AdminPage() {
           TAB: RESOLVE MARKETS
           ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === "resolution" && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
+        <div className="space-y-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-[#0D0D0D] border border-white/10 p-8">
             <div>
-              <h2 className="text-2xl font-bold text-white">Markets Pending Resolution</h2>
-              <p className="text-white/40 text-[10px] uppercase tracking-widest mt-1">
-                {openMarkets.length} open market{openMarkets.length !== 1 ? "s" : ""} awaiting oracle verdict
-              </p>
+              <h2 className="text-xl font-black text-white uppercase tracking-[0.1em]">VERDICT PARAMETERS</h2>
+              <p className="text-[9px] text-white/20 uppercase tracking-[0.3em] mt-1 font-bold">SET GLOBAL OUTCOME FOR BATCH PROCESSING</p>
             </div>
 
-            {/* Global outcome + payout controls */}
-            <div className="flex items-center gap-3">
-              <div className="flex gap-1">
+            <div className="flex items-center gap-6">
+              <div className="flex p-1 bg-black border border-white/10">
                 <button
                   onClick={() => setOutcome("YES")}
-                  className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-                    outcome === "YES"
-                      ? "bg-emerald-600 text-white border-emerald-400"
-                      : "bg-white/5 text-white/40 border-white/10 hover:bg-white/10"
+                  className={`px-8 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${
+                    outcome === "YES" ? "bg-[#00C853] text-black" : "text-white/20 hover:text-white"
                   }`}
                 >
                   YES
                 </button>
                 <button
                   onClick={() => setOutcome("NO")}
-                  className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-                    outcome === "NO"
-                      ? "bg-red-600 text-white border-red-400"
-                      : "bg-white/5 text-white/40 border-white/10 hover:bg-white/10"
+                  className={`px-8 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${
+                    outcome === "NO" ? "bg-red-500 text-black" : "text-white/20 hover:text-white"
                   }`}
                 >
                   NO
                 </button>
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[8px] text-white/30 uppercase font-black tracking-widest pl-1">
-                  Payout BPS
-                </label>
+              <div className="space-y-2">
+                <label className="text-[8px] text-white/20 uppercase font-black tracking-widest pl-1">PAYOUT BPS CONFIG</label>
                 <input
                   type="number"
                   value={payoutBps}
                   onChange={(e) => setPayoutBps(e.target.value)}
-                  className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-xs w-28 focus:outline-none focus:border-blue-500/50"
+                  className="bg-black border border-white/10 px-4 py-3 text-white text-[12px] font-black w-32 focus:outline-none focus:border-[#FF8C00]/50"
                 />
               </div>
             </div>
@@ -450,72 +442,49 @@ export default function AdminPage() {
 
           <div className="grid grid-cols-1 gap-4">
             {loading ? (
-              <div className="glass-panel p-20 text-center rounded-3xl border border-white/5 animate-pulse">
-                <div className="text-white/20 text-sm">Loading markets…</div>
+              <div className="py-20 text-center border border-white/5 bg-[#0D0D0D]">
+                <Loader2 className="w-8 h-8 text-[#FF8C00] animate-spin mx-auto mb-4" />
+                <span className="text-[10px] text-white/20 uppercase font-black">SCANNING HORIZONS...</span>
               </div>
             ) : openMarkets.length === 0 ? (
-              <div className="glass-panel p-20 text-center rounded-4xl border border-dashed border-white/10">
-                <span className="material-symbols-outlined text-white/10 text-5xl mb-6">verified_user</span>
-                <p className="text-[10px] text-white/30 uppercase font-bold tracking-widest italic">
-                  All horizons reached consensus. No pending resolutions.
+              <div className="py-24 text-center border border-dashed border-white/10 bg-[#0D0D0D]">
+                <Shield className="w-12 h-12 text-white/5 mx-auto mb-6" />
+                <p className="text-[10px] text-white/20 uppercase font-black tracking-[0.4em] italic">
+                  NO PENDING RESOLUTIONS DETECTED
                 </p>
               </div>
             ) : (
               openMarkets.map((m) => (
-                <div
-                  key={m.id}
-                  className="glass-panel p-6 rounded-2xl border border-white/5 bg-gradient-to-br from-white/2 to-transparent group hover:border-white/10 transition-all"
-                >
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div className="space-y-1 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[9px] text-blue-400 font-bold uppercase tracking-widest">
-                          Contract #{m.contractMarketId}
-                        </span>
-                        <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg ${STATUS_STYLES[m.status] ?? "bg-white/10 text-white/40"}`}>
+                <div key={m.id} className="bg-[#0D0D0D] border border-white/10 p-8 group hover:border-[#FF8C00]/30 transition-all relative">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+                    <div className="flex-1 space-y-4">
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] text-[#FF8C00] font-black">#{m.contractMarketId}</span>
+                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 border ${STATUS_STYLES[m.status]}`}>
                           {m.status}
                         </span>
-                        {m.qualityScore != null && (
-                          <span
-                            className={`text-[9px] font-bold ${
-                              m.qualityScore >= 70
-                                ? "text-green-400"
-                                : m.qualityScore >= 40
-                                ? "text-yellow-400"
-                                : "text-red-400"
-                            }`}
-                          >
-                            Q: {m.qualityScore.toFixed(0)}
-                          </span>
-                        )}
-                        {m.manipulationScore != null && m.manipulationScore >= 70 && (
-                          <span className="text-[9px] text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-2 py-0.5">
-                            ⚠️ Risk {m.manipulationScore.toFixed(0)}
-                          </span>
-                        )}
                       </div>
-                      <h3 className="text-lg font-bold text-white">{m.title}</h3>
-                      <p className="text-xs text-white/40 max-w-md">
-                        {m.description || "No description provided."}
-                      </p>
-                      <div className="flex gap-4 mt-2 text-[10px] text-white/30 uppercase font-black tracking-widest">
-                        <span>
-                          YES Pool:{" "}
-                          <span className="text-emerald-400 ml-1">{m.yesPool} XLM</span>
-                        </span>
-                        <span className="border-l border-white/10 pl-4">
-                          NO Pool:{" "}
-                          <span className="text-red-400 ml-1">{m.noPool} XLM</span>
-                        </span>
+                      <h3 className="text-2xl font-black text-white tracking-tighter uppercase italic">{m.title}</h3>
+                      <p className="text-[11px] text-white/40 uppercase font-bold leading-relaxed max-w-2xl">{m.description}</p>
+                      
+                      <div className="flex gap-8 text-[10px] font-black uppercase tracking-widest pt-2">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-white/20 text-[8px]">POOL YES</span>
+                          <span className="text-[#00C853]">{m.yesPool} XLM</span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-white/20 text-[8px]">POOL NO</span>
+                          <span className="text-red-500">{m.noPool} XLM</span>
+                        </div>
                       </div>
                     </div>
 
                     <button
                       onClick={() => handleResolve(m)}
                       disabled={resolvingId === m.id}
-                      className="shrink-0 bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] px-8 py-3 rounded-xl hover:bg-blue-400 hover:text-white transition-all transform active:scale-95 disabled:opacity-30 shadow-lg"
+                      className="px-10 py-5 bg-white text-black text-[11px] font-black uppercase tracking-[0.3em] hover:bg-[#FF8C00] transition-all disabled:opacity-20 shrink-0"
                     >
-                      {resolvingId === m.id ? "Resolving…" : "Resolve On-Chain"}
+                      {resolvingId === m.id ? "EXECUTING..." : "COMMIT_VERDICT"}
                     </button>
                   </div>
                 </div>
@@ -529,43 +498,22 @@ export default function AdminPage() {
           TAB: ALL MARKETS
           ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === "markets" && (
-        <div className="space-y-5">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-white">All Markets</h2>
-              <p className="text-white/40 text-[10px] uppercase tracking-widest mt-1">
-                {filteredAllMarkets.length} of {allMarkets.length} markets
-              </p>
-            </div>
-            {publicKey && (
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-blue-600 text-white border border-blue-400/30 hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                New Market
-              </button>
-            )}
-          </div>
-
-          {/* Filters */}
-          <div className="flex flex-col md:flex-row gap-3">
+        <div className="space-y-6">
+          <div className="flex flex-col md:flex-row gap-4">
             <input
               type="text"
-              placeholder="Search by title or contract ID…"
+              placeholder="SEARCH BY TITLE OR ID..."
               value={marketSearch}
               onChange={(e) => setMarketSearch(e.target.value)}
-              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-blue-500/50"
+              className="flex-1 bg-[#0D0D0D] border border-white/10 px-6 py-4 text-white text-sm font-black placeholder:text-white/5 focus:outline-none focus:border-[#FF8C00]/50"
             />
-            <div className="flex gap-2">
-              {["ALL", "OPEN", "RESOLVED", "CLOSED", "DISPUTED"].map((s) => (
+            <div className="flex bg-black border border-white/10 p-1">
+              {["ALL", "OPEN", "RESOLVED", "CLOSED"].map((s) => (
                 <button
                   key={s}
                   onClick={() => setMarketStatusFilter(s)}
-                  className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                    marketStatusFilter === s
-                      ? "bg-blue-600 text-white border-blue-400"
-                      : "bg-white/5 text-white/40 border-white/10 hover:bg-white/10 hover:text-white"
+                  className={`px-4 py-2 text-[9px] font-black uppercase tracking-widest transition-all ${
+                    marketStatusFilter === s ? "bg-[#FF8C00] text-black" : "text-white/20 hover:text-white"
                   }`}
                 >
                   {s}
@@ -574,97 +522,71 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Table */}
-          <div className="glass-panel rounded-2xl border border-white/5 overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="bg-[#0D0D0D] border border-white/10 overflow-x-auto">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-white/5 bg-white/3">
-                  {(
-                    [
-                      { key: "contractMarketId", label: "#" },
-                      { key: "title", label: "Title" },
-                      { key: "status", label: "Status" },
-                      { key: "yesPool", label: "YES Pool" },
-                      { key: "noPool", label: "NO Pool" },
-                      { key: "closeDate", label: "Close Date" },
-                    ] as { key: MarketSortKey; label: string }[]
-                  ).map(({ key, label }) => (
+                <tr className="border-b border-white/10 bg-white/[0.02]">
+                  {[
+                    { key: "contractMarketId", label: "ID" },
+                    { key: "imageUrl", label: "VISUAL" },
+                    { key: "title", label: "MODULE TITLE" },
+                    { key: "status", label: "STATE" },
+                    { key: "yesPool", label: "POOL YES" },
+                    { key: "noPool", label: "POOL NO" },
+                    { key: "closeDate", label: "TERMINATION" },
+                  ].map(({ key, label }) => (
                     <th
                       key={key}
-                      onClick={() => toggleMarketSort(key)}
-                      className="px-5 py-3.5 text-left text-[9px] text-white/30 font-bold uppercase tracking-widest cursor-pointer hover:text-white/60 transition-colors select-none"
+                      onClick={() => toggleMarketSort(key as any)}
+                      className="px-6 py-4 text-[9px] text-white/20 font-black uppercase tracking-widest cursor-pointer hover:text-[#FF8C00] transition-colors"
                     >
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2">
                         {label}
-                        <SortIcon col={key} />
+                        <SortIcon col={key as any} />
                       </div>
                     </th>
                   ))}
-                  <th className="px-5 py-3.5 text-right text-[9px] text-white/30 font-bold uppercase tracking-widest">
-                    Action
-                  </th>
+                  <th className="px-6 py-4 text-right text-[9px] text-white/20 font-black uppercase tracking-widest">ACTION</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-white/5">
                 {loading ? (
-                  <tr>
-                    <td colSpan={7} className="px-5 py-16 text-center text-white/20 text-sm">
-                      Loading…
-                    </td>
-                  </tr>
+                  <tr><td colSpan={7} className="px-6 py-20 text-center text-white/10 text-[10px] font-black uppercase">SYNCING DATA STREAM...</td></tr>
                 ) : filteredAllMarkets.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-5 py-16 text-center text-white/20 text-sm">
-                      No markets match your filters.
-                    </td>
-                  </tr>
+                  <tr><td colSpan={7} className="px-6 py-20 text-center text-white/10 text-[10px] font-black uppercase">NO RECORDS FOUND</td></tr>
                 ) : (
                   filteredAllMarkets.map((m) => (
-                    <tr
-                      key={m.id}
-                      className="border-b border-white/5 hover:bg-white/3 transition-colors group"
-                    >
-                      <td className="px-5 py-4 text-[11px] text-blue-400 font-mono font-bold">
-                        {m.contractMarketId}
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="font-semibold text-white text-sm leading-tight max-w-xs truncate">
-                          {m.title}
-                        </div>
-                        {m.description && (
-                          <div className="text-[10px] text-white/30 mt-0.5 max-w-xs truncate">
-                            {m.description}
+                    <tr key={m.id} className="hover:bg-white/[0.02] transition-colors group">
+                      <td className="px-6 py-6 text-[11px] text-[#FF8C00] font-black italic">{m.contractMarketId}</td>
+                      <td className="px-6 py-6">
+                        {m.imageUrl ? (
+                          <div className="w-12 h-8 border border-white/10 overflow-hidden">
+                            <img src={m.imageUrl} alt="" className="w-full h-full object-cover grayscale opacity-50" />
                           </div>
+                        ) : (
+                          <div className="w-12 h-8 border border-dashed border-white/5 flex items-center justify-center text-[6px] text-white/10 uppercase font-black">NO_DATA</div>
                         )}
                       </td>
-                      <td className="px-5 py-4">
-                        <span
-                          className={`text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg ${
-                            STATUS_STYLES[m.status] ?? "bg-white/10 text-white/40"
-                          }`}
-                        >
+                      <td className="px-6 py-6">
+                        <div className="text-[12px] font-black text-white uppercase italic tracking-tighter truncate max-w-[200px]">{m.title}</div>
+                      </td>
+                      <td className="px-6 py-6">
+                        <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 border ${STATUS_STYLES[m.status]}`}>
                           {m.status}
                         </span>
                       </td>
-                      <td className="px-5 py-4 text-[12px] text-emerald-400 font-bold">
-                        {m.yesPool} XLM
+                      <td className="px-6 py-6 text-[11px] font-black text-white/60">{m.yesPool} XLM</td>
+                      <td className="px-6 py-6 text-[11px] font-black text-white/60">{m.noPool} XLM</td>
+                      <td className="px-6 py-6 text-[10px] font-black text-white/20">
+                        {m.closeDate ? new Date(m.closeDate).toLocaleDateString().toUpperCase() : "---"}
                       </td>
-                      <td className="px-5 py-4 text-[12px] text-red-400 font-bold">
-                        {m.noPool} XLM
-                      </td>
-                      <td className="px-5 py-4 text-[11px] text-white/40">
-                        {m.closeDate ? new Date(m.closeDate).toLocaleDateString() : "—"}
-                      </td>
-                      <td className="px-5 py-4 text-right">
+                      <td className="px-6 py-6 text-right">
                         {m.status === "OPEN" && (
                           <button
-                            onClick={() => {
-                              setActiveTab("resolution");
-                              setOutcome("YES");
-                            }}
-                            className="text-[9px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all"
+                            onClick={() => { setActiveTab("resolution"); setOutcome("YES"); }}
+                            className="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 border border-[#FF8C00]/30 text-[#FF8C00] hover:bg-[#FF8C00] hover:text-black transition-all"
                           >
-                            Resolve
+                            RESOLVE
                           </button>
                         )}
                       </td>
@@ -681,217 +603,150 @@ export default function AdminPage() {
           TAB: BET MANAGEMENT
           ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === "bets" && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="space-y-8">
+          <div className="flex items-center justify-between bg-[#0D0D0D] border border-white/10 p-8">
             <div>
-              <span className="text-[10px] text-purple-400 font-black tracking-[0.3em] uppercase mb-2 block">
-                Betting Activity
-              </span>
-              <h2 className="text-2xl font-bold text-white tracking-tight">Bet Management</h2>
-              <p className="text-white/40 text-[10px] mt-1 uppercase tracking-widest">
-                Monitor all sealed positions across markets
-              </p>
+              <h2 className="text-xl font-black text-white uppercase tracking-[0.1em]">SYSTEM TX STREAM</h2>
+              <p className="text-[9px] text-white/20 uppercase tracking-[0.3em] mt-1 font-bold">MONITOR REALTIME SEALED COMMITMENTS</p>
             </div>
             <button
               onClick={() => setShowBetForm(!showBetForm)}
-              className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-purple-600 text-white border border-purple-400 hover:bg-purple-700 transition-all"
+              className="px-8 py-3 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all"
             >
-              {showBetForm ? "Cancel" : "+ Create Test Bet"}
+              {showBetForm ? "ABORT_MANUAL_ENTRY" : "INIT_MANUAL_BET"}
             </button>
           </div>
 
-          {/* Manual Bet Creation Form */}
           {showBetForm && (
-            <div className="glass-panel p-8 rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-transparent">
-              <h3 className="text-xl font-bold text-white mb-6">Create Test Bet</h3>
-              <form onSubmit={handleCreateBet} className="space-y-4">
-                <div>
-                  <label className="text-[8px] text-white/30 uppercase font-black tracking-widest pl-1 mb-2 block">
-                    Market
-                  </label>
-                  {/* Use allMarkets here so we can create bets on any market (not just OPEN) */}
-                  <select
-                    value={betFormData.marketId}
-                    onChange={(e) => setBetFormData({ ...betFormData, marketId: e.target.value })}
-                    required
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500/50"
-                  >
-                    <option value="">Select a market</option>
-                    {allMarkets.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        [{m.status}] {m.title} (Contract #{m.contractMarketId})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[8px] text-white/30 uppercase font-black tracking-widest pl-1 mb-2 block">
-                    User Public Key
-                  </label>
-                  <input
-                    type="text"
-                    value={betFormData.userPublicKey}
-                    onChange={(e) =>
-                      setBetFormData({ ...betFormData, userPublicKey: e.target.value })
-                    }
-                    placeholder="GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                    required
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500/50 font-mono"
-                  />
-                  {publicKey && (
-                    <button
-                      type="button"
-                      onClick={() => setBetFormData({ ...betFormData, userPublicKey: publicKey })}
-                      className="mt-1 text-[9px] text-purple-400 hover:text-purple-300 transition-colors pl-1"
+            <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#0D0D0D] border border-[#FF8C00]/30 p-10">
+              <form onSubmit={handleCreateBet} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div>
+                    <label className="text-[8px] text-white/20 uppercase font-black tracking-widest mb-2 block">SELECT_TARGET_HORIZON</label>
+                    <select
+                      value={betFormData.marketId}
+                      onChange={(e) => setBetFormData({ ...betFormData, marketId: e.target.value })}
+                      required
+                      className="w-full bg-black border border-white/10 px-4 py-4 text-white text-[11px] font-black uppercase focus:outline-none focus:border-[#FF8C00]/50 appearance-none"
                     >
-                      Use my wallet address
+                      <option value="">-- SELECT_MARKET --</option>
+                      {allMarkets.map((m) => (
+                        <option key={m.id} value={m.id}>[{m.status}] {m.title.toUpperCase()}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[8px] text-white/20 uppercase font-black tracking-widest mb-2 block">AUTH_PUBLIC_KEY</label>
+                    <input
+                      type="text"
+                      value={betFormData.userPublicKey}
+                      onChange={(e) => setBetFormData({ ...betFormData, userPublicKey: e.target.value })}
+                      placeholder="G..."
+                      required
+                      className="w-full bg-black border border-white/10 px-4 py-4 text-white text-[11px] font-black focus:outline-none focus:border-[#FF8C00]/50"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-6">
+                  <div>
+                    <label className="text-[8px] text-white/20 uppercase font-black tracking-widest mb-2 block">INJECTION_AMOUNT_XLM</label>
+                    <input
+                      type="number" step="0.01" min="0.01"
+                      value={betFormData.amount}
+                      onChange={(e) => setBetFormData({ ...betFormData, amount: e.target.value })}
+                      placeholder="0.00"
+                      required
+                      className="w-full bg-black border border-white/10 px-4 py-4 text-white text-[11px] font-black focus:outline-none focus:border-[#FF8C00]/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[8px] text-white/20 uppercase font-black tracking-widest mb-2 block">COMMITMENT_HASH_OVERRIDE</label>
+                    <input
+                      type="text"
+                      value={betFormData.commitment}
+                      onChange={(e) => setBetFormData({ ...betFormData, commitment: e.target.value })}
+                      placeholder="AUTO_GENERATE_IF_EMPTY"
+                      className="w-full bg-black border border-white/10 px-4 py-4 text-white text-[11px] font-black focus:outline-none focus:border-[#FF8C00]/50"
+                    />
+                  </div>
+                  <div className="flex gap-4 pt-4">
+                    <button type="submit" disabled={creatingBet} className="flex-1 bg-[#FF8C00] text-black text-[11px] font-black uppercase tracking-[0.2em] py-4 hover:bg-white transition-all disabled:opacity-20">
+                      {creatingBet ? "INJECTING..." : "EXEC_INJECTION"}
                     </button>
-                  )}
-                </div>
-
-                <div>
-                  <label className="text-[8px] text-white/30 uppercase font-black tracking-widest pl-1 mb-2 block">
-                    Amount (XLM)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    value={betFormData.amount}
-                    onChange={(e) => setBetFormData({ ...betFormData, amount: e.target.value })}
-                    placeholder="10.00"
-                    required
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500/50"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[8px] text-white/30 uppercase font-black tracking-widest pl-1 mb-2 block">
-                    Commitment Hash (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={betFormData.commitment}
-                    onChange={(e) => setBetFormData({ ...betFormData, commitment: e.target.value })}
-                    placeholder="0x... (auto-generated if empty)"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500/50 font-mono"
-                  />
-                  <p className="text-[9px] text-white/40 mt-1 pl-1">
-                    Leave empty to auto-generate a random commitment
-                  </p>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="submit"
-                    disabled={creatingBet}
-                    className="flex-1 bg-purple-600 text-white text-[10px] font-black uppercase tracking-[0.2em] py-3 rounded-xl hover:bg-purple-700 transition-all transform active:scale-95 disabled:opacity-30 shadow-lg"
-                  >
-                    {creatingBet ? "Creating…" : "Create Bet"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowBetForm(false)}
-                    className="px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white/5 text-white border border-white/10 hover:bg-white/10 transition-all"
-                  >
-                    Cancel
-                  </button>
+                  </div>
                 </div>
               </form>
-            </div>
+            </motion.div>
           )}
 
-          {/* Stats Cards */}
           {betStats && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="glass-panel p-6 rounded-2xl border border-white/5 bg-gradient-to-br from-purple-500/10 to-transparent">
-                <div className="text-[9px] text-purple-400 font-bold uppercase tracking-widest mb-2">
-                  Total Volume
-                </div>
-                <div className="text-3xl font-bold text-white">
-                  {betStats.totalVolume.toFixed(2)} XLM
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-[#0D0D0D] border border-white/10 p-8">
+                <div className="text-[9px] text-white/20 font-black uppercase tracking-widest mb-3">TOTAL_VOLUME</div>
+                <div className="text-3xl font-black text-white tracking-tighter">{betStats.totalVolume.toFixed(2)} XLM</div>
+              </div>
+              <div className="bg-[#0D0D0D] border border-white/10 p-8">
+                <div className="text-[9px] text-[#FF8C00] font-black uppercase tracking-widest mb-3">BET_COUNT</div>
+                <div className="text-3xl font-black text-[#FF8C00] tracking-tighter">{betStats.betCount}</div>
+                <div className="text-[9px] text-white/20 mt-2 font-bold uppercase tracking-widest">
+                  {betStats.sealedCount} SEALED // {betStats.revealedCount} REVEALED
                 </div>
               </div>
-              <div className="glass-panel p-6 rounded-2xl border border-white/5 bg-gradient-to-br from-blue-500/10 to-transparent">
-                <div className="text-[9px] text-blue-400 font-bold uppercase tracking-widest mb-2">
-                  Bet Count
-                </div>
-                <div className="text-3xl font-bold text-white">{betStats.betCount}</div>
-                <div className="text-[9px] text-white/40 mt-1">
-                  {betStats.sealedCount} sealed · {betStats.revealedCount} revealed
-                </div>
-              </div>
-              <div className="glass-panel p-6 rounded-2xl border border-white/5 bg-gradient-to-br from-green-500/10 to-transparent">
-                <div className="text-[9px] text-green-400 font-bold uppercase tracking-widest mb-2">
-                  Avg Bet Size
-                </div>
-                <div className="text-3xl font-bold text-white">
-                  {betStats.avgBetSize.toFixed(2)} XLM
-                </div>
+              <div className="bg-[#0D0D0D] border border-white/10 p-8">
+                <div className="text-[9px] text-blue-400 font-black uppercase tracking-widest mb-3">AVG_SIZE</div>
+                <div className="text-3xl font-black text-blue-400 tracking-tighter">{betStats.avgBetSize.toFixed(2)} XLM</div>
               </div>
             </div>
           )}
 
-          {/* Filters and Sort Controls */}
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-1">
-              <label className="text-[8px] text-white/30 uppercase font-black tracking-widest pl-1 mb-2 block">
-                Filter by Market
-              </label>
+              <label className="text-[8px] text-white/20 uppercase font-black tracking-widest mb-2 block pl-1">FILTER_BY_MARKET</label>
               <select
                 value={selectedMarketFilter}
                 onChange={(e) => setSelectedMarketFilter(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500/50"
+                className="w-full bg-[#0D0D0D] border border-white/10 px-6 py-4 text-white text-[11px] font-black uppercase focus:outline-none focus:border-[#FF8C00]/50 appearance-none"
               >
-                <option value="all">All Markets</option>
+                <option value="all">ALL_HORIZONS</option>
                 {allMarkets.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    [{m.status}] {m.title}
-                  </option>
+                  <option key={m.id} value={m.id}>[{m.status}] {m.title.toUpperCase()}</option>
                 ))}
               </select>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-4">
               <div>
-                <label className="text-[8px] text-white/30 uppercase font-black tracking-widest pl-1 mb-2 block">
-                  Sort By
-                </label>
+                <label className="text-[8px] text-white/20 uppercase font-black tracking-widest mb-2 block pl-1">SORT_BY</label>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as "amount" | "createdAt")}
-                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500/50"
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="bg-[#0D0D0D] border border-white/10 px-6 py-4 text-white text-[11px] font-black uppercase focus:outline-none focus:border-[#FF8C00]/50 appearance-none min-w-[140px]"
                 >
-                  <option value="createdAt">Date</option>
-                  <option value="amount">Amount</option>
+                  <option value="createdAt">TIMESTAMP</option>
+                  <option value="amount">VALUE</option>
                 </select>
               </div>
               <div>
-                <label className="text-[8px] text-white/30 uppercase font-black tracking-widest pl-1 mb-2 block">
-                  Order
-                </label>
+                <label className="text-[8px] text-white/20 uppercase font-black tracking-widest mb-2 block pl-1">ORDER</label>
                 <select
                   value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
-                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500/50"
+                  onChange={(e) => setSortOrder(e.target.value as any)}
+                  className="bg-[#0D0D0D] border border-white/10 px-6 py-4 text-white text-[11px] font-black uppercase focus:outline-none focus:border-[#FF8C00]/50 appearance-none min-w-[140px]"
                 >
-                  <option value="desc">Descending</option>
-                  <option value="asc">Ascending</option>
+                  <option value="desc">DESCENDING</option>
+                  <option value="asc">ASCENDING</option>
                 </select>
               </div>
             </div>
           </div>
 
-          {/* Bet Table */}
-          <BetManagementTable
-            bets={bets}
-            loading={betsLoading}
-            onSort={(sb, so) => {
-              setSortBy(sb);
-              setSortOrder(so);
-            }}
-            onFilter={(marketId) => setSelectedMarketFilter(marketId)}
-          />
+          <div className="bg-[#0D0D0D] border border-white/10">
+            <BetManagementTable
+              bets={bets}
+              loading={betsLoading}
+              onSort={(sb, so) => { setSortBy(sb); setSortOrder(so); }}
+              onFilter={(marketId) => setSelectedMarketFilter(marketId)}
+            />
+          </div>
         </div>
       )}
 
@@ -907,13 +762,5 @@ export default function AdminPage() {
         />
       )}
     </div>
-  );} 
-  else {
-    return (
-      <div className="text-center text-2xl">
-        <h1>You are not authorized to access this page</h1>
-      </div>
-    )
-  }
-}
+  );
 }

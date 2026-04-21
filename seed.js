@@ -1,12 +1,14 @@
 require("dotenv").config();
-const { neonConfig } = require("@neondatabase/serverless");
-const { PrismaNeon } = require("@prisma/adapter-neon");
+const { Pool } = require("pg");
+const { PrismaPg } = require("@prisma/adapter-pg");
 const { PrismaClient } = require("@prisma/client");
-const ws = require("ws");
 
-neonConfig.webSocketConstructor = ws;
-
-const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
+const connectionString = process.env.DATABASE_URL;
+const pool = new Pool({ 
+  connectionString,
+  ssl: { rejectUnauthorized: false }
+});
+const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 const CREATOR_ID = "GCVSH65WNB6IM3LPC5DMEEY5WXQ5ISX62STSGBYIRKRWSEMZ4S2LHPD7";
@@ -91,7 +93,6 @@ async function main() {
     const { contractMarketId, ...rest } = m;
     const data = {
       ...rest,
-      bondAmount: 100,
       status: "OPEN",
       oracleAddress: CREATOR_ID,
       creatorId: CREATOR_ID,

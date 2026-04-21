@@ -22,60 +22,44 @@ export default function Navbar() {
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="fixed top-0 left-0 right-0 z-50 h-[60px] flex items-center border-b border-white/[0.06] bg-black/70 backdrop-blur-xl"
+      className="fixed top-0 left-0 right-0 z-50 h-[64px] flex items-center border-b border-white/5 bg-[#0D0D0D]"
     >
-      {/* Logo */}
+      {/* Logo Section */}
       <Link
         href="/markets"
-        className="flex items-center gap-2.5 px-5 min-w-[220px] border-r border-white/[0.06] h-full"
+        className="flex items-center gap-3 px-6 h-full border-r border-white/5 hover:bg-white/[0.02] transition-colors"
       >
-        <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
-          <Zap className="w-3.5 h-3.5 text-white" />
-        </div>
-        <div className="leading-none">
-          <div className="text-[13px] font-bold text-white tracking-tight">Event Horizon</div>
-          <div className="text-[9px] text-white/35 uppercase tracking-[0.15em] font-semibold mt-0.5">
-            ZK Prediction Market
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 border-2 border-white flex items-center justify-center">
+            <div className="w-1.5 h-1.5 bg-white animate-pulse" />
           </div>
+          <span className="text-xl font-black tracking-tighter text-white">EVENT HORIZON</span>
         </div>
       </Link>
 
-      {/* Center Nav — always visible */}
-      <nav className="flex-1 flex items-center justify-center gap-1 px-4">
+      {/* Center Nav */}
+      <nav className="flex-1 flex items-center gap-2 px-6">
         {NAV_ITEMS.map(({ href, label, Icon }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
             return (
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-all ${
+                className={`flex items-center gap-2.5 px-4 py-1.5 transition-all border ${
                   active
-                    ? "bg-white/10 text-white"
-                    : "text-white/45 hover:text-white hover:bg-white/5"
+                    ? "border-[#FF8C00]/40 bg-[#FF8C00]/5 text-[#FF8C00]"
+                    : "border-transparent text-white/30 hover:text-white/60"
                 }`}
               >
-                <Icon className="w-3.5 h-3.5" />
-                {label}
+                <Icon className={`w-3.5 h-3.5 ${active ? "animate-pulse" : "opacity-30"}`} />
+                <span className="text-[11px] font-bold uppercase tracking-tight">{label}</span>
               </Link>
             );
         })}
       </nav>
 
-      {/* Right — Admin + Wallet */}
-      <div className="flex items-center gap-3 px-5 min-w-[220px] justify-end border-l border-white/[0.06] h-full">
-        {publicKey === process.env.NEXT_PUBLIC_ADMIN_ID && (
-          <Link
-            href="/admin"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-widest transition-all ${
-              pathname === "/admin"
-                ? "bg-white/10 text-white"
-                : "text-white/30 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <Shield className="w-3 h-3" />
-            Admin
-          </Link>
-        )}
+      {/* Right Utility Section */}
+      <div className="flex items-center gap-6 px-6 h-full border-l border-white/5 bg-[#0A0A0A]">
         <ConnectWalletButton />
       </div>
     </motion.header>

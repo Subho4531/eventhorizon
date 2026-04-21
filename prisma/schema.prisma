@@ -63,6 +63,7 @@ model Market {
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   category            String               @default("Crypto")
+  imageUrl            String?              @default("")
   oracleAddress       String?
   payoutBps           Int?                 @default(10000)
   bets                Bet[]

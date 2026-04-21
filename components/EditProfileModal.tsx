@@ -19,6 +19,7 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -54,6 +55,32 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
       console.error(err);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      setPfpUrl(data.secure_url);
+    } catch (err) {
+      setError("Upload failed. Please try again.");
+      console.error(err);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -97,16 +124,32 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
               <div className="overflow-y-auto flex-1 p-6">
                 <form id="edit-profile-form" onSubmit={handleSubmit} className="space-y-5">
                   
-                  {/* Avatar Preview */}
                   <div className="flex items-center gap-4 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
-                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-blue-600/30 to-violet-600/30 border border-white/10 flex items-center justify-center shrink-0">
-                      {pfpUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={pfpUrl} alt="" className="w-full h-full object-cover" onError={() => setPfpUrl("")} />
-                      ) : (
-                        <span className="text-xl font-bold text-white/50">{initials}</span>
-                      )}
-                    </div>
+                    <label className="relative cursor-pointer group/avatar shrink-0">
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        accept="image/*" 
+                        onChange={handleFileUpload} 
+                        disabled={isUploading} 
+                      />
+                      <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-blue-600/30 to-violet-600/30 border border-white/10 flex items-center justify-center">
+                        {pfpUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={pfpUrl} alt="" className="w-full h-full object-cover group-hover/avatar:opacity-40 transition-opacity" onError={() => setPfpUrl("")} />
+                        ) : (
+                          <span className="text-xl font-bold text-white/50 group-hover/avatar:opacity-40 transition-opacity">{initials}</span>
+                        )}
+                        
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
+                          {isUploading ? (
+                            <Loader2 className="w-5 h-5 text-white animate-spin" />
+                          ) : (
+                            <Plus className="w-5 h-5 text-white" />
+                          )}
+                        </div>
+                      </div>
+                    </label>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-white mb-1">{name || "Your Name"}</p>
                       <p className="text-[10px] text-white/30 truncate">{publicKey?.slice(0, 20)}...</p>

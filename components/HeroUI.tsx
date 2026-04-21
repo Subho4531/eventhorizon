@@ -32,9 +32,9 @@ export default function HeroUI() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
-            className="text-5xl md:text-7xl font-medium tracking-tight mb-2 drop-shadow-2xl text-shadow-lg"
+            className="text-6xl md:text-8xl font-black tracking-tighter mb-4 drop-shadow-2xl text-shadow-lg uppercase italic text-white"
           >
-            Event Horizon
+            EVENT<br></br> HORIZON
           </motion.h1>
 
           <motion.h2
@@ -42,9 +42,9 @@ export default function HeroUI() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
-            className="text-5xl md:text-7xl font-sans tracking-tight mb-8 drop-shadow-2xl text-shadow-lg"
+            className="text-xl md:text-2xl font-mono tracking-[0.3em] mb-12 drop-shadow-2xl text-[#FF8C00] font-black uppercase italic"
           >
-            Trade on the <span className="text-dim">future</span> without <span className="text-dim">exposure.</span>
+            Trade on the <span className="text-white">future</span> without <span className="text-white">exposure.</span>
           </motion.h2>
 
           <motion.p
@@ -52,9 +52,9 @@ export default function HeroUI() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 1, delay: 0.6 }}
-            className="text-dim text-sm max-w-lg mb-12 leading-relaxed"
+            className="text-white/40 text-[11px] max-w-xl mb-14 leading-relaxed font-black uppercase tracking-[0.1em]"
           >
-            Event Horizon is a Soroban-based prediction market where your positions are cryptographically sealed. Trade on outcomes using Zero-Knowledge proofs — your bets, your privacy.
+            Trade on the outcome of real-world events. Using Zero-Knowledge proofs, your positions are cryptographically sealed until resolution, enabling true decentralized privacy.
           </motion.p>
           
 

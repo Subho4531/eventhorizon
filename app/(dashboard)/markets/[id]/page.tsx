@@ -41,6 +41,7 @@ interface Market {
   contractMarketId?: number | null;
   bondAmount?: number;
   oracleAddress?: string;
+  imageUrl?: string | null;
 }
 
 interface MarketIntelligence {
@@ -60,15 +61,15 @@ interface Activity {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Crypto: "text-blue-400 bg-blue-500/10 border-blue-500/30",
-  Finance: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
-  Technology: "text-purple-400 bg-purple-500/10 border-purple-500/30",
-  Politics: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-  Sports: "text-rose-400 bg-rose-500/10 border-rose-500/30",
+  Crypto: "text-[#FF8C00] border-[#FF8C00]/30 bg-[#FF8C00]/5",
+  Finance: "text-[#00C853] border-[#00C853]/30 bg-[#00C853]/5",
+  Technology: "text-[#2979FF] border-[#2979FF]/30 bg-[#2979FF]/5",
+  Politics: "text-[#FFD700] border-[#FFD700]/30 bg-[#FFD700]/5",
+  Sports: "text-[#F50057] border-[#F50057]/30 bg-[#F50057]/5",
 };
 
 function truncKey(key: string) {
-  return `${key.slice(0, 6)}…${key.slice(-4)}`;
+  return `${key.slice(0, 8)}...${key.slice(-6)}`;
 }
 
 export default function MarketDetailPage({
@@ -102,7 +103,6 @@ export default function MarketDetailPage({
         const m: Market = await res.json();
         setMarket(m);
 
-        // Parallel intelligence + activity fetches
         const [probRes, qualityRes, riskRes, betsRes] = await Promise.allSettled([
           fetch(`/api/markets/${id}/probability`),
           fetch(`/api/markets/${id}/quality`),
@@ -130,19 +130,17 @@ export default function MarketDetailPage({
           const betsData = await betsRes.value.json();
           const bets = betsData.bets ?? [];
           setActivity(bets);
-          // Check if current user already has a bet
           if (publicKey) {
             setHasBet(bets.some((b: { userPublicKey: string }) => b.userPublicKey === publicKey));
           }
         }
       } catch {
-        // market stays null → error state
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, [id]);
+  }, [id, publicKey]);
 
   const calcOdds = (yes: number, no: number) => {
     const t = yes + no;
@@ -170,36 +168,29 @@ export default function MarketDetailPage({
     setSubmitting(true);
     setBetError("");
     setBetSuccess(false);
-    setBetStatus("Checking escrow balance…");
+    setBetStatus("Checking escrow balance...");
 
     try {
-      // 1. Check on-chain escrow balance
       const escrowBal = await getOnchainEscrowBalance(publicKey);
       if (escrowBal < stake) {
         throw new Error(`Insufficient escrow balance. You have ${escrowBal.toFixed(4)} XLM. Deposit more from your Portfolio.`);
       }
 
-      // 1b. Check on-chain market state
       const onchainMarket = await getMarket(market.contractMarketId);
       if (!onchainMarket) {
-        throw new Error(`Market not found on the smart contract (ID: ${market.contractMarketId}). This usually means the market is archived or from an older version of the contract.`);
+        throw new Error(`Market not found on the smart contract (ID: ${market.contractMarketId}).`);
       }
       
-      // Robust check for MarketStatus::Open (can be 0 or "Open")
       const isStatusOpen = onchainMarket.status === 0 || onchainMarket.status === "Open";
       if (!isStatusOpen) {
         throw new Error(`Market is no longer open for betting (Status: ${onchainMarket.status}).`);
       }
 
-      // 2. Generate ZK commitment via the SealBet circuit: Poseidon(side, nonce, bettor_key)
-      setBetStatus("Generating ZK commitment…");
+      setBetStatus("Generating ZK commitment...");
       const sideNum = side === "YES" ? 0 : 1;
       const nonce = Math.floor(Math.random() * 2 ** 32).toString();
-
-      // Derive a numeric bettor_key from the publicKey (first 8 hex chars → number)
       const bettorKeyNum = parseInt(publicKey.slice(1, 9), 36).toString();
 
-      // @ts-ignore — snarkjs types
       const snarkjs = await import("snarkjs");
       const { proof: sealProof, publicSignals: sealSignals } = await snarkjs.groth16.fullProve(
         { side: sideNum.toString(), nonce, bettor_key: bettorKeyNum },
@@ -207,16 +198,13 @@ export default function MarketDetailPage({
         "/circuit/seal/seal_0001.zkey"
       );
 
-      // The seal_bet circuit output is publicSignals[0] = commitment
       const commitmentHash = sealSignals[0];
 
-      // 3. On-chain place_bet (this deducts from escrow)
-      setBetStatus("Building on-chain transaction…");
+      setBetStatus("Building on-chain transaction...");
       const res = await placeBetOnChain(publicKey, market.contractMarketId, commitmentHash, stake);
       if (!res.success || !res.unsignedXdr) throw new Error("Failed to build place_bet transaction");
 
-      // 4. Sign with Freighter
-      setBetStatus("Waiting for Freighter signature…");
+      setBetStatus("Waiting for Freighter signature...");
       const { signTransaction } = await import("@stellar/freighter-api");
       const networkPassphrase = "Test SDF Network ; September 2015";
       const signResult = await signTransaction(res.unsignedXdr, { networkPassphrase });
@@ -225,13 +213,11 @@ export default function MarketDetailPage({
       else if (signResult && "signedTxXdr" in signResult) signedXdr = (signResult as { signedTxXdr: string }).signedTxXdr;
       if (!signedXdr) throw new Error("Freighter returned unexpected response");
 
-      // 5. Submit to Soroban
-      setBetStatus("Submitting to Soroban…");
+      setBetStatus("Submitting to Soroban...");
       const submitRes = await submitSignedXdr(signedXdr);
       if (!submitRes.hash) throw new Error("Transaction submission failed");
 
-      // 6. Record in DB
-      setBetStatus("Recording bet…");
+      setBetStatus("Recording bet...");
       const dbRes = await fetch("/api/bets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -248,7 +234,6 @@ export default function MarketDetailPage({
       if (!dbRes.ok) {
         const d = await dbRes.json();
         if (dbRes.status === 409) {
-          // Already bet — treat gracefully since on-chain tx went through
           setHasBet(true);
         } else {
           console.error("DB indexing warning:", d.error);
@@ -257,7 +242,6 @@ export default function MarketDetailPage({
         setHasBet(true);
       }
 
-      // 7. Store in localStorage for portfolio display
       const portfolioEntry = {
         marketId: market.id,
         contractMarketId: market.contractMarketId,
@@ -277,7 +261,6 @@ export default function MarketDetailPage({
       setBetSuccess(true);
       setBetStatus("");
       setAmount("50");
-      // Optimistically update pool
       setMarket((prev) =>
         prev
           ? {
@@ -294,7 +277,7 @@ export default function MarketDetailPage({
       if (msg.toLowerCase().includes("user declined") || msg.toLowerCase().includes("rejected")) {
         setBetError("Signature rejected in Freighter.");
       } else {
-        setBetError(msg.length > 120 ? msg.slice(0, 120) + "…" : msg);
+        setBetError(msg.length > 120 ? msg.slice(0, 120) + "..." : msg);
       }
       setBetStatus("");
     } finally {
@@ -304,132 +287,179 @@ export default function MarketDetailPage({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 text-white/30 animate-spin" />
+      <div className="flex items-center justify-center min-h-[60vh] font-mono">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 text-[#FF8C00] animate-spin" />
+          <span className="text-[10px] text-white/30 uppercase tracking-[0.2em]">Loading_Market_Data...</span>
+        </div>
       </div>
     );
   }
 
   if (!market) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <AlertCircle className="w-10 h-10 text-red-500/40" />
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 font-mono">
+        <div className="w-12 h-12 border border-red-500/30 flex items-center justify-center bg-red-500/5">
+          <AlertCircle className="w-6 h-6 text-red-500" />
+        </div>
         <div className="text-center">
-          <p className="text-white font-bold tracking-widest text-sm uppercase mb-1">Market Not Found</p>
-          <p className="text-white/30 text-xs max-w-xs mx-auto">This market may have been archived or deleted due to a contract synchronization update.</p>
+          <p className="text-white font-black tracking-tighter text-sm uppercase mb-2">ERR_404: MARKET_NOT_FOUND</p>
+          <p className="text-white/20 text-[10px] max-w-xs mx-auto uppercase">The requested data module is unavailable or archived.</p>
         </div>
         <button
           onClick={() => router.push("/markets")}
-          className="mt-4 px-6 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white/60 hover:bg-white/10 hover:text-white transition-all"
+          className="mt-4 px-6 py-2 border border-white/10 text-[10px] text-white/40 font-bold uppercase hover:bg-white/5 transition-all"
         >
-          ← Back to markets
+          ← Return_To_Terminal
         </button>
       </div>
     );
   }
 
   const odds = calcOdds(market.yesPool, market.noPool);
-  const catColor = CATEGORY_COLORS[market.category] ?? "text-white/60 bg-white/5 border-white/10";
+  const catColor = CATEGORY_COLORS[market.category] ?? "text-white/40 border-white/10 bg-white/5";
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-0 pt-8 pb-24">
+    <div className="w-full max-w-7xl mx-auto px-0 pt-4 pb-24 font-mono">
       {/* Back nav */}
       <button
         onClick={() => router.push("/markets")}
-        className="flex items-center gap-2 text-white/40 hover:text-white text-xs uppercase tracking-widest font-semibold mb-8 transition-colors"
+        className="flex items-center gap-3 text-white/20 hover:text-[#FF8C00] text-[10px] uppercase font-black mb-8 transition-colors"
       >
-        <ArrowLeft className="w-4 h-4" />
-        All Markets
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Back::Markets_Index
       </button>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-8">
         {/* ── LEFT COLUMN ── */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Market header */}
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white/3 border border-white/8 rounded-2xl p-6 space-y-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="border border-white/10 bg-[#0D0D0D] p-8 relative overflow-hidden"
           >
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border ${catColor}`}>
+            {/* Grid overlay */}
+            <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[radial-gradient(#fff_1px,transparent_1px)] bg-[length:16px_16px]" />
+            
+            {/* Market Image Hero */}
+            {market.imageUrl && (
+              <div className="relative w-full h-[300px] mb-8 border border-white/5 overflow-hidden">
+                <img 
+                  src={market.imageUrl} 
+                  alt={market.title}
+                  className="w-full h-full object-cover opacity-80"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-[#0D0D0D]/20 to-transparent" />
+                
+                {/* Meta data overlay */}
+                <div className="absolute bottom-4 left-6 flex items-center gap-4">
+                  <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-md border border-white/10">
+                    <div className="w-1.5 h-1.5 bg-[#FF8C00] rounded-full animate-pulse" />
+                    <span className="text-[8px] text-[#FF8C00] font-black tracking-[0.2em] uppercase">DATA FEED ACTIVE</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-md border border-white/10 text-white/40 text-[8px] font-black tracking-[0.2em] uppercase">
+                    VISUAL_RELAY_v2.0
+                  </div>
+                </div>
+
+                {/* Scanning effect */}
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-[#FF8C00]/30 animate-scan pointer-events-none" />
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center gap-3 relative z-10">
+              <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 border ${catColor}`}>
                 {market.category}
               </span>
               <span
-                className={`flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full border ${
+                className={`flex items-center gap-2 text-[9px] font-black uppercase tracking-widest px-3 py-1 border ${
                   market.status === "OPEN"
-                    ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/30"
-                    : "text-white/30 bg-white/5 border-white/10"
+                    ? "text-[#00C853] border-[#00C853]/30 bg-[#00C853]/5"
+                    : "text-white/20 bg-white/5 border-white/10"
                 }`}
               >
                 {market.status === "OPEN" && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="w-1.5 h-1.5 bg-[#00C853] animate-pulse rounded-full" />
                 )}
-                {market.status}
+                STATUS::{market.status}
               </span>
-              {intelligence.qualityScore !== undefined && (
-                <QualityIndicator score={intelligence.qualityScore} size="sm" />
-              )}
             </div>
 
-            <h1 className="text-2xl md:text-3xl font-semibold text-white leading-snug">
+            <h1 className="text-3xl md:text-4xl font-black text-white leading-tight mt-6 mb-4 uppercase tracking-tighter">
               {market.title}
             </h1>
 
             {market.description && (
-              <p className="text-sm text-white/50 leading-relaxed">{market.description}</p>
+              <p className="text-xs text-white/40 leading-relaxed max-w-3xl border-l border-white/10 pl-6 my-6 italic">
+                {market.description}
+              </p>
             )}
 
-            <div className="flex flex-wrap items-center gap-5 pt-2 border-t border-white/5">
-              <div className="flex items-center gap-1.5 text-xs text-white/40">
-                <Clock className="w-3.5 h-3.5" />
-                Closes {new Date(market.closeDate).toLocaleDateString("en-US", { dateStyle: "long" })}
+            <div className="flex flex-wrap items-center gap-8 pt-6 border-t border-white/5 mt-8">
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] text-white/20 uppercase font-black tracking-widest">Expiration_Date</span>
+                <div className="flex items-center gap-2 text-[11px] text-white/60 font-bold uppercase">
+                  <Clock className="w-3.5 h-3.5 opacity-30" />
+                  {new Date(market.closeDate).toLocaleDateString("en-US", { dateStyle: "medium" }).toUpperCase()}
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-white/40">
-                <TrendingUp className="w-3.5 h-3.5" />
-                {(market.totalVolume || 0).toLocaleString()} XLM volume
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] text-white/20 uppercase font-black tracking-widest">Total_Volume</span>
+                <div className="flex items-center gap-2 text-[11px] text-[#FF8C00] font-bold uppercase">
+                  <TrendingUp className="w-3.5 h-3.5 opacity-50" />
+                  {(market.totalVolume || 0).toLocaleString()} XLM
+                </div>
               </div>
               {market.contractMarketId && (
-                <div className="flex items-center gap-1.5 text-xs text-white/40">
-                  <Shield className="w-3.5 h-3.5" />
-                  On-chain #{market.contractMarketId}
+                <div className="flex flex-col gap-1">
+                  <span className="text-[9px] text-white/20 uppercase font-black tracking-widest">Onchain_Module</span>
+                  <div className="flex items-center gap-2 text-[11px] text-white/40 font-bold uppercase">
+                    <Shield className="w-3.5 h-3.5 opacity-30" />
+                    CID::{market.contractMarketId}
+                  </div>
                 </div>
               )}
             </div>
+
+            {/* Decorative scanline */}
+            <div className="absolute bottom-0 left-0 w-full h-[1px] bg-[#FF8C00]/20" />
           </motion.div>
 
           {/* Chart */}
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.07 }}
-            className="bg-white/3 border border-white/8 rounded-2xl p-6 space-y-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="border border-white/10 bg-[#0D0D0D] p-8"
           >
-            <div className="flex items-center justify-between">
-              <h2 className="text-[10px] font-black uppercase tracking-widest text-white/60">
-                Probability History
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">
+                Data Stream Probability Index
               </h2>
-              <div className="flex items-center gap-4 text-[10px]">
-                <span className="flex items-center gap-1.5 text-blue-400 font-bold">
-                  <span className="w-3 h-0.5 bg-blue-400 rounded" />
-                  YES {odds.yes}%
+              <div className="flex items-center gap-6 text-[10px] font-black tracking-widest">
+                <span className="flex items-center gap-2 text-[#FF8C00]">
+                  <div className="w-3 h-1 bg-[#FF8C00]" />
+                  YES_{odds.yes}%
                 </span>
-                <span className="flex items-center gap-1.5 text-rose-400 font-bold">
-                  <span className="w-3 h-0.5 bg-rose-400 rounded" />
-                  NO {odds.no}%
+                <span className="flex items-center gap-2 text-white/40">
+                  <div className="w-3 h-1 bg-white/10" />
+                  NO_{odds.no}%
                 </span>
               </div>
             </div>
-            <MarketChart marketId={market.id} yesPool={market.yesPool} noPool={market.noPool} />
+            <div className="h-[300px] border border-white/5 bg-black/20">
+              <MarketChart marketId={market.id} yesPool={market.yesPool} noPool={market.noPool} />
+            </div>
           </motion.div>
 
-          {/* Risk / Intelligence alerts */}
+          {/* Intelligence Modules */}
           {(intelligence.manipulationScore || intelligence.probability !== undefined) && (
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.12 }}
-              className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-6"
             >
               {intelligence.probability !== undefined && intelligence.probability > 0 && (() => {
                 const prob = intelligence.probability!;
@@ -437,66 +467,85 @@ export default function MarketDetailPage({
                 const sources: string[] = (intelligence as any).sources ?? [];
                 const isPoolOnly = !sources.includes("historical") && !sources.includes("external");
                 const pct = (prob * 100).toFixed(1);
-                const label = isPoolOnly ? "Pool-weighted" : "AI Probability";
+                
                 return (
-                  <div className="bg-purple-500/8 border border-purple-500/20 rounded-2xl p-4 flex items-center gap-4">
-                    <Brain className="w-8 h-8 text-purple-400 shrink-0" />
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-purple-400 mb-1">
-                        {label}
-                      </p>
-                      <p className="text-2xl font-bold text-white">
-                        {pct}%
-                      </p>
-                      <p className="text-[10px] text-white/40">
-                        {isPoolOnly
-                          ? "Based on current pool ratio"
-                          : `YES likelihood · ${Math.round(confidence * 100)}% confidence`}
-                      </p>
+                  <div className="border border-blue-500/20 bg-blue-500/5 p-6 relative overflow-hidden">
+                    <div className="flex items-start gap-5 relative z-10">
+                      <div className="w-12 h-12 border border-blue-500/30 flex items-center justify-center bg-blue-500/10">
+                        <Brain className="w-6 h-6 text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-400/60 mb-2">
+                          {isPoolOnly ? "Module Pool Signal" : "Module AI Inference"}
+                        </p>
+                        <p className="text-3xl font-black text-white mb-1">
+                          {pct}%
+                        </p>
+                        <p className="text-[9px] text-white/30 uppercase tracking-tighter">
+                          {isPoolOnly
+                            ? "Data Source: On-chain Liquidity"
+                            : `Model Conf: ${Math.round(confidence * 100)}% · Source: Multi_Inference`}
+                        </p>
+                      </div>
                     </div>
+                    {/* Decorative bits */}
+                    <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-blue-500/20" />
                   </div>
                 );
               })()}
               {intelligence.manipulationScore !== undefined && intelligence.manipulationScore >= 50 && (
-                <RiskAlert
-                  score={intelligence.manipulationScore}
-                  flags={intelligence.riskFlags}
-                />
+                <div className="h-full">
+                  <RiskAlert
+                    score={intelligence.manipulationScore}
+                    flags={intelligence.riskFlags}
+                  />
+                </div>
               )}
             </motion.div>
           )}
 
-          {/* Activity feed */}
+          {/* Activity Feed */}
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="bg-white/3 border border-white/8 rounded-2xl p-6 space-y-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="border border-white/10 bg-[#0D0D0D] p-8"
           >
-            <h2 className="text-[10px] font-black uppercase tracking-widest text-white/60 flex items-center gap-2">
-              <Users className="w-3.5 h-3.5" />
-              Recent Activity
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 flex items-center gap-3 mb-6">
+              <Users className="w-4 h-4 opacity-30" />
+              Recent Transaction Log
             </h2>
             {activity.length === 0 ? (
-              <p className="text-xs text-white/30 text-center py-8">
-                No trades yet — be the first.
-              </p>
+              <div className="flex items-center justify-center py-12 border border-white/5 bg-white/[0.02]">
+                <p className="text-[10px] text-white/20 uppercase tracking-[0.2em] animate-pulse">
+                  Waiting For Data Transmission...
+                </p>
+              </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {activity.map((a) => (
                   <div
                     key={a.id}
-                    className="flex items-center justify-between text-xs text-white/60 py-2 border-b border-white/5 last:border-0"
+                    className="flex items-center justify-between text-[11px] py-3 px-4 border border-white/5 hover:bg-white/[0.02] transition-colors group"
                   >
-                    <span className="font-mono text-white/40">
-                      {truncKey(a.user?.publicKey ?? "Unknown")}
-                    </span>
-                    <span className="text-white/80 font-semibold">
-                      {a.amount.toLocaleString()} XLM
-                    </span>
-                    <span className="text-white/30">
-                      {new Date(a.createdAt).toLocaleDateString()}
-                    </span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-white/20 text-[9px] uppercase font-black tracking-tighter">Trader Id</span>
+                      <span className="text-white/60 font-bold">
+                        {truncKey(a.user?.publicKey ?? "UNKNOWN_MODULE")}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-end gap-0.5">
+                      <span className="text-white/20 text-[9px] uppercase font-black tracking-tighter">Stake Val</span>
+                      <span className="text-[#FF8C00] font-black">
+                        {a.amount.toLocaleString()} XLM
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-end gap-0.5 min-w-[80px]">
+                      <span className="text-white/20 text-[9px] uppercase font-black tracking-tighter">Timestamp</span>
+                      <span className="text-white/30 font-bold uppercase">
+                        {new Date(a.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -504,79 +553,92 @@ export default function MarketDetailPage({
           </motion.div>
         </div>
 
-        {/* ── RIGHT COLUMN: Bet Panel ── */}
+        {/* ── RIGHT COLUMN: Trade Terminal ── */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1 }}
-          className="space-y-4"
+          transition={{ delay: 0.2 }}
+          className="space-y-6"
         >
-          {/* Odds summary */}
-          <div className="bg-white/3 border border-white/8 rounded-2xl p-5 space-y-4">
-            <h2 className="text-[10px] font-black uppercase tracking-widest text-white/60">
-              Current Odds
+          {/* Probability Module */}
+          <div className="border border-white/10 bg-[#0D0D0D] p-6 space-y-6">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">
+              Module Market Sentiment
             </h2>
-            <Progress
-              value={odds.yes}
-              label="YES"
-              textClass="text-blue-400"
-              indicatorClass="bg-blue-500/20"
-            />
-            <Progress
-              value={odds.no}
-              label="NO"
-              textClass="text-rose-400"
-              indicatorClass="bg-rose-500/20"
-            />
+            <div className="space-y-4">
+              <Progress
+                value={odds.yes}
+                label="YES INDEX"
+                textClass="text-[#FF8C00]"
+                indicatorClass="bg-[#FF8C00]/20"
+              />
+              <Progress
+                value={odds.no}
+                label="NO INDEX"
+                textClass="text-white/40"
+                indicatorClass="bg-white/5"
+              />
+            </div>
           </div>
 
-          {/* Bet form */}
-          <div className="bg-white/3 border border-white/8 rounded-2xl p-5 space-y-5 sticky top-6">
-            <h2 className="text-[10px] font-black uppercase tracking-widest text-white/60 flex items-center gap-2">
-              <Zap className="w-3.5 h-3.5" />
-              Place Trade
+          {/* Trade Terminal */}
+          <div className="border border-[#FF8C00]/40 bg-[#0D0D0D] p-6 space-y-8 sticky top-24 relative overflow-hidden">
+            {/* Header scanning effect */}
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-[#FF8C00]/30 animate-scan pointer-events-none" />
+            
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FF8C00] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4" />
+                Terminal Trade Execution
+              </div>
+              <div className="w-2 h-2 bg-[#FF8C00] animate-pulse rounded-full" />
             </h2>
 
             {hasBet && market.status === "OPEN" && (
-              <div className="flex items-center gap-2 text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-xl p-3">
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
-                <span className="text-xs font-semibold">You already have a position on this market.</span>
+              <div className="border border-white/10 bg-white/5 p-4 text-[10px] text-white/40 uppercase font-black leading-relaxed">
+                STATUS LOG: POSITION ALREADY OPEN. MULTIPLE BETS DISABLED.
               </div>
             )}
 
             {market.status !== "OPEN" ? (
-              <div className="text-center py-8 space-y-2">
-                <XCircle className="w-8 h-8 text-white/20 mx-auto" />
-                <p className="text-xs text-white/30 uppercase tracking-widest">
-                  Market Closed
+              <div className="text-center py-12 border border-white/5 bg-white/[0.02] space-y-3">
+                <XCircle className="w-10 h-10 text-white/10 mx-auto" />
+                <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.3em]">
+                  Terminal Locked
                 </p>
               </div>
             ) : (
               <>
                 {/* Side selector */}
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   {(["YES", "NO"] as const).map((opt) => (
                     <button
                       key={opt}
                       onClick={() => setSide(opt)}
-                      className={`flex-1 py-3 rounded-xl text-sm font-black uppercase tracking-widest border transition-all ${
+                      className={`relative py-4 border transition-all font-black uppercase text-[11px] tracking-[0.2em] ${
                         side === opt
                           ? opt === "YES"
-                            ? "bg-blue-600 text-white border-blue-400 shadow-lg shadow-blue-600/20"
-                            : "bg-rose-600 text-white border-rose-400 shadow-lg shadow-rose-600/20"
-                          : "bg-white/5 text-white/40 border-white/10 hover:bg-white/10 hover:text-white/70"
+                            ? "bg-[#FF8C00]/10 border-[#FF8C00] text-[#FF8C00]"
+                            : "bg-white/10 border-white text-white"
+                          : "border-white/10 text-white/20 hover:bg-white/5 hover:text-white/40"
                       }`}
                     >
                       {opt}
+                      {side === opt && (
+                        <motion.div layoutId="side-indicator" className="absolute -bottom-[1px] left-0 w-full h-[2px] bg-current" />
+                      )}
                     </button>
                   ))}
                 </div>
 
                 {/* Amount input */}
-                <div className="space-y-2">
-                  <label className="text-[10px] text-white/50 uppercase tracking-widest font-bold">
-                    Amount (XLM)
-                  </label>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[9px] text-white/40 uppercase font-black tracking-widest">
+                      Input::Stake_Amount (XLM)
+                    </label>
+                    <span className="text-[9px] text-white/20 uppercase font-bold">Limit::5000_XLM</span>
+                  </div>
                   <div className="relative">
                     <input
                       type="number"
@@ -584,21 +646,22 @@ export default function MarketDetailPage({
                       step="1"
                       value={amount}
                       onChange={(e) => { setAmount(e.target.value); setBetError(""); setBetSuccess(false); }}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500/50 transition-colors"
-                      placeholder="50"
+                      className="w-full bg-black border border-white/10 rounded-sm px-5 py-4 text-white text-sm font-black focus:outline-none focus:border-[#FF8C00]/50 transition-colors"
+                      placeholder="0.00"
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-white/30 font-semibold">
-                      XLM
-                    </span>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                      <div className="w-px h-4 bg-white/10" />
+                      <span className="text-[10px] text-white/40 font-black uppercase">XLM</span>
+                    </div>
                   </div>
 
                   {/* Quick amounts */}
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-4 gap-1.5">
                     {["10", "50", "100", "500"].map((q) => (
                       <button
                         key={q}
                         onClick={() => setAmount(q)}
-                        className="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest border border-white/10 rounded-lg text-white/40 hover:text-white hover:border-white/30 transition-all"
+                        className="py-2 text-[9px] font-black uppercase border border-white/5 text-white/30 hover:text-white hover:border-[#FF8C00]/30 hover:bg-[#FF8C00]/5 transition-all"
                       >
                         {q}
                       </button>
@@ -606,119 +669,118 @@ export default function MarketDetailPage({
                   </div>
                 </div>
 
-                {/* Payout estimate */}
-                <div className="bg-white/3 border border-white/6 rounded-xl p-4 space-y-2 text-xs">
-                  <div className="flex justify-between text-white/40">
-                    <span>Potential Profit</span>
-                    <span className="text-emerald-400 font-bold">+{potentialPayout()} XLM</span>
+                {/* Payout data */}
+                <div className="border border-white/5 bg-black/40 p-4 space-y-3">
+                  <div className="flex justify-between text-[10px]">
+                    <span className="text-white/30 uppercase font-black">Est_Profit</span>
+                    <span className="text-[#00C853] font-black">+{potentialPayout()} XLM</span>
                   </div>
-                  <div className="flex justify-between text-white/40">
-                    <span>Win Probability</span>
-                    <span className="font-bold text-white/60">
+                  <div className="flex justify-between text-[10px]">
+                    <span className="text-white/30 uppercase font-black">Probability</span>
+                    <span className="text-white/60 font-black">
                       {side === "YES" ? odds.yes : odds.no}%
                     </span>
                   </div>
                 </div>
 
-                {/* Error / success / status */}
-                <AnimatePresence>
+                {/* Status messages */}
+                <AnimatePresence mode="wait">
                   {betError && (
                     <motion.div
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0 }}
-                      className="flex items-start gap-2 text-red-400 bg-red-500/10 border border-red-500/30 rounded-xl p-3"
+                      className="p-4 border border-red-500/30 bg-red-500/5 text-red-500 text-[10px] font-black uppercase leading-tight"
                     >
-                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                      <span className="text-xs">{betError}</span>
+                      ERR::{betError}
                     </motion.div>
                   )}
                   {betSuccess && (
                     <motion.div
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0 }}
-                      className="flex items-center gap-2 text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3"
+                      className="p-4 border border-[#00C853]/30 bg-[#00C853]/5 text-[#00C853] text-[10px] font-black uppercase leading-tight"
                     >
-                      <CheckCircle2 className="w-4 h-4 shrink-0" />
-                      <span className="text-xs font-semibold">
-                        Bet placed — escrow deducted & position sealed on-chain ✓
-                      </span>
+                      SUCCESS::POSITION_SEALED_ON_CHAIN
                     </motion.div>
                   )}
                   {betStatus && !betError && (
                     <motion.div
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0 }}
-                      className="flex items-center gap-2 text-blue-400 bg-blue-500/10 border border-blue-500/30 rounded-xl p-3"
+                      className="p-4 border border-blue-500/30 bg-blue-500/5 text-blue-400 text-[10px] font-black uppercase flex items-center gap-3"
                     >
-                      <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
-                      <span className="text-xs font-semibold">{betStatus}</span>
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      {betStatus}
                     </motion.div>
                   )}
                 </AnimatePresence>
 
-                {/* Submit */}
+                {/* Execute Button */}
                 <button
                   onClick={handleBet}
                   disabled={submitting || !publicKey || hasBet}
-                  className={`w-full py-4 rounded-xl text-sm font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 ${
+                  className={`group relative w-full py-5 font-black uppercase text-[12px] tracking-[0.3em] transition-all overflow-hidden border ${
                     hasBet
-                      ? "bg-white/5 text-white/30 border border-white/10 cursor-not-allowed"
+                      ? "border-white/5 text-white/20 cursor-not-allowed bg-white/[0.02]"
                       : side === "YES"
-                      ? "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30"
-                      : "bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30"
-                  } disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97]`}
+                      ? "border-[#FF8C00] bg-[#FF8C00] text-black hover:bg-black hover:text-[#FF8C00]"
+                      : "border-white bg-white text-black hover:bg-black hover:text-white"
+                  } disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {betStatus || "Sealing Bet…"}
-                    </>
-                  ) : hasBet ? (
-                    "Position Already Open"
-                  ) : !publicKey ? (
-                    "Connect Wallet to Trade"
-                  ) : (
-                    `Buy ${side} · ${amount} XLM`
+                  <span className="relative z-10 flex items-center justify-center gap-3">
+                    {submitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        PROCESSING...
+                      </>
+                    ) : hasBet ? (
+                      "TERMINAL_LOCKED"
+                    ) : !publicKey ? (
+                      "CONNECT_WALLET"
+                    ) : (
+                      `EXECUTE_BUY_${side}`
+                    )}
+                  </span>
+                  
+                  {/* Hover scanline */}
+                  {!submitting && !hasBet && publicKey && (
+                    <motion.div 
+                      className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 pointer-events-none" 
+                    />
                   )}
                 </button>
-
-                {!publicKey && (
-                  <p className="text-center text-[10px] text-white/30 uppercase tracking-widest">
-                    Wallet connection required
-                  </p>
-                )}
               </>
             )}
           </div>
 
-          {/* Contract info */}
-          <div className="bg-white/3 border border-white/8 rounded-2xl p-4 space-y-3">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-white/40">
-              Contract Info
+          {/* Module Specs */}
+          <div className="border border-white/10 bg-[#0D0D0D] p-6 space-y-4">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">
+              Module::Contract_Specifications
             </h3>
-            <div className="space-y-2 text-[10px] text-white/40">
+            <div className="space-y-2 text-[10px] font-bold uppercase tracking-tighter">
               {market.contractMarketId && (
-                <div className="flex justify-between">
-                  <span>Market ID</span>
-                  <span className="font-mono text-white/60">#{market.contractMarketId}</span>
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-white/30">Module_ID</span>
+                  <span className="text-white/60">0x00{market.contractMarketId}</span>
                 </div>
               )}
-              <div className="flex justify-between">
-                <span>Bond</span>
-                <span className="font-mono text-white/60">{market.bondAmount ?? 100} XLM</span>
+              <div className="flex justify-between border-b border-white/5 pb-2">
+                <span className="text-white/30">Bond_Stake</span>
+                <span className="text-white/60">{market.bondAmount ?? 100} XLM</span>
               </div>
               {market.oracleAddress && (
-                <div className="flex justify-between">
-                  <span>Oracle</span>
-                  <span className="font-mono text-white/60">{truncKey(market.oracleAddress)}</span>
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-white/30">Oracle_Relay</span>
+                  <span className="text-white/60 truncate max-w-[120px]">{truncKey(market.oracleAddress)}</span>
                 </div>
               )}
               <div className="flex justify-between">
-                <span>Network</span>
-                <span className="font-mono text-white/60">Stellar Testnet</span>
+                <span className="text-white/30">Network_Bus</span>
+                <span className="text-[#00C853]">STELLAR_TESTNET_v4</span>
               </div>
             </div>
           </div>

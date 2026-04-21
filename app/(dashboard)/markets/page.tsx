@@ -15,7 +15,7 @@ export default function MarketsPage() {
         <header className="mb-12 pointer-events-auto">
            <div className="flex items-start justify-between gap-6 mb-4">
              <div>
-               <h1 className="text-4xl md:text-5xl font-medium tracking-tight drop-shadow-xl font-sans text-white">
+               <h1 className="text-4xl md:text-5xl font-medium tracking-tight drop-shadow-xl  text-white">
                   Prediction Markets
                </h1>
              </div>
@@ -29,7 +29,7 @@ export default function MarketsPage() {
                </button>
              )} */}
            </div>
-           <p className="text-white/60 max-w-2xl text-lg tracking-wide leading-relaxed font-sans">
+           <p className="text-white/60 max-w-2xl text-lg tracking-wide leading-relaxed ">
              Trade on the outcome of real-world events. Using Zero-Knowledge proofs, 
              your positions are <span className="text-blue-400">cryptographically sealed</span> until resolution, enabling true decentralized privacy.
            </p>
