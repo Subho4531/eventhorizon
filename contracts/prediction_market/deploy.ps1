@@ -17,7 +17,7 @@
 
 .REQUIREMENTS
   - Rust + cargo
-  - stellar CLI:  cargo install --locked stellar-cli --features opt
+  - stellar CLI:  cargo install --locked stellar-cli
   - soroban target: rustup target add wasm32-unknown-unknown
 #>
 
@@ -69,7 +69,7 @@ if (Get-Command wasm-opt -ErrorAction SilentlyContinue) {
 Write-Host "`n==> Setting up deployer identity ..." -ForegroundColor Cyan
 
 if (!(Get-Command stellar -ErrorAction SilentlyContinue)) {
-    throw "stellar CLI not found. Install with: cargo install --locked stellar-cli --features opt"
+    throw "stellar CLI not found. Install with: cargo install --locked stellar-cli"
 }
 
 $identityName = "gravityflow-deployer"
