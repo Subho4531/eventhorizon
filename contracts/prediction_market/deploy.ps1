@@ -18,7 +18,7 @@
 .REQUIREMENTS
   - Rust + cargo
   - stellar CLI:  cargo install --locked stellar-cli
-  - soroban target: rustup target add wasm32-unknown-unknown
+  - soroban target: rustup target add wasm32v1-none
 #>
 
 Set-StrictMode -Version Latest
