@@ -22,7 +22,13 @@ export default function CreateMarketModal({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [oracle, setOracle] = useState(userPublicKey);
-  const [closeDate, setCloseDate] = useState("");
+  
+  // Default to 1 week from now
+  const defaultDate = new Date();
+  defaultDate.setDate(defaultDate.getDate() + 7);
+  const formattedDefaultDate = defaultDate.toISOString().slice(0, 16);
+  
+  const [closeDate, setCloseDate] = useState(formattedDefaultDate);
   const [category, setCategory] = useState("CRYPTO");
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);

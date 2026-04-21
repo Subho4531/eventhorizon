@@ -16,6 +16,16 @@ export default function HeroUI() {
       <section className="min-h-screen flex items-center justify-center pt-20 px-8">
         <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
           <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className="mb-8"
+          >
+            <img src="/logo.png" alt="Event Horizon Logo" className="w-32 h-32 object-contain rounded-full shadow-[0_0_50px_rgba(255,255,255,0.1)]" />
+          </motion.div>
+
+          <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}

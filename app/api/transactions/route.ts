@@ -6,13 +6,13 @@ export const dynamic = 'force-dynamic';
 // GET /api/transactions?publicKey=...
 export async function GET(req: NextRequest) {
   const publicKey = req.nextUrl.searchParams.get("publicKey");
-  if (!publicKey) {
-    return NextResponse.json({ error: "publicKey is required" }, { status: 400 });
-  }
+  const limit = req.nextUrl.searchParams.get("limit");
+  
   try {
     const transactions = await prisma.transaction.findMany({
-      where: { userPublicKey: publicKey },
+      where: publicKey ? { userPublicKey: publicKey } : {},
       orderBy: { createdAt: "desc" },
+      take: limit ? parseInt(limit, 10) : undefined,
     });
     return NextResponse.json({ transactions });
   } catch (err) {

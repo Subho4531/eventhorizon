@@ -23,6 +23,7 @@ import { setActiveMarketCategory } from "./MarketsGrid";
 
 /* ─── Sidebar nav items ─────────────────────────────────────── */
 const MAIN_NAV = [
+  { href: "/", label: "Protocol Terminal", Icon: Activity, desc: "Network Overview" },
   { href: "/markets", label: "Prediction Markets", Icon: BarChart2, desc: "Browse predictions" },
   { href: "/portfolio", label: "Portfolio", Icon: Activity, desc: "Your positions" },
   { href: "/leaderboard", label: "Leaderboard", Icon: Trophy, desc: "Top traders" },
@@ -70,8 +71,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen pt-[64px]">
         {/* ── SIDEBAR EVENT HORIZON REDESIGN ── */}
         <aside className="hidden md:flex flex-col w-[240px] border-r border-white/5 bg-[#0D0D0D] sticky top-[64px] h-[calc(100vh-64px)] overflow-y-auto no-scrollbar shrink-0">
-
-          {/* Hardware-styled Wallet Card */}
           <div className="p-4">
             {publicKey ? (
               <div className="relative group">
@@ -80,9 +79,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-1.5">
                       <div className="w-1 h-1 bg-[#FF8C00] animate-pulse" />
-                      <span className="text-[9px] font-black text-[#FF8C00] uppercase tracking-tighter text-shadow-glow">Auth Active</span>
+                      <span className="text-[9px] font-black text-[#FF8C00] uppercase tracking-tighter text-shadow-glow">Wallet Connected</span>
                     </div>
-                    <div className="text-[8px] text-white/20 uppercase">Module 01</div>
                   </div>
                   <div className="text-[11px] font-bold text-white/80 tracking-tight break-all">
                     {formatKey(publicKey)}
@@ -90,7 +88,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
                 {/* Decorative scanning line for card */}
                 <div className="absolute bottom-0 left-0 w-full h-[1px] bg-[#FF8C00]/30 overflow-hidden">
-                  <motion.div animate={{ x: ["-100%", "100%"] }} transition={{ duration: 2, repeat: Infinity }} className="w-1/2 h-full bg-[#FF8C00]" />
+                  
                 </div>
               </div>
             ) : (
@@ -110,21 +108,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* Nav Links */}
           <nav className="px-3 space-y-1">
             {MAIN_NAV.map(({ href, label, Icon }) => {
-              const active = pathname === href || (href !== "/markets" && pathname.startsWith(href));
+              const isActive = href === "/" 
+                ? pathname === "/" 
+                : (pathname === href || pathname.startsWith(href + "/"));
               const marketsActive = href === "/markets" && inMarkets;
-              const isActive = active || marketsActive;
+              const highlighted = isActive || marketsActive;
               return (
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-3 px-3 py-2 transition-all border ${isActive
+                  className={`flex items-center gap-3 px-3 py-2 transition-all border ${highlighted
                       ? "border-[#FF8C00]/30 bg-[#FF8C00]/5 text-[#FF8C00]"
                       : "border-transparent text-white/30 hover:text-white/60 hover:bg-white/[0.02]"
                     }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "animate-pulse" : "opacity-30"}`} />
+                  <Icon className={`w-3.5 h-3.5 shrink-0 ${highlighted ? "animate-pulse" : "opacity-30"}`} />
                   <span className="text-[12px] font-bold uppercase tracking-tighter">{label}</span>
-                  {isActive && (
+                  {highlighted && (
                     <div className="ml-auto w-1 h-1 bg-[#FF8C00]" />
                   )}
                 </Link>

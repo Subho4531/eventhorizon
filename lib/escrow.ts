@@ -365,65 +365,35 @@ export async function zkCreateMarket(
 
   try {
     const { Address, nativeToScVal, xdr } = await import("@stellar/stellar-sdk");
-
     const proof = generateDummyProof();
-    const proofScVal = xdr.ScVal.scvMap(
-      new xdr.ScMap([
-        new xdr.ScMapEntry({
-          key: xdr.ScVal.scvSymbol("a"),
-          val: xdr.ScVal.scvMap(
-            new xdr.ScMap([
-              new xdr.ScMapEntry({
-                key: xdr.ScVal.scvSymbol("x"),
-                val: nativeToScVal(Buffer.from(proof.pi_a[0], "hex")),
-              }),
-              new xdr.ScMapEntry({
-                key: xdr.ScVal.scvSymbol("y"),
-                val: nativeToScVal(Buffer.from(proof.pi_a[1], "hex")),
-              }),
-            ])
-          ),
-        }),
-        new xdr.ScMapEntry({
-          key: xdr.ScVal.scvSymbol("b"),
-          val: xdr.ScVal.scvMap(
-            new xdr.ScMap([
-              new xdr.ScMapEntry({
-                key: xdr.ScVal.scvSymbol("x_im"),
-                val: nativeToScVal(Buffer.from(proof.pi_b[0][0], "hex")),
-              }),
-              new xdr.ScMapEntry({
-                key: xdr.ScVal.scvSymbol("x_re"),
-                val: nativeToScVal(Buffer.from(proof.pi_b[0][1], "hex")),
-              }),
-              new xdr.ScMapEntry({
-                key: xdr.ScVal.scvSymbol("y_im"),
-                val: nativeToScVal(Buffer.from(proof.pi_b[1][0], "hex")),
-              }),
-              new xdr.ScMapEntry({
-                key: xdr.ScVal.scvSymbol("y_re"),
-                val: nativeToScVal(Buffer.from(proof.pi_b[1][1], "hex")),
-              }),
-            ])
-          ),
-        }),
-        new xdr.ScMapEntry({
-          key: xdr.ScVal.scvSymbol("c"),
-          val: xdr.ScVal.scvMap(
-            new xdr.ScMap([
-              new xdr.ScMapEntry({
-                key: xdr.ScVal.scvSymbol("x"),
-                val: nativeToScVal(Buffer.from(proof.pi_c[0], "hex")),
-              }),
-              new xdr.ScMapEntry({
-                key: xdr.ScVal.scvSymbol("y"),
-                val: nativeToScVal(Buffer.from(proof.pi_c[1], "hex")),
-              }),
-            ])
-          ),
-        }),
-      ])
-    );
+
+    const toBytes32 = (val: string) => {
+      let hex = val.startsWith("0x") ? val.slice(2) : BigInt(val).toString(16);
+      return xdr.ScVal.scvBytes(Buffer.from(hex.padStart(64, "0"), "hex"));
+    };
+
+    const g1 = (x: string, y: string) =>
+      xdr.ScVal.scvMap([
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("x"), val: toBytes32(x) }),
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("y"), val: toBytes32(y) }),
+      ]);
+
+    const g2 = (xRe: string, xIm: string, yRe: string, yIm: string) =>
+      xdr.ScVal.scvMap([
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("x_im"), val: toBytes32(xIm) }),
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("x_re"), val: toBytes32(xRe) }),
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("y_im"), val: toBytes32(yIm) }),
+        new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("y_re"), val: toBytes32(yRe) }),
+      ]);
+
+    const proofScVal = xdr.ScVal.scvMap([
+      new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("a"), val: g1(proof.pi_a[0], proof.pi_a[1]) }),
+      new xdr.ScMapEntry({
+        key: xdr.ScVal.scvSymbol("b"),
+        val: g2(proof.pi_b[0][0], proof.pi_b[0][1], proof.pi_b[1][0], proof.pi_b[1][1]),
+      }),
+      new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol("c"), val: g1(proof.pi_c[0], proof.pi_c[1]) }),
+    ]);
 
     const args = [
       new Address(publicKey).toScVal(),

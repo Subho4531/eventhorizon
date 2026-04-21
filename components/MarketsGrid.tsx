@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   TrendingUp,
@@ -54,10 +54,13 @@ export function setActiveMarketCategory(cat: string) {
 
 export default function MarketsGrid() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [markets, setMarkets] = useState<Market[]>([]);
   const [intelligence, setIntelligence] = useState<Record<string, MarketIntelligence>>({});
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All");
+
+  const query = searchParams.get("q") || "";
 
   // Expose the setter for the sidebar
   useEffect(() => {
@@ -124,7 +127,14 @@ export default function MarketsGrid() {
     };
   };
 
-  const filteredMarkets = (activeCategory === "All" ? markets : markets.filter((m) => m.category === activeCategory))
+  const filteredMarkets = markets
+    .filter((m) => {
+      const matchesCategory = activeCategory === "All" || m.category === activeCategory;
+      const matchesQuery = !query || 
+        m.title.toLowerCase().includes(query.toLowerCase()) || 
+        m.description?.toLowerCase().includes(query.toLowerCase());
+      return matchesCategory && matchesQuery;
+    })
     .sort((a, b) => {
       if (a.status === "RESOLVED" && b.status !== "RESOLVED") return 1;
       if (a.status !== "RESOLVED" && b.status === "RESOLVED") return -1;
@@ -148,7 +158,7 @@ export default function MarketsGrid() {
     return (
       <div className="flex items-center gap-2 mt-auto pt-2">
         <div className={`px-2 py-0.5 border ${isPoolOnly ? "border-white/10 bg-white/5 text-white/30" : "border-blue-500/30 bg-blue-500/5 text-blue-400"} text-[8px] font-black tracking-widest flex items-center gap-1.5`}>
-          <div className={`w-1 h-1 rounded-full ${isPoolOnly ? "bg-white/20" : "bg-blue-400 animate-pulse"}`} />
+          <div className={`w-1 h-1 rounded-full ${isPoolOnly ? "bg-white/20" : "bg-blue-400"}`} />
           {isPoolOnly ? "Pool Signal" : "AI Signal"}
         </div>
         <div className="flex items-baseline gap-1">
@@ -235,7 +245,7 @@ export default function MarketsGrid() {
                         }`}
                       >
                         {market.status === "OPEN" && (
-                          <span className="w-1 h-1 bg-[#00C853] animate-pulse" />
+                          <span className="w-1 h-1 bg-[#00C853]" />
                         )}
                         {market.status}
                       </span>
@@ -253,17 +263,10 @@ export default function MarketsGrid() {
                       <img 
                         src={market.imageUrl} 
                         alt={market.title}
-                        className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 opacity-60 group-hover:opacity-100"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 opacity-80 group-hover:opacity-100"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-transparent to-transparent" />
                       
-                      {/* Scanning overlay */}
-                      <div className="absolute top-2 left-2 flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 bg-[#FF8C00] rounded-full animate-pulse" />
-                          <span className="text-[7px] text-[#FF8C00] font-black tracking-widest uppercase">Scanning Signal</span>
-                        </div>
-                      </div>
 
                       {market.totalVolume > 500 && (
                         <div className="absolute top-2 right-2 px-2 py-0.5 bg-[#FF8C00] text-black text-[7px] font-black tracking-[0.2em] uppercase italic">
@@ -305,7 +308,7 @@ export default function MarketsGrid() {
                       Closes: {new Date(market.closeDate).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" })}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="text-[8px] text-[#FF8C00] animate-pulse uppercase font-black">
+                      <span className="text-[8px] text-[#FF8C00] uppercase font-black">
                         Live Sync
                       </span>
                       <ArrowRight className="w-3 h-3 text-white/20 group-hover:text-[#FF8C00] transition-colors" />

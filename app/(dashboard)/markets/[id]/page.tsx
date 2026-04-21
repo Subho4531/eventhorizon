@@ -737,11 +737,11 @@ export default function MarketDetailPage({
                         PROCESSING...
                       </>
                     ) : hasBet ? (
-                      "TERMINAL_LOCKED"
+                      "TERMINAL LOCKED"
                     ) : !publicKey ? (
-                      "CONNECT_WALLET"
+                      "CONNECT WALLET"
                     ) : (
-                      `EXECUTE_BUY_${side}`
+                      `EXECUTE BUY ${side}`
                     )}
                   </span>
                   

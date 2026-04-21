@@ -15,7 +15,7 @@ export default function MarketsPage() {
         <header className="mb-12 pointer-events-auto">
            <div className="flex items-start justify-between gap-6 mb-4">
              <div>
-               <h1 className="text-4xl md:text-5xl font-medium tracking-tight drop-shadow-xl  text-white">
+               <h1 className="text-4xl md:text-5xl font-medium tracking-tight drop-shadow-xl text-white">
                   Prediction Markets
                </h1>
              </div>
