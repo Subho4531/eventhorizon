@@ -8,7 +8,7 @@ export interface SystemAlertData {
   type: AlertType
   severity: AlertSeverity
   message: string
-  metadata: Record<string, any>
+  metadata: Record<string, unknown>
 }
 
 /**
@@ -115,7 +115,7 @@ export async function runBackgroundMonitoring(): Promise<void> {
 /**
  * Get recent alerts (last 24 hours by default)
  */
-export async function getRecentAlerts(hours: number = 24): Promise<any[]> {
+export async function getRecentAlerts(hours: number = 24): Promise<unknown[]> {
   const since = new Date(Date.now() - hours * 60 * 60 * 1000)
 
   return await prisma.systemAlert.findMany({

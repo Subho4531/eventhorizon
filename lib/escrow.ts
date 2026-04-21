@@ -110,11 +110,8 @@ async function buildSorobanCall(
   const {
     Contract,
     TransactionBuilder,
-    Networks,
     BASE_FEE,
     rpc,
-    nativeToScVal,
-    Address,
   } = await import("@stellar/stellar-sdk");
 
   const server = new rpc.Server(RPC_URL, { allowHttp: false });
@@ -124,7 +121,7 @@ async function buildSorobanCall(
 
   // Convert args to ScVal — args are already ScVal instances passed by callers.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const scArgs = args as any[];
+  const scArgs = args as unknown[];
 
   const tx = new TransactionBuilder(account, {
     fee: BASE_FEE,
@@ -152,8 +149,8 @@ async function buildSorobanCall(
  */
 export async function submitSignedXdr(
   signedXdr: string
-): Promise<{ hash: string; returnValue?: any }> {
-  const { TransactionBuilder, Networks, rpc } = await import(
+): Promise<{ hash: string; returnValue?: unknown }> {
+  const { TransactionBuilder, rpc } = await import(
     "@stellar/stellar-sdk"
   );
 
@@ -211,7 +208,7 @@ export async function depositToEscrow(
 
     // Helper to format proof components for ScVal
     const toBytes32 = (val: string) => {
-      let hex = val.startsWith("0x") ? val.slice(2) : BigInt(val).toString(16);
+      const hex = val.startsWith("0x") ? val.slice(2) : BigInt(val).toString(16);
       return xdr.ScVal.scvBytes(Buffer.from(hex.padStart(64, "0"), "hex"));
     };
 
@@ -271,7 +268,7 @@ export async function withdrawFromEscrow(
     const proof = generateDummyProof();
 
     const toBytes32 = (val: string) => {
-      let hex = val.startsWith("0x") ? val.slice(2) : BigInt(val).toString(16);
+      const hex = val.startsWith("0x") ? val.slice(2) : BigInt(val).toString(16);
       return xdr.ScVal.scvBytes(Buffer.from(hex.padStart(64, "0"), "hex"));
     };
 
@@ -368,7 +365,7 @@ export async function zkCreateMarket(
     const proof = generateDummyProof();
 
     const toBytes32 = (val: string) => {
-      let hex = val.startsWith("0x") ? val.slice(2) : BigInt(val).toString(16);
+      const hex = val.startsWith("0x") ? val.slice(2) : BigInt(val).toString(16);
       return xdr.ScVal.scvBytes(Buffer.from(hex.padStart(64, "0"), "hex"));
     };
 
@@ -430,7 +427,7 @@ export async function resolveMarket(
   }
 
   try {
-    const { Address, nativeToScVal, xdr } = await import("@stellar/stellar-sdk");
+    const { Address, nativeToScVal } = await import("@stellar/stellar-sdk");
 
     // Contract takes `outcome: u32` — 0 = YES, 1 = NO (see types.rs OUTCOME_YES/NO)
     const outcomeU32 = outcome === "YES" ? 0 : 1;
@@ -458,7 +455,6 @@ export async function getOnchainEscrowBalance(
     const {
       Contract,
       TransactionBuilder,
-      Networks,
       BASE_FEE,
       rpc,
       scValToNative,
@@ -499,7 +495,7 @@ export async function getOnchainEscrowBalance(
 export async function getOnchainMarketCount(): Promise<number> {
   if (!CONTRACT_ID) return 0;
   try {
-    const { Contract, TransactionBuilder, Networks, BASE_FEE, rpc, scValToNative } = await import("@stellar/stellar-sdk");
+    const { Contract, TransactionBuilder, BASE_FEE, rpc, scValToNative } = await import("@stellar/stellar-sdk");
     const server = new rpc.Server(RPC_URL);
     const contract = new Contract(CONTRACT_ID);
     
@@ -552,7 +548,7 @@ export async function placeBet(
     const commitBytes = Buffer.from(hex, "hex");
 
     const toBytes32 = (val: string) => {
-      let h = val.startsWith("0x") ? val.slice(2) : BigInt(val).toString(16);
+      const h = val.startsWith("0x") ? val.slice(2) : BigInt(val).toString(16);
       return xdr.ScVal.scvBytes(Buffer.from(h.padStart(64, "0"), "hex"));
     };
 
@@ -598,7 +594,7 @@ export async function placeBet(
 /**
  * Fetch a single market from on-chain state.
  */
-export async function getMarket(marketId: number): Promise<any | null> {
+export async function getMarket(marketId: number): Promise<unknown | null> {
   if (!CONTRACT_ID) return null;
   try {
     const { Contract, rpc, scValToNative, nativeToScVal } = await import("@stellar/stellar-sdk");
@@ -620,7 +616,7 @@ export async function getMarket(marketId: number): Promise<any | null> {
     
     // Let's implement a minimal simulation. We'll use GA2N... (contract admin) as the dummy source.
     const dummySource = "GA2NUAFIJ6XN2QXRPWYGGGLSRIENLE4KISERJOSQS2IA37Z3PQVOLE43";
-    const { TransactionBuilder, Networks, BASE_FEE } = await import("@stellar/stellar-sdk");
+    const { TransactionBuilder, BASE_FEE } = await import("@stellar/stellar-sdk");
     
     const account = await server.getAccount(dummySource);
     const tx = new TransactionBuilder(account, { fee: BASE_FEE, networkPassphrase: "Test SDF Network ; September 2015" })
@@ -649,7 +645,7 @@ export async function getMarket(marketId: number): Promise<any | null> {
  * Return true if a nullifier has been spent.
  */
 export async function isNullifierSpent(
-  nullifier: string
+  _nullifier: string
 ): Promise<boolean> {
   if (!CONTRACT_ID) return false;
   // Implementation similar to getMarket
@@ -681,7 +677,7 @@ export async function claimWinnings(
     );
 
     const toBytes32 = (val: string) => {
-      let hex = val.startsWith("0x") ? val.slice(2) : BigInt(val).toString(16);
+      const hex = val.startsWith("0x") ? val.slice(2) : BigInt(val).toString(16);
       return xdr.ScVal.scvBytes(Buffer.from(hex.padStart(64, "0"), "hex"));
     };
 

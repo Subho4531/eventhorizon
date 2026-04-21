@@ -109,7 +109,7 @@ export async function calculateRiskScore(marketId: string): Promise<number> {
   const seenTypes = new Set<string>()
 
   for (const alert of alerts) {
-    const details = alert.details as any
+    const details = alert.details as RiskFlag
     const type = details.type
     
     if (seenTypes.has(type)) continue
@@ -345,7 +345,7 @@ async function createManipulationAlert(marketId: string, flag: RiskFlag): Promis
       marketId,
       flagType: flag.type,
       severity,
-      details: flag as any,
+      details: flag as unknown as Record<string, unknown>,
       resolved: false,
     },
   })

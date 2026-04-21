@@ -45,7 +45,7 @@ async function executeMandate() {
                 "execute",
                 // args
                 xdr.ScVal.scvAddress(xdr.ScAddress.scAddressTypeAccount(relayerKeypair.xdrAccountId())), // relayer
-                xdr.ScVal.scvI128(new xdr.ScVal::I128Parts({ hi: 0, lo: 100 })), // request_amount = 100
+                xdr.ScVal.scvI128(new xdr.Int128Parts({ hi: 0, lo: 100 })), // request_amount = 100
                 xdr.ScVal.scvBytes(Buffer.from(proofData, 'hex')) // proof_bytes
             ))
             .setTimeout(30)

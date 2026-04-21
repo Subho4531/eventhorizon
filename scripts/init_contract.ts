@@ -1,5 +1,4 @@
-import { rpc, TransactionBuilder, Networks, Address, nativeToScVal, Keypair } from "@stellar/stellar-sdk";
-import fs from "fs";
+import { rpc, TransactionBuilder, Networks, Address, Keypair } from "@stellar/stellar-sdk";
 
 async function run() {
   const server = new rpc.Server("https://soroban-testnet.stellar.org");
@@ -18,7 +17,7 @@ async function run() {
     networkPassphrase: Networks.TESTNET,
   })
     .addOperation(
-        // @ts-ignore
+        // @ts-expect-error - placeholder for operation
       new Address(contractId).toScVal() // wait, easier to just use `Contract` object
     )
     .setTimeout(300)

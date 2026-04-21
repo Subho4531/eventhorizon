@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, AlertCircle, Loader2, Scale, Users } from "lucide-react";
 import { useWallet } from "./WalletProvider";
@@ -39,9 +39,9 @@ export default function VoteModal({
     if (isOpen && publicKey) {
       fetchReputation();
     }
-  }, [isOpen, publicKey]);
+  }, [isOpen, publicKey, fetchReputation]);
 
-  const fetchReputation = async () => {
+  const fetchReputation = useCallback(async () => {
     if (!publicKey) return;
     
     try {
@@ -55,7 +55,7 @@ export default function VoteModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [publicKey]);
 
   const handleSubmit = async () => {
     if (!publicKey) {
@@ -95,8 +95,9 @@ export default function VoteModal({
 
       alert("Vote submitted successfully!");
       onClose();
-    } catch (err: any) {
-      setError(err.message || "Failed to submit vote");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to submit vote";
+      setError(message);
     } finally {
       setSubmitting(false);
     }

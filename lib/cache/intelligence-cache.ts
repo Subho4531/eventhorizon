@@ -17,7 +17,7 @@ type CacheKey =
   | `liquidity:${string}`
 
 class IntelligenceCache {
-  private cache: Map<CacheKey, CacheEntry<any>>
+  private cache: Map<CacheKey, CacheEntry<unknown>>
   private defaultTTL: number
 
   constructor(defaultTTL: number = 60000) { // 60 seconds default
