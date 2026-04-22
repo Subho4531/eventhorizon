@@ -3,7 +3,12 @@
  * Runs before all tests
  */
 
-Object.defineProperty(process.env, 'NODE_ENV', { value: 'test' })
+import { vi } from 'vitest'
+
+// Make vi globally available
+(globalThis as typeof globalThis & { vi: typeof vi }).vi = vi;
+
+process.env.NODE_ENV = 'test'
 
 // Mock console methods to reduce noise in test output
 global.console = {
@@ -15,9 +20,3 @@ global.console = {
   // Keep error for debugging
   error: console.error,
 }
-
-// Setup global test utilities
-import { vi } from 'vitest'
-
-// Make vi globally available
-(globalThis as typeof globalThis & { vi: typeof vi }).vi = vi;

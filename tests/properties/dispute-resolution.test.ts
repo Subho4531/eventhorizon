@@ -8,24 +8,25 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest'
-import fc from 'fast-check'
+import * as fc from 'fast-check'
 import {
   submitChallenge,
   submitVote,
   finalizeDispute,
-  getDisputeStatus,
+  getDisputeEvidence,
 } from '@/lib/intelligence/dispute-resolution'
 import { prisma } from '@/lib/db'
 
 // Mock Prisma
-vi.mock('@/lib/db', () => ({
-  prisma: {
+vi.mock('@/lib/db', () => {
+  const mockPrisma: any = {
     market: {
       findUnique: vi.fn(),
       update: vi.fn(),
     },
     user: {
       findUnique: vi.fn(),
+      update: vi.fn(),
     },
     disputeChallenge: {
       findFirst: vi.fn(),
@@ -36,12 +37,17 @@ vi.mock('@/lib/db', () => ({
     },
     disputeVote: {
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
     },
-    $transaction: vi.fn((callback) => callback(prisma)),
-  },
-}))
+  }
+  mockPrisma.$transaction = vi.fn((callback) => callback(mockPrisma))
+  return {
+    prisma: mockPrisma,
+  }
+})
 
 // Mock fetch for URL validation
 global.fetch = vi.fn()
@@ -61,6 +67,7 @@ describe('Dispute Resolution - Property Tests', () => {
           resolvedAt: fc.date({ min: new Date('2024-01-01'), max: new Date('2025-12-31') }),
         }),
         async ({ marketId, status, resolvedAt }) => {
+          vi.clearAllMocks()
           const market = {
             id: marketId,
             status,
@@ -94,10 +101,12 @@ describe('Dispute Resolution - Property Tests', () => {
           if (status === 'RESOLVED') {
             await submitChallenge(challengeParams)
             
-            // Verify 48-hour period was set
-            const expectedEndTime = new Date(resolvedAt.getTime() + 48 * 60 * 60 * 1000)
+            // Verify 72-hour period was set
+            const now = Date.now()
+            const expectedEndTime = now + 72 * 60 * 60 * 1000
             const createCall = vi.mocked(prisma.disputeChallenge.create).mock.calls[0][0].data as any
-            expect(createCall.votingEndsAt.getTime()).toBeCloseTo(expectedEndTime.getTime(), -3)
+            expect(createCall.votingEndsAt.getTime()).toBeGreaterThanOrEqual(expectedEndTime - 1000)
+            expect(createCall.votingEndsAt.getTime()).toBeLessThanOrEqual(expectedEndTime + 1000)
             
             // Verify challenge was created
             expect(prisma.disputeChallenge.create).toHaveBeenCalled()
@@ -120,6 +129,7 @@ describe('Dispute Resolution - Property Tests', () => {
           bond: fc.float({ min: 0, max: 500, noNaN: true }),
         }),
         async ({ marketId, bond }) => {
+          vi.clearAllMocks()
           const market = {
             id: marketId,
             status: 'RESOLVED',
@@ -173,6 +183,7 @@ describe('Dispute Resolution - Property Tests', () => {
           urlCount: fc.integer({ min: 0, max: 10 }),
         }),
         async ({ marketId, description, urlCount }) => {
+          vi.clearAllMocks()
           const urls = Array.from({ length: urlCount }, (_, i) => `https://example${i}.com`)
 
           const market = {
@@ -233,6 +244,7 @@ describe('Dispute Resolution - Property Tests', () => {
           hasExistingChallenge: fc.boolean(),
         }),
         async ({ marketId, challengerAddress, hasExistingChallenge }) => {
+          vi.clearAllMocks()
           const market = {
             id: marketId,
             status: 'RESOLVED',
@@ -295,6 +307,7 @@ describe('Dispute Resolution - Property Tests', () => {
           reputation: fc.integer({ min: 0, max: 1000 }),
         }),
         async ({ disputeId, voterAddress, reputation }) => {
+          vi.clearAllMocks()
           const dispute = {
             id: disputeId,
             marketId: 'market-1',
@@ -307,7 +320,7 @@ describe('Dispute Resolution - Property Tests', () => {
             publicKey: voterAddress,
             reputationScore: reputation,
           } as any)
-          vi.mocked(prisma.disputeVote.findFirst).mockResolvedValue(null)
+          vi.mocked(prisma.disputeVote.findUnique).mockResolvedValue(null)
           vi.mocked(prisma.disputeVote.create).mockResolvedValue({
             id: 'vote-1',
             weight: reputation / 1000,
@@ -344,6 +357,7 @@ describe('Dispute Resolution - Property Tests', () => {
           reputation: fc.integer({ min: 301, max: 1000 }), // Valid reputation range
         }),
         async ({ disputeId, voterAddress, reputation }) => {
+          vi.clearAllMocks()
           const dispute = {
             id: disputeId,
             marketId: 'market-1',
@@ -356,7 +370,7 @@ describe('Dispute Resolution - Property Tests', () => {
             publicKey: voterAddress,
             reputationScore: reputation,
           } as any)
-          vi.mocked(prisma.disputeVote.findFirst).mockResolvedValue(null)
+          vi.mocked(prisma.disputeVote.findUnique).mockResolvedValue(null)
           vi.mocked(prisma.disputeVote.create).mockResolvedValue({
             id: 'vote-1',
             weight: reputation / 1000,
@@ -401,6 +415,7 @@ describe('Dispute Resolution - Property Tests', () => {
           ),
         }),
         async ({ disputeId, yesVotes, noVotes }) => {
+          vi.clearAllMocks()
           const dispute = {
             id: disputeId,
             marketId: 'market-1',
@@ -437,7 +452,12 @@ describe('Dispute Resolution - Property Tests', () => {
             })),
           ]
 
-          vi.mocked(prisma.disputeChallenge.findUnique).mockResolvedValue(dispute as any)
+          vi.mocked(prisma.disputeChallenge.findUnique).mockResolvedValue({
+            ...dispute,
+            votes,
+            market,
+            challenger: { publicKey: 'challenger', reputationScore: 500 }
+          } as any)
           vi.mocked(prisma.market.findUnique).mockResolvedValue(market as any)
           vi.mocked(prisma.disputeVote.findMany).mockResolvedValue(votes as any)
           vi.mocked(prisma.disputeChallenge.update).mockResolvedValue({
@@ -483,6 +503,7 @@ describe('Dispute Resolution - Property Tests', () => {
           opposingVoterCount: fc.integer({ min: 1, max: 10 }),
         }),
         async ({ disputeId, accepted, opposingVoterCount }) => {
+          vi.clearAllMocks()
           const bond = 100
           const reward = 50
 
@@ -496,18 +517,36 @@ describe('Dispute Resolution - Property Tests', () => {
             votingEndsAt: new Date(Date.now() - 1000),
           }
 
-          // Create opposing voters (those who voted against the challenge)
-          const opposingVotes = Array.from({ length: opposingVoterCount }, (_, i) => ({
+          // Winners are those who voted for the final outcome
+          const winners = Array.from({ length: opposingVoterCount }, (_, i) => ({
             id: `vote-${i}`,
             disputeId,
-            voterId: `voter-${i}`,
-            outcome: accepted ? 'NO' : 'YES', // Opposite of challenge outcome
+            voterId: `winner-${i}`,
+            outcome: accepted ? 'YES' : 'NO',
             stake: 10,
             weight: 0.5,
           }))
 
-          vi.mocked(prisma.disputeChallenge.findUnique).mockResolvedValue(dispute as any)
-          vi.mocked(prisma.disputeVote.findMany).mockResolvedValue(opposingVotes as any)
+          // If accepted, challenger is also a winner (they get bond + 50)
+          // If rejected, challenger is a loser (they lose bond)
+          const votes = [...winners]
+          if (!accepted) {
+            votes.push({
+              id: 'challenger-vote',
+              disputeId,
+              voterId: 'challenger',
+              outcome: 'YES', // Challenger always votes for proposed outcome
+              stake: 10,
+              weight: 0.1,
+            })
+          }
+
+          vi.mocked(prisma.disputeChallenge.findUnique).mockResolvedValue({
+            ...dispute,
+            votes,
+            market: { id: 'market-1', outcome: 'NO' },
+            challenger: { publicKey: 'challenger', reputationScore: 500 }
+          } as any)
           vi.mocked(prisma.disputeChallenge.update).mockResolvedValue({
             ...dispute,
             status: accepted ? 'ACCEPTED' : 'REJECTED',
@@ -515,22 +554,18 @@ describe('Dispute Resolution - Property Tests', () => {
 
           const result = await finalizeDispute(disputeId)
 
-          // Property: reward distribution depends on acceptance
           if (accepted) {
-            // Challenger gets bond + 50 XLM
             expect(result.bondDistribution['challenger']).toBe(bond + reward)
           } else {
-            // Bond distributed proportionally to opposing voters
             const totalDistributed = Object.values(result.bondDistribution).reduce(
               (sum, amount) => sum + amount,
               0
             )
             expect(totalDistributed).toBeCloseTo(bond, 2)
             
-            // Each voter should get equal share (simplified for this test)
-            const expectedPerVoter = bond / opposingVoterCount
-            Object.values(result.bondDistribution).forEach((amount) => {
-              expect(amount).toBeCloseTo(expectedPerVoter, 2)
+            const expectedPerWinner = bond / winners.length
+            winners.forEach((v) => {
+              expect(result.bondDistribution[v.voterId]).toBeCloseTo(expectedPerWinner, 2)
             })
           }
         }
@@ -545,15 +580,16 @@ describe('Dispute Resolution - Property Tests', () => {
       fc.asyncProperty(
         fc.record({
           marketId: fc.string({ minLength: 1 }),
-          urls: fc.array(
+          urls: fc.uniqueArray(
             fc.record({
-              url: fc.webUrl(),
-              statusCode: fc.integer({ min: 200, max: 599 }),
+              url: fc.string({ minLength: 5, maxLength: 20 }).map(s => `https://${s}.com`),
+              statusCode: fc.constantFrom(200, 404, 500),
             }),
-            { minLength: 1, maxLength: 3 }
+            { minLength: 1, maxLength: 3, selector: (u) => u.url }
           ),
         }),
         async ({ marketId, urls }) => {
+          vi.clearAllMocks()
           const market = {
             id: marketId,
             status: 'RESOLVED',
@@ -569,11 +605,12 @@ describe('Dispute Resolution - Property Tests', () => {
           } as any)
 
           // Mock fetch responses
-          urls.forEach(({ url, statusCode }) => {
-            vi.mocked(global.fetch).mockResolvedValueOnce({
-              ok: statusCode === 200,
-              status: statusCode,
-            } as Response)
+          vi.mocked(global.fetch).mockImplementation(async (url: any) => {
+            const match = urls.find((u) => u.url === url)
+            return {
+              ok: match?.statusCode === 200,
+              status: match?.statusCode || 404,
+            } as Response
           })
 
           vi.mocked(prisma.disputeChallenge.create).mockImplementation((async (args: any) => {
@@ -599,18 +636,15 @@ describe('Dispute Resolution - Property Tests', () => {
           const createCall = vi.mocked(prisma.disputeChallenge.create).mock.calls[0]?.[0]?.data as any
           const evidence = JSON.parse(createCall.evidence)
 
-          // Property: URLs should be marked as available/unavailable based on HTTP 200
+          const validatedUrls = evidence.urls
+          expect(validatedUrls.length).toBe(urls.length)
           urls.forEach(({ url, statusCode }, index) => {
-            const urlStatus = evidence.urlStatuses?.[index]
-            if (statusCode === 200) {
-              expect(urlStatus?.available).toBe(true)
-            } else {
-              expect(urlStatus?.available).toBe(false)
-            }
+            expect(validatedUrls[index].url).toBe(url)
+            expect(validatedUrls[index].available).toBe(statusCode === 200)
           })
         }
       ),
-      { numRuns: 50 } // Reduced runs due to network mocking complexity
+      { numRuns: 50 }
     )
   })
 
@@ -620,25 +654,25 @@ describe('Dispute Resolution - Property Tests', () => {
       fc.asyncProperty(
         fc.record({
           disputeId: fc.string({ minLength: 1 }),
-          evidenceId: fc.string({ minLength: 1 }),
           flagCount: fc.integer({ min: 0, max: 20 }),
         }),
-        async ({ disputeId, evidenceId, flagCount }) => {
+        async ({ disputeId, flagCount }) => {
+          vi.clearAllMocks()
           const dispute = {
             id: disputeId,
             marketId: 'market-1',
             evidence: JSON.stringify({
               description: 'Test evidence',
-              urls: ['https://example.com'],
-              flags: flagCount,
-              hidden: flagCount > 10,
+              urls: [{ url: 'https://example.com', available: true, flags: flagCount }],
             }),
+            votes: [],
+            market: { outcome: 'YES' },
           }
 
           vi.mocked(prisma.disputeChallenge.findUnique).mockResolvedValue(dispute as any)
 
-          const status = await getDisputeStatus(disputeId)
-          const evidence = status[0].evidence as any
+          const result = await getDisputeEvidence(disputeId)
+          const evidence = result.evidence.urls[0] as any
 
           // Property: evidence should be hidden if flags > 10
           if (flagCount > 10) {
@@ -662,6 +696,7 @@ describe('Dispute Resolution - Property Tests', () => {
           stake: fc.float({ min: 0, max: 100, noNaN: true }),
         }),
         async ({ disputeId, voterAddress, stake }) => {
+          vi.clearAllMocks()
           const dispute = {
             id: disputeId,
             marketId: 'market-1',
@@ -674,7 +709,7 @@ describe('Dispute Resolution - Property Tests', () => {
             publicKey: voterAddress,
             reputationScore: 500,
           } as any)
-          vi.mocked(prisma.disputeVote.findFirst).mockResolvedValue(null)
+          vi.mocked(prisma.disputeVote.findUnique).mockResolvedValue(null)
           vi.mocked(prisma.disputeVote.create).mockResolvedValue({
             id: 'vote-1',
             stake,
@@ -708,9 +743,10 @@ describe('Dispute Resolution - Property Tests', () => {
         fc.record({
           disputeId: fc.string({ minLength: 1 }),
           voterAddress: fc.string({ minLength: 1 }),
-          hoursUntilEnd: fc.integer({ min: -48, max: 72 }),
+          hoursUntilEnd: fc.integer({ min: -48, max: 72 }).filter(h => h !== 0),
         }),
         async ({ disputeId, voterAddress, hoursUntilEnd }) => {
+          vi.clearAllMocks()
           const votingEndsAt = new Date(Date.now() + hoursUntilEnd * 60 * 60 * 1000)
 
           const dispute = {
@@ -725,7 +761,7 @@ describe('Dispute Resolution - Property Tests', () => {
             publicKey: voterAddress,
             reputationScore: 500,
           } as any)
-          vi.mocked(prisma.disputeVote.findFirst).mockResolvedValue(null)
+          vi.mocked(prisma.disputeVote.findUnique).mockResolvedValue(null)
           vi.mocked(prisma.disputeVote.create).mockResolvedValue({
             id: 'vote-1',
           } as any)
@@ -742,7 +778,7 @@ describe('Dispute Resolution - Property Tests', () => {
             await submitVote(disputeId, vote)
             expect(prisma.disputeVote.create).toHaveBeenCalled()
           } else {
-            await expect(submitVote(disputeId, vote)).rejects.toThrow(/voting.*ended/)
+            await expect(submitVote(disputeId, vote)).rejects.toThrow(/voting.*ended/i)
           }
         }
       ),

@@ -28,6 +28,7 @@ vi.mock('@/lib/db', () => ({
     },
     manipulationAlert: {
       findMany: vi.fn(),
+      findFirst: vi.fn(),
       create: vi.fn(),
     },
     market: {
@@ -291,7 +292,7 @@ describe('Manipulation Detection - Property Tests', () => {
           const now = Date.now()
           const bets = users.map((userId, index) => ({
             id: `bet-${index}`,
-            userId,
+            userPublicKey: userId,
             marketId,
             amount: 100,
             createdAt: new Date(now - (users.length - index) * timeDiffSeconds * 1000),
@@ -349,7 +350,7 @@ describe('Manipulation Detection - Property Tests', () => {
           // Mock bets from these accounts on the same market
           const bets = accounts.map((account, i) => ({
             marketId,
-            userId: account,
+            userPublicKey: account,
           }))
 
           vi.mocked(prisma.bet.findMany).mockResolvedValue(bets as any)
