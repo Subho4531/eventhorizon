@@ -46,7 +46,22 @@ export default function LaunchDashboard() {
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  const CACHE_KEY = "gravityflow_dashboard_cache";
+
   useEffect(() => {
+    // 1. Try to load from cache first
+    const cachedData = localStorage.getItem(CACHE_KEY);
+    if (cachedData) {
+      try {
+        const parsed = JSON.parse(cachedData);
+        if (parsed.markets) setTrendingMarkets(parsed.markets);
+        if (parsed.metrics) setMetrics(parsed.metrics);
+        setLoading(false); // We have something to show, so stop the full-page loader
+      } catch (e) {
+        console.error("Cache parse error:", e);
+      }
+    }
+
     fetchDashboardData();
     const interval = setInterval(fetchDashboardData, 30000);
     return () => clearInterval(interval);
@@ -93,6 +108,18 @@ export default function LaunchDashboard() {
         }));
 
         setTrendingMarkets(marketsWithHistory);
+
+        // 2. Save to cache for next time
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          markets: marketsWithHistory,
+          metrics: {
+            totalVolume: totalVol,
+            activeMarkets: active,
+            totalLiquidity: liquidity,
+            change24h: 5.2
+          },
+          updatedAt: Date.now()
+        }));
       }
     } catch (err) {
       console.error("Dashboard fetch error:", err);

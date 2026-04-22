@@ -75,7 +75,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-h-screen pt-[64px]">
         {/* ── SIDEBAR EVENT HORIZON REDESIGN ── */}
-        {!["/", "/portfolio"].includes(pathname) && (
+        {!["/", "/portfolio", "/leaderboard"].includes(pathname) && (
           <aside className="hidden md:flex flex-col w-[240px] border-r border-white/5 bg-[#0D0D0D] sticky top-[64px] h-[calc(100vh-64px)] overflow-y-auto no-scrollbar shrink-0">
           <div className="p-4">
             {publicKey ? (

@@ -64,13 +64,40 @@ export default function MarketsGrid() {
     return () => { _setCategory = null; };
   }, []);
 
+  const CACHE_KEY = "gravityflow_markets_cache";
+
   useEffect(() => {
+    // 1. Load from cache
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (parsed.markets) setMarkets(parsed.markets);
+        if (parsed.intelligence) setIntelligence(parsed.intelligence);
+        setLoading(false);
+      } catch (e) {
+        console.error("Markets cache error:", e);
+      }
+    }
+
     async function fetchMarkets() {
       try {
         const res = await fetch("/api/markets");
         const data = await res.json();
         const marketList: Market[] = data.markets || [];
         setMarkets(marketList);
+        
+        // Cache basic market data early
+        const existingIntel = localStorage.getItem(CACHE_KEY) 
+          ? JSON.parse(localStorage.getItem(CACHE_KEY)!).intelligence 
+          : {};
+          
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          markets: marketList,
+          intelligence: existingIntel,
+          updatedAt: Date.now()
+        }));
+
         fetchIntelligenceData(marketList);
       } catch (err) {
         console.error(err instanceof Error ? err.message : "Internal Error");
@@ -112,6 +139,14 @@ export default function MarketsGrid() {
     );
 
     setIntelligence(intelligenceData);
+
+    // 2. Save full intel to cache
+    const currentMarkets = JSON.parse(localStorage.getItem(CACHE_KEY) || '{"markets":[]}');
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      markets: currentMarkets.markets,
+      intelligence: intelligenceData,
+      updatedAt: Date.now()
+    }));
   };
 
   const calculateOdds = (yes: number, no: number) => {

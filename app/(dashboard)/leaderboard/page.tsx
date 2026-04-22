@@ -19,12 +19,35 @@ export default function LeaderboardPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const CACHE_KEY = "gravityflow_leaderboard_cache";
+
   useEffect(() => {
+    // 1. Load from cache
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (parsed.users) {
+          setUsers(parsed.users);
+          setLoading(false);
+        }
+      } catch (e) {
+        console.error("Leaderboard cache error:", e);
+      }
+    }
+
     async function fetchLeaderboard() {
       try {
         const res = await fetch("/api/leaderboard");
         const data = await res.json();
-        setUsers(data.users || []);
+        const userList = data.users || [];
+        setUsers(userList);
+        
+        // 2. Save to cache
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          users: userList,
+          updatedAt: Date.now()
+        }));
       } catch (err) {
         console.error("Leaderboard fetch error:", err);
       } finally {

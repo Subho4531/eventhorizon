@@ -649,7 +649,22 @@ export default function PortfolioPage() {
     }
   }, [publicKey]);
 
+  const CACHE_KEY = "gravityflow_portfolio_cache";
+
   useEffect(() => {
+    // 1. Load from cache
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (parsed.transactions) setTransactions(parsed.transactions);
+        if (parsed.sealedPositions) setSealedPositions(parsed.sealedPositions);
+        if (parsed.onchainBalance !== undefined) setOnchainBalance(parsed.onchainBalance);
+      } catch (e) {
+        console.error("Portfolio cache error:", e);
+      }
+    }
+
     if (!publicKey) return;
     loadTransactions();
     loadSealedPositions();
@@ -657,6 +672,18 @@ export default function PortfolioPage() {
     const interval = setInterval(fetchOnchainBalance, 30_000);
     return () => clearInterval(interval);
   }, [loadTransactions, loadSealedPositions, fetchOnchainBalance, publicKey]);
+
+  // Update cache whenever these values change significantly
+  useEffect(() => {
+    if (publicKey && (transactions.length > 0 || sealedPositions.length > 0)) {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        transactions,
+        sealedPositions,
+        onchainBalance,
+        updatedAt: Date.now()
+      }));
+    }
+  }, [transactions, sealedPositions, onchainBalance, publicKey]);
 
   const copyKey = () => {
     if (publicKey) {

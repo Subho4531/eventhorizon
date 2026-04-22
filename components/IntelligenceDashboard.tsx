@@ -98,7 +98,7 @@ export default function IntelligenceDashboard() {
             <Cpu className="w-5 h-5 text-[#FF8C00]" />
             <h2 className="text-xl font-black text-white uppercase tracking-[0.1em] italic">INTELLIGENCE CORE</h2>
           </div>
-          <p className="text-[9px] text-white/20 uppercase tracking-[0.3em] font-bold pl-8">CONTINUOUS THREAT ASSESSMENT ACTIVE</p>
+          <p className="text-[9px] text-white/20 uppercase tracking-[0.3em] font-bold pl-8">SYSTEM_CORE_V4</p>
         </div>
         <div className="flex gap-4">
           <div className="text-right">
@@ -125,7 +125,7 @@ export default function IntelligenceDashboard() {
           >
             <div className="flex justify-between items-start mb-6">
               <m.icon className={`w-5 h-5 ${m.color} opacity-40 group-hover:opacity-100 transition-opacity`} />
-              <div className="text-[8px] text-white/20 font-black tracking-[0.2em] uppercase italic">METRIC_00{i+1}</div>
+              <div className="text-[8px] text-white/20 font-black tracking-[0.2em] uppercase italic">STREAM_00{i+1}</div>
             </div>
             <div className="text-2xl font-black text-white tracking-tighter mb-2">{m.value}</div>
             <div className="text-[9px] text-white/40 font-black uppercase tracking-widest italic">{m.label}</div>

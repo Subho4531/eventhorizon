@@ -219,18 +219,23 @@ export async function generateInitialProbability(
       sources.push("historical");
     }
 
-    // Try AI signals via Ollama
-    const external = await fetchExternalSignals(market.title, market.description || "");
-    if (external) {
-      // Blend with historical if available
-      if (sources.includes("historical")) {
-        probability = (probability + external.probability) / 2;
-        confidence = Math.max(confidence, external.confidence);
-      } else {
-        probability = external.probability;
-        confidence = external.confidence;
+    // Try AI signals via OpenRouter (skip if market is already very active/efficient)
+    const totalVolume = market.yesPool + market.noPool;
+    if (totalVolume < 2000) {
+      const external = await fetchExternalSignals(market.title, market.description || "");
+      if (external) {
+        // Blend with historical if available
+        if (sources.includes("historical")) {
+          probability = (probability + external.probability) / 2;
+          confidence = Math.max(confidence, external.confidence);
+        } else {
+          probability = external.probability;
+          confidence = external.confidence;
+        }
+        sources.push("external");
       }
-      sources.push("external");
+    } else {
+      console.log(`[probability-model] Skipping AI for high-volume market: ${market.id}`);
     }
 
     // Fallback to volume-weighted if no other sources
@@ -273,8 +278,9 @@ export async function generateInitialProbability(
       },
     });
 
-    // Cache the result
+    // Cache the result for 15 minutes to reduce redundant AI inference calls
     setCachedEstimate(marketId, estimate);
+    intelligenceCache.set(`probability:${marketId}`, estimate, 900000); 
 
     return estimate;
   } catch (error) {

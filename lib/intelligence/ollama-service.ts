@@ -36,17 +36,10 @@ async function getOpenRouterScore(
 ): Promise<AIScoreResponse | null> {
   try {
     const prompt = `
-      Analyze the following prediction market and provide a probability estimate (0-100) for it resolving to "YES".
-      
-      Market Title: ${title}
-      Market Description: ${description}
-      
-      Return ONLY a JSON object with the following structure:
-      {
-        "score": number (0-100),
-        "confidence": number (0.0-1.0),
-        "reasoning": "brief string"
-      }
+      Market: ${title}
+      Context: ${description}
+      Probability of "YES" (0-100)?
+      Respond only JSON: {"score": number, "confidence": number, "reasoning": "string"}
     `;
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -58,7 +51,7 @@ async function getOpenRouterScore(
         "X-Title": "GravityFlow",
       },
       body: JSON.stringify({
-        model: "google/gemma-4-31b-it:free",
+        model: "mistralai/mistral-7b-instruct:free",
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" }
       }),

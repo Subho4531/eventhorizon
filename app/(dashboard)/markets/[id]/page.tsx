@@ -352,16 +352,7 @@ export default function MarketDetailPage({
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-[#0D0D0D]/20 to-transparent" />
                 
-                {/* Meta data overlay */}
-                <div className="absolute bottom-4 left-6 flex items-center gap-4">
-                  <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-md border border-white/10">
-                    <div className="w-1.5 h-1.5 bg-[#FF8C00] rounded-full animate-pulse" />
-                    <span className="text-[8px] text-[#FF8C00] font-black tracking-[0.2em] uppercase">DATA FEED ACTIVE</span>
-                  </div>
-                  <div className="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-md border border-white/10 text-white/40 text-[8px] font-black tracking-[0.2em] uppercase">
-                    VISUAL_RELAY_v2.0
-                  </div>
-                </div>
+
 
                 {/* Scanning effect */}
                 <div className="absolute top-0 left-0 w-full h-[1px] bg-[#FF8C00]/30 animate-scan pointer-events-none" />
