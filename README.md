@@ -2,10 +2,10 @@
 
 Horizon is a next-generation prediction market platform built on the Stellar blockchain, leveraging Soroban smart contracts and Zero-Knowledge (ZK) proofs to ensure trader privacy while providing high-fidelity market intelligence.
 
-![Horizon Banner](https://img.shields.io/badge/Horizon-Stellar--Soroban-blueviolet?style=for-the-badge&logo=stellar)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge&logo=vercel)](https://horizonx-ten.vercel.app/markets)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repo-black?style=for-the-badge&logo=github)](https://github.com/Subho4531/eventhorizon)
+![Stellar](https://img.shields.io/badge/Stellar-Soroban-blueviolet?style=for-the-badge&logo=stellar)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
-![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)
 
 ---
 
@@ -130,11 +130,15 @@ We value community input and actively iterate on our platform based on user expe
 
 **[View Full User Feedback Response Sheet](https://docs.google.com/spreadsheets/d/1ZWrlcff79a274MHBfSEh__zPHHFg-faftsk7UUYXess/edit?resourcekey=&gid=510073230#gid=510073230)**
 
-### Feedback Summary & Implementation
+### 💬 Feedback Summary & Implementation
 
-| User Name | User Email | User Wallet Address | User Feedback | Commit ID |
-| :--- | :--- | :--- | :--- | :--- |
-| Nilarpan Jana | nnilarpan@gmail.com | GCQM3XP3IWUY3LCPDIP4QRLB7VIL2DY2QLZJ2KG2NANWUAFAZ3ULECUQ | Appreciated the unique markets and focus on security/decentralization. Suggested UX improvements for navigation. | [8512a70](https://github.com/Subho4531/eventhorizon/commit/8512a70) |
+| User Name | User Wallet Address | User Feedback | Commit ID |
+| :--- | :--- | :--- | :--- |
+| **Nilarpan Jana** | `GCQM3X...Z3ULECUQ` | Appreciated unique markets and security. Suggested UX navigation tweaks. | [`6bbb519`](https://github.com/Subho4531/eventhorizon/commit/6bbb519) |
+| **Sumit Sarkar** | `GAVAIW...H3AJVAN` | Excellent decentralization focus. Suggested optimizing app loading times. | [`8512a70`](https://github.com/Subho4531/eventhorizon/commit/8512a70) |
+
+> [!TIP]
+> We actively monitor the [User Feedback Response Sheet](https://docs.google.com/spreadsheets/d/1ZWrlcff79a274MHBfSEh__zPHHFg-faftsk7UUYXess/edit?resourcekey=&gid=510073230#gid=510073230) for continuous improvements.
 
 ---
 
@@ -177,13 +181,14 @@ We value community input and actively iterate on our platform based on user expe
 ---
 
 ## 🛠️ Tech Stack
+Horizon is built using a modern, high-performance stack optimized for security and scale.
 
-- **Frontend**: Next.js 15 (App Router), Tailwind CSS, Framer Motion
-- **Blockchain**: Stellar (Soroban), Freighter Wallet, Stellar SDK
-- **Backend**: Next.js API Routes, Prisma ORM
-- **Database**: PostgreSQL
-- **Security**: Zero-Knowledge Proofs (Circuit Layer)
-- **Testing**: Vitest, Property-Based Testing (PBT)
+- **Frontend**: ![Next.js](https://img.shields.io/badge/Next.js-000?style=flat&logo=next.js) ![Tailwind CSS](https://img.shields.io/badge/Tailwind-38B2AC?style=flat&logo=tailwind-css) ![Framer Motion](https://img.shields.io/badge/Framer-0055FF?style=flat&logo=framer)
+- **Blockchain**: ![Stellar](https://img.shields.io/badge/Stellar-7D4698?style=flat&logo=stellar) ![Soroban](https://img.shields.io/badge/Soroban-FFD700?style=flat&logo=rust) ![Freighter](https://img.shields.io/badge/Freighter-FF4B00?style=flat)
+- **Backend**: ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=nodedotjs) ![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=flat&logo=prisma)
+- **Database**: ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat&logo=postgresql)
+- **Security**: ![ZK-Proofs](https://img.shields.io/badge/ZK--Proofs-FF69B4?style=flat) ![Circuit](https://img.shields.io/badge/Circom-gray?style=flat)
+- **Testing**: ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat&logo=vitest)
 
 ---
 
@@ -202,6 +207,21 @@ We value community input and actively iterate on our platform based on user expe
 
 ---
 
+## 🤝 Contributing
+
+We welcome contributions from the community! Whether you're fixing a bug, suggesting a feature, or improving documentation, your help is appreciated.
+
+1.  **Fork** the repository.
+2.  **Create a branch** (`git checkout -b feature/AmazingFeature`).
+3.  **Commit** your changes (`git commit -m 'Add some AmazingFeature'`).
+4.  **Push** to the branch (`git push origin feature/AmazingFeature`).
+5.  **Open a Pull Request**.
+
+---
+
 ## 📜 License
 
 This project is licensed under the MIT License.
+
+---
+<p align="center">Made with ❤️ for the Stellar Ecosystem</p>
