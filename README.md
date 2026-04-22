@@ -83,16 +83,25 @@ Horizon's core logic is governed by a Soroban smart contract deployed on the Ste
 
 ## 🌟 Project Vision
 
-To establish the gold standard for decentralized prediction markets where privacy is not a luxury, but a fundamental right. Horizon aims to empower the global community with a transparent yet private platform for forecasting the future.
+Horizon's mission is to build the world's most trusted, private, and intelligence-driven prediction market ecosystem. We believe that **Privacy is a Human Right**, and in the realm of prediction markets, it is the key to preventing manipulation and ensuring that the "Wisdom of the Crowd" is truly unbiased.
+
+*   **Decentralized Truth**: Leveraging Stellar's immutable ledger to create a transparent source of record for global events.
+*   **Privacy by Default**: Using Zero-Knowledge Proofs to protect individual strategies and positions.
+*   **Intelligence-First**: Moving beyond simple betting to provide high-fidelity sentiment analysis and risk metrics.
+*   **Global Empowerment**: Providing anyone, anywhere, with the tools to hedge against future uncertainty.
 
 ---
 
 ## 🚀 Future Scope
 
-1.  **AI Market Curator**: Automated market creation and liquidity provisioning using LLMs.
-2.  **Cross-Chain Bridging**: Expanding to other ZK-friendly ecosystems like Ethereum (L2) and Polygon.
-3.  **Mobile App**: Immersive mobile experience with hardware-level ZK proof generation.
-4.  **Advanced Oracle Network**: Integration with decentralized oracle providers for automated resolution.
+The journey has just begun. Our roadmap for the next 12-18 months includes:
+
+1.  **🤖 Horizon AI Curator**: Integrating Large Language Models to automatically create markets from real-time news feeds and manage liquidity.
+2.  **🌐 Cross-Chain ZK-Rollups**: Expanding Horizon's privacy primitives to Ethereum, Polygon, and beyond via decentralized bridges.
+3.  **📱 Mobile-Native Experience**: A high-performance mobile app featuring biometric-secured ZK proof generation and instant push alerts.
+4.  **🏦 Institutional Liquidity Pools**: Specialized vaults for market makers and institutional hedgers with advanced risk management tools.
+5.  **🛰️ Decentralized Oracle Network**: A bespoke oracle system utilizing multi-party computation (MPC) for automated and dispute-free resolutions.
+6.  **🎮 Gamified Prediction Tiers**: Introducing reputation-based tiers, social trading leaderboards, and ZK-verified performance badges.
 
 ---
 
