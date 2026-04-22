@@ -7,14 +7,24 @@ import prisma from '@/lib/db';
 vi.mock('@/lib/db', () => ({
   default: {
     market: {
-      findUnique: vi.fn()
+      findUnique: vi.fn(),
+      update: vi.fn()
     },
     bet: {
       create: vi.fn(),
       findMany: vi.fn(),
       count: vi.fn(),
-      aggregate: vi.fn()
-    }
+      aggregate: vi.fn(),
+      findFirst: vi.fn()
+    },
+    user: {
+      upsert: vi.fn(),
+      update: vi.fn()
+    },
+    transaction: {
+      create: vi.fn()
+    },
+    $transaction: vi.fn((ops) => Promise.all(ops))
   }
 }));
 
@@ -32,6 +42,7 @@ describe('POST /api/bets - Validation', () => {
         marketId: 'market-123',
         userPublicKey: 'GABC123',
         amount: 50,
+        side: 'YES',
         commitment: 'commitment-hash'
       })
     });
@@ -55,6 +66,7 @@ describe('POST /api/bets - Validation', () => {
         marketId: 'market-123',
         userPublicKey: 'GABC123',
         amount: 50,
+        side: 'YES',
         commitment: 'commitment-hash'
       })
     });
@@ -82,12 +94,19 @@ describe('POST /api/bets - Validation', () => {
       createdAt: new Date()
     } as any);
 
+    // Mock other prisma calls in transaction
+    vi.mocked(prisma.market.update).mockResolvedValue({} as any);
+    vi.mocked(prisma.transaction.create).mockResolvedValue({} as any);
+    vi.mocked(prisma.user.upsert).mockResolvedValue({} as any);
+    vi.mocked(prisma.user.update).mockResolvedValue({} as any);
+
     const req = new Request('http://localhost:3000/api/bets', {
       method: 'POST',
       body: JSON.stringify({
         marketId: 'market-123',
         userPublicKey: 'GABC123',
         amount: 50,
+        side: 'YES',
         commitment: 'commitment-hash'
       })
     });
