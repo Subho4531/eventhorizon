@@ -182,7 +182,7 @@ export default function IntelligenceDashboard() {
           ) : (
             <div className="space-y-4">
               <AnimatePresence>
-                {alerts.slice(0, 10).map((alert, i) => (
+                {alerts.slice(0, 10).map((alert) => (
                   <motion.div
                     key={alert.id}
                     initial={{ opacity: 0, x: -10 }}

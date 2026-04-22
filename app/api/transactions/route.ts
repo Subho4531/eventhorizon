@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     });
     return NextResponse.json({ transactions });
   } catch (err) {
-    console.error(err);
+    console.error(err instanceof Error ? err.message : "Internal Error");
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 }
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ transaction }, { status: 201 });
   } catch (err) {
-    console.error(err);
+    console.error(err instanceof Error ? err.message : "Internal Error");
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 }

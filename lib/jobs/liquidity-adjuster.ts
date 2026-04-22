@@ -111,7 +111,7 @@ class LiquidityAdjuster {
       this.lastUpdate = new Date()
       
       console.log(`[LiquidityAdjuster] Cycle ${this.cycleCount} completed in ${duration}ms`)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('[LiquidityAdjuster] Error during adjustment cycle:', error)
       
       // Exponential backoff on error
@@ -145,7 +145,7 @@ class LiquidityAdjuster {
       // Calculate new parameters
       const minBetSize = await calculateMinBetSize(marketId)
       const incentiveMultiplier = await getIncentiveMultiplier(marketId)
-      const bondRequirement = await adjustBondRequirement(marketId)
+      await adjustBondRequirement(marketId)
 
       // Update market with new parameters
       await prisma.market.update({
@@ -156,7 +156,7 @@ class LiquidityAdjuster {
           // Note: bondRequirement affects new markets, not stored per market
         }
       })
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`[LiquidityAdjuster] Failed to adjust market ${marketId}:`, error)
       // Continue with other markets
     }
@@ -176,7 +176,7 @@ class LiquidityAdjuster {
   /**
    * Handle errors with exponential backoff
    */
-  private async handleError(error: any): Promise<void> {
+  private async handleError(_error: unknown): Promise<void> {
     const backoffMs = Math.min(1000 * Math.pow(2, Math.min(this.cycleCount % 5, 4)), 30000)
     console.log(`[LiquidityAdjuster] Backing off for ${backoffMs}ms`)
     await new Promise(resolve => setTimeout(resolve, backoffMs))

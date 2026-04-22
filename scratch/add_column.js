@@ -1,4 +1,5 @@
 
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { PrismaClient } = require('@prisma/client');
 const { PrismaNeon } = require('@prisma/adapter-neon');
 const ws = require('ws');

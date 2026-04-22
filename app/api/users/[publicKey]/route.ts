@@ -22,7 +22,7 @@ export async function PUT(
     });
     return NextResponse.json({ user });
   } catch (err) {
-    console.error(err);
+    console.error(err instanceof Error ? err.message : "Internal Error");
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 }

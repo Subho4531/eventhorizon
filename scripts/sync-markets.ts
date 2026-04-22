@@ -45,7 +45,7 @@ async function sync() {
            where: { contractMarketId: i },
            update: {
              title: m.title,
-             status: status as any,
+             status: status as "OPEN" | "RESOLVED",
              closeDate: new Date(Number(m.close_time) * 1000),
              outcome: m.outcome !== undefined ? (m.outcome === 0 ? "YES" : "NO") : null,
              payoutBps: m.payout_bps,
@@ -57,7 +57,7 @@ async function sync() {
              creatorId: ADMIN_ID,
              closeDate: new Date(Number(m.close_time) * 1000),
              category: "Crypto",
-             status: status as any,
+             status: status as "OPEN" | "RESOLVED",
              outcome: m.outcome !== undefined ? (m.outcome === 0 ? "YES" : "NO") : null,
              payoutBps: m.payout_bps,
            }
@@ -66,7 +66,7 @@ async function sync() {
        }
     }
   } catch (err) {
-    console.error("Sync failed:", err);
+    console.error("Sync failed:", err instanceof Error ? err.message : String(err));
   } finally {
     await prisma.$disconnect();
   }

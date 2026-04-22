@@ -1,5 +1,5 @@
-const { PrismaClient } = require("@prisma/client");
-require("dotenv").config();
+import { PrismaClient } from "@prisma/client";
+import "dotenv/config";
 
 async function main() {
   const prisma = new PrismaClient();
@@ -11,7 +11,7 @@ async function main() {
     console.log("Current Markets in DB:");
     console.table(markets);
   } catch (err) {
-    console.error("DB Error:", err);
+    console.error("DB Error:", err instanceof Error ? err.message : String(err));
   } finally {
     await prisma.$disconnect();
   }

@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWallet } from "@/components/WalletProvider";
 import {
@@ -55,11 +55,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const inMarkets = pathname === "/markets" || pathname.startsWith("/markets/");
   const onMarketsIndex = pathname === "/markets";
 
+  const router = useRouter();
+
   function handleCategoryClick(label: string) {
     setActiveCategory(label);
     setActiveMarketCategory(label);
     if (!onMarketsIndex) {
-      window.location.href = "/markets";
+      router.push("/markets");
     }
   }
 
@@ -171,7 +173,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="p-3 space-y-2">
             {/* Admin Module */}
             {publicKey === process.env.NEXT_PUBLIC_ADMIN_ID &&
-              SECONDARY_NAV.map(({ href, label, Icon }) => {
+              SECONDARY_NAV.map(({ href, label, Icon: _Icon }) => {
                 const isActive = pathname === href;
                 return (
                   <Link
@@ -182,7 +184,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         : "border-white/5 text-white/20 hover:text-white/40"
                       }`}
                   >
-                    <Shield className="w-3.5 h-3.5 shrink-0" />
+                    <_Icon className="w-3.5 h-3.5 shrink-0" />
                     <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
                   </Link>
                 );

@@ -1,6 +1,7 @@
 // Simple script to list all markets in the database
 // Run with: node scripts/list-markets.js
 
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 

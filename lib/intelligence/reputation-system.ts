@@ -187,9 +187,9 @@ export async function getUserReputation(
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-  const recentBets = user.bets.filter(
-    (bet) => bet.createdAt >= thirtyDaysAgo
-  )
+  // const recentBets = user.bets.filter(
+  //   (bet) => bet.createdAt >= thirtyDaysAgo
+  // )
 
   // For rolling average, we need to track reputation changes over time
   // For MVP, we'll use current score as rolling average

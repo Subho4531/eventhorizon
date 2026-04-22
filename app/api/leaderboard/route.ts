@@ -18,7 +18,7 @@ export async function GET() {
 
     return NextResponse.json({ users });
   } catch (err) {
-    console.error("Leaderboard API error:", err);
+    console.error("Leaderboard API error:", err instanceof Error ? err.message : "Internal Error");
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 }

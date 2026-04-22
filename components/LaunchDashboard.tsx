@@ -1,32 +1,26 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   TrendingUp, 
   Activity, 
   Zap, 
-  BarChart3, 
-  ArrowUpRight, 
-  Layers, 
-  Clock, 
-  ShieldCheck,
+  Cpu,
   ChevronRight,
   ChevronLeft,
-  Globe,
+  ArrowUpRight,
+  BarChart2,
   Database,
-  Cpu,
-  BarChart2
+  Layers
 } from "lucide-react";
 import {
   AreaChart,
   Area,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis
+  ResponsiveContainer
 } from "recharts";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface Market {
   id: string;
@@ -37,7 +31,7 @@ interface Market {
   noPool: number;
   imageUrl?: string;
   status: string;
-  history?: any[];
+  history?: { p: number; t: string }[];
 }
 
 export default function LaunchDashboard() {
@@ -87,12 +81,12 @@ export default function LaunchDashboard() {
              const hRes = await fetch(`/api/markets/${m.id}/probability?history=true&limit=20`);
              if (hRes.ok) {
                const hData = await hRes.json();
-               return { ...m, history: hData.history.map((h: any) => ({ 
+               return { ...m, history: hData.history.map((h: { probability: number; createdAt: string }) => ({ 
                  p: Math.round(h.probability * 100),
                  t: new Date(h.createdAt).toLocaleTimeString()
                })).reverse() };
              }
-           } catch (e) {}
+           } catch (_e) {}
            return m;
         }));
 
@@ -164,7 +158,8 @@ export default function LaunchDashboard() {
             >
               {/* Poster Background */}
               <div className="absolute inset-0">
-                <img 
+                <Image 
+                  fill
                   src={featured.imageUrl || `https://source.unsplash.com/featured/?${featured.category},future`} 
                   alt="" 
                   className="w-full h-full object-cover opacity-40 grayscale group-hover:grayscale-0 transition-all duration-1000 scale-105 group-hover:scale-100"

@@ -12,14 +12,13 @@ import {
   AlertCircle,
   Brain,
   Shield,
-  CheckCircle2,
-  XCircle,
   Zap,
+  XCircle,
 } from "lucide-react";
+import Image from "next/image";
 import { useWallet } from "@/components/WalletProvider";
 import MarketChart from "@/components/MarketChart";
 import { Progress } from "@/components/ui/progress";
-import QualityIndicator from "@/components/QualityIndicator";
 import RiskAlert from "@/components/RiskAlert";
 import {
   placeBet as placeBetOnChain,
@@ -192,7 +191,7 @@ export default function MarketDetailPage({
       const bettorKeyNum = parseInt(publicKey.slice(1, 9), 36).toString();
 
       const snarkjs = await import("snarkjs");
-      const { proof: sealProof, publicSignals: sealSignals } = await snarkjs.groth16.fullProve(
+      const { publicSignals: sealSignals } = await snarkjs.groth16.fullProve(
         { side: sideNum.toString(), nonce, bettor_key: bettorKeyNum },
         "/circuit/seal/seal_bet.wasm",
         "/circuit/seal/seal_0001.zkey"
@@ -272,8 +271,8 @@ export default function MarketDetailPage({
           : prev
       );
       setTimeout(() => setBetSuccess(false), 4000);
-    } catch (e: any) {
-      const msg = e.message || "Failed to place bet.";
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to place bet.";
       if (msg.toLowerCase().includes("user declined") || msg.toLowerCase().includes("rejected")) {
         setBetError("Signature rejected in Freighter.");
       } else {
@@ -345,10 +344,11 @@ export default function MarketDetailPage({
             {/* Market Image Hero */}
             {market.imageUrl && (
               <div className="relative w-full h-[300px] mb-8 border border-white/5 overflow-hidden">
-                <img 
+                <Image 
                   src={market.imageUrl} 
                   alt={market.title}
-                  className="w-full h-full object-cover opacity-80"
+                  fill
+                  className="object-cover opacity-80"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-[#0D0D0D]/20 to-transparent" />
                 
@@ -463,8 +463,8 @@ export default function MarketDetailPage({
             >
               {intelligence.probability !== undefined && intelligence.probability > 0 && (() => {
                 const prob = intelligence.probability!;
-                const confidence = (intelligence as any).confidence ?? 0;
-                const sources: string[] = (intelligence as any).sources ?? [];
+                const confidence = intelligence.confidence ?? 0;
+                const sources: string[] = intelligence.sources ?? [];
                 const isPoolOnly = !sources.includes("historical") && !sources.includes("external");
                 const pct = (prob * 100).toFixed(1);
                 

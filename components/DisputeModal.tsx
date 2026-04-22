@@ -67,8 +67,9 @@ export default function DisputeModal({
 
       alert("Challenge submitted successfully! Voting period has begun.");
       onClose();
-    } catch (err: any) {
-      setError(err.message || "Failed to submit challenge");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to submit challenge";
+      setError(message);
     } finally {
       setSubmitting(false);
     }
@@ -195,7 +196,7 @@ export default function DisputeModal({
                     <p className="font-bold uppercase tracking-widest">Important</p>
                     <p className="opacity-80">
                       Submitting a challenge requires a 100 XLM bond. If your challenge is accepted,
-                      you'll receive your bond back plus a 50 XLM reward. If rejected, your bond
+                      you&apos;ll receive your bond back plus a 50 XLM reward. If rejected, your bond
                       will be distributed to voters.
                     </p>
                   </div>

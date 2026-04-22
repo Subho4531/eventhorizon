@@ -15,7 +15,7 @@ export async function GET() {
 
     return NextResponse.json({ markets });
   } catch (err) {
-    console.error(err);
+    console.error(err instanceof Error ? err.message : "Internal Error");
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 }
@@ -50,8 +50,8 @@ export async function POST(req: NextRequest) {
       });
 
       return NextResponse.json({ market }, { status: 201 });
-    } catch (err: any) {
-      console.error(err);
-      return NextResponse.json({ error: `DB error: ${err.message || "Unknown error"}` }, { status: 500 });
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : "Internal Error");
+      return NextResponse.json({ error: `DB error: ${err instanceof Error ? err.message : "Unknown error"}` }, { status: 500 });
     }
   }

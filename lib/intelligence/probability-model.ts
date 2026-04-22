@@ -88,8 +88,7 @@ function calculateDecayWeight(resolvedAt: Date): number {
  * Analyze similar historical markets and compute weighted probability.
  */
 async function analyzeHistoricalMarkets(
-  marketTitle: string,
-  marketDescription: string
+  marketTitle: string
 ): Promise<{ probability: number; confidence: number } | null> {
   try {
     // Find similar resolved markets (simple keyword matching for MVP)
@@ -211,8 +210,7 @@ export async function generateInitialProbability(
 
     // Try historical analysis first
     const historical = await analyzeHistoricalMarkets(
-      market.title,
-      market.description || ""
+      market.title
     );
     
     if (historical) {

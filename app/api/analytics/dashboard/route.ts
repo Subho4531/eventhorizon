@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getDashboardMetrics } from '@/lib/intelligence/analytics-dashboard'
 import { withRateLimit } from '@/lib/middleware/rate-limit'
 
-export const GET = withRateLimit(async (request: NextRequest) => {
+export const GET = withRateLimit(async () => {
   try {
     const metrics = await getDashboardMetrics()
 

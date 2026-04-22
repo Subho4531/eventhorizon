@@ -36,6 +36,9 @@ export async function getAIMarketScore(
       }
     `;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
     const response = await fetch(OLLAMA_URL, {
       method: "POST",
       headers: {
@@ -47,14 +50,16 @@ export async function getAIMarketScore(
         stream: false,
         format: "json",
       }),
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`Ollama API error: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    const result = JSON.parse(data.response);
+    const data = (await response.json()) as { response: string };
+    const result = JSON.parse(data.response) as AIScoreResponse;
 
     return {
       score: result.score,

@@ -20,4 +20,4 @@ global.console = {
 import { vi } from 'vitest'
 
 // Make vi globally available
-(globalThis as any).vi = vi
+(globalThis as typeof globalThis & { vi: typeof vi }).vi = vi;

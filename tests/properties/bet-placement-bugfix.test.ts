@@ -168,7 +168,7 @@ describe('Bet Placement and Management - Bug Condition Exploration', () => {
             expect(Array.isArray(adminPageResult.bets)).toBe(true)
 
             // Each bet must have required fields
-            adminPageResult.bets.forEach((bet: any) => {
+            adminPageResult.bets.forEach((bet: { marketId: string; userPublicKey: string; amount: number; commitment: string; createdAt: string; revealed: boolean }) => {
               expect(bet).toHaveProperty('marketId')
               expect(bet).toHaveProperty('userPublicKey')
               expect(bet).toHaveProperty('amount')
@@ -182,7 +182,7 @@ describe('Bet Placement and Management - Bug Condition Exploration', () => {
           if (marketFilter) {
             expect(adminPageResult.filteringWorks).toBe(true)
             if (adminPageResult.bets) {
-              adminPageResult.bets.forEach((bet: any) => {
+              adminPageResult.bets.forEach((bet: { marketId: string }) => {
                 expect(bet.marketId).toBe(marketFilter)
               })
             }
@@ -481,7 +481,7 @@ interface AdminPageResult {
   betManagementInterfaceExists: boolean
   apiEndpointExists: boolean
   apiReturns405: boolean
-  bets?: any[]
+  bets?: Array<{ marketId: string; userPublicKey: string; amount: number; commitment: string; createdAt: string; revealed: boolean }>
   filteringWorks: boolean
   sortingWorks: boolean
   statsDisplayed: boolean
@@ -534,7 +534,7 @@ async function simulateAdminPageAccess(
       
       // Verify filtering works
       if (params.marketFilter && result.bets) {
-        result.filteringWorks = result.bets.every((bet: any) => 
+        result.filteringWorks = result.bets.every((bet: { marketId: string }) => 
           bet.marketId === params.marketFilter
         )
       }

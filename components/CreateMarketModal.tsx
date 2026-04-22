@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { zkCreateMarket as createMarket, submitSignedXdr } from "@/lib/escrow";
 import { signTransaction } from "@stellar/freighter-api";
 import { useRouter } from "next/navigation";
@@ -68,7 +69,6 @@ export default function CreateMarketModal({
       setStep("indexing");
       
       // Simulating ZK proof generation for market creation
-      const prevStep = step;
       setStep("tx"); // Reuse tx view for proving state if needed or update labels
       
       let uploadedUrl = "";
@@ -109,8 +109,9 @@ export default function CreateMarketModal({
         onClose();
         router.refresh();
       }, 2000);
-    } catch (err: any) {
-      setErrorMsg(err.message || "SYS_INTERNAL_ERROR");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "SYS_INTERNAL_ERROR";
+      setErrorMsg(message);
       setStep("error");
     } finally {
       setLoading(false);
@@ -206,7 +207,7 @@ export default function CreateMarketModal({
                         <span>{image ? image.name.toUpperCase() : "Click to upload image..."}</span>
                         {imagePreview && (
                           <div className="w-10 h-10 border border-white/10 overflow-hidden">
-                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                            <Image src={imagePreview} alt="Preview" width={40} height={40} className="w-full h-full object-cover" />
                           </div>
                         )}
                       </div>

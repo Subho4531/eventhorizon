@@ -1,16 +1,11 @@
 import { PrismaClient } from "@prisma/client";
-import { Horizon, rpc, Contract, scValToNative } from "@stellar/stellar-sdk";
 import * as dotenv from "dotenv";
 
 dotenv.config();
 
 const prisma = new PrismaClient();
-const CONTRACT_ID = process.env.NEXT_PUBLIC_ESCROW_CONTRACT_ID;
-const RPC_URL = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || "https://soroban-testnet.stellar.org";
 
 async function main() {
-  const prisma = new PrismaClient();
-
   const onChainCount = 5; // Hardcoded after CLI verification to be safe
   console.log(`Synchronizing Database with On-Chain Market Count Limit: ${onChainCount}`);
   

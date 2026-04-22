@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useWallet } from "@/components/WalletProvider";
 import { Zap } from "lucide-react";
+import Image from "next/image";
 
 interface User {
   publicKey: string;
@@ -81,8 +82,9 @@ export default function LeaderboardPage() {
           <div className="order-2 md:order-1 flex flex-col items-center group">
             <div className="relative mb-6">
               <div className="w-24 h-24 rounded-full border-2 border-white/10 p-1 group-hover:border-[#2979FF]/40 transition-all duration-500 overflow-hidden shadow-2xl relative z-10">
-                <img 
-                  className="w-full h-full rounded-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" 
+                <Image 
+                  fill
+                  className="rounded-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" 
                   alt="Avatar" 
                   src={top3[1].pfpUrl || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${top3[1].publicKey}`}
                 />
@@ -112,8 +114,9 @@ export default function LeaderboardPage() {
                 <Zap className="w-8 h-8 fill-[#FF8C00]" />
               </div>
               <div className="w-32 h-32 rounded-full border-4 border-[#FF8C00]/30 p-1 shadow-[0_0_50px_rgba(255,140,0,0.2)] group-hover:border-[#FF8C00] transition-all overflow-hidden bg-black relative">
-                <img 
-                  className="w-full h-full rounded-full object-cover" 
+                <Image 
+                  fill
+                  className="rounded-full object-cover" 
                   alt="Avatar" 
                   src={top3[0].pfpUrl || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${top3[0].publicKey}`}
                 />
@@ -140,8 +143,9 @@ export default function LeaderboardPage() {
           <div className="order-3 md:order-3 flex flex-col items-center group">
             <div className="relative mb-6">
               <div className="w-24 h-24 rounded-full border-2 border-white/10 p-1 group-hover:border-purple-500/40 transition-all duration-500 overflow-hidden shadow-2xl relative z-10">
-                <img 
-                  className="w-full h-full rounded-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" 
+                <Image 
+                  fill
+                  className="rounded-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" 
                   alt="Avatar" 
                   src={top3[2].pfpUrl || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${top3[2].publicKey}`}
                 />
@@ -196,9 +200,10 @@ export default function LeaderboardPage() {
                     </td>
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-full border ${isMe ? "border-blue-500/40 shadow-[0_0_10px_rgba(59,130,246,0.3)]" : "border-white/10"} p-0.5 bg-black overflow-hidden`}>
-                          <img 
-                            className="w-full h-full rounded-full object-cover" 
+                        <div className={`w-10 h-10 rounded-full border ${isMe ? "border-blue-500/40 shadow-[0_0_10px_rgba(59,130,246,0.3)]" : "border-white/10"} p-0.5 bg-black overflow-hidden relative`}>
+                          <Image 
+                            fill
+                            className="rounded-full object-cover" 
                             alt="Avatar" 
                             src={user.pfpUrl || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.publicKey}`}
                           />

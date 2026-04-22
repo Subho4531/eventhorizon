@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Ensure user exists (we skip strict DB balance check here because the contract handles it on-chain)
-    const user = await prisma.user.upsert({
+    await prisma.user.upsert({
       where: { publicKey: userPublicKey },
       update: {},
       create: { publicKey: userPublicKey, name: "", balance: 1000 }, // Default high balance for indexing
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json({ bet }, { status: 201 });
   } catch (err) {
-    console.error(err);
+    console.error(err instanceof Error ? err.message : "Internal Error");
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 }
@@ -186,7 +186,7 @@ export async function GET(req: NextRequest) {
       }
     });
   } catch (err) {
-    console.error(err);
+    console.error(err instanceof Error ? err.message : "Internal Error");
     return NextResponse.json({ error: "Failed to fetch bets" }, { status: 500 });
   }
 }

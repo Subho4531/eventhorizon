@@ -120,7 +120,6 @@ async function buildSorobanCall(
   const contract = new Contract(CONTRACT_ID);
 
   // Convert args to ScVal — args are already ScVal instances passed by callers.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const scArgs = args as unknown[];
 
   const tx = new TransactionBuilder(account, {

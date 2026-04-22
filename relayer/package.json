@@ -9,7 +9,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "@stellar/stellar-sdk": "^14.6.1",
     "dotenv": "^17.3.1",

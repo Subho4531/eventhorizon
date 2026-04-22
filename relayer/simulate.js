@@ -1,4 +1,4 @@
-const { Keypair } = require('@stellar/stellar-sdk');
+import { Keypair } from '@stellar/stellar-sdk';
 
 console.log("Stellar Testnet ZK AutoPay E2E Simulation\n==========================================");
 

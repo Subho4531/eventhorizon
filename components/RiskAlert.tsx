@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Shield, Info, Cpu, Zap, Activity } from "lucide-react";
+import { Cpu, Activity } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface RiskAlertProps {
@@ -20,7 +20,7 @@ export default function RiskAlert({ score, flags = [], onDismiss }: RiskAlertPro
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       className={`relative overflow-hidden border ${
-        isCritical ? "border-red-500 bg-red-500/5" : "border-[#FF8C00]/40 bg-[#0D0D0D]"
+        isCritical ? "border-red-500 bg-red-500/5" : isWarning ? "border-[#FF8C00] bg-[#FF8C00]/5" : "border-white/10 bg-[#0D0D0D]"
       } p-5 font-mono shadow-2xl shadow-black/50`}
     >
       {/* Scanning effect */}

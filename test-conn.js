@@ -1,8 +1,13 @@
-const { Client } = require('pg');
-require('dotenv').config();
+import pg from 'pg';
+const { Client } = pg;
+import 'dotenv/config';
 
 async function testConnection() {
   const url = process.env.DATABASE_URL;
+  if (!url) {
+    console.error('DATABASE_URL not found');
+    return;
+  }
   console.log('Testing connection to:', url.split('@')[1]); // Log host only for safety
   
   const client = new Client({
@@ -17,7 +22,7 @@ async function testConnection() {
     console.log('Current time from DB:', res.rows[0].now);
     await client.end();
   } catch (err) {
-    console.error('Connection failed!', err.message);
+    console.error('Connection failed!', err instanceof Error ? err.message : String(err));
     
     if (url.includes('channel_binding=require')) {
       console.log('Retrying without channel_binding...');
@@ -31,7 +36,7 @@ async function testConnection() {
         console.log('Success without channel_binding!');
         await client2.end();
       } catch (err2) {
-        console.error('Connection still failed:', err2.message);
+        console.error('Connection still failed:', err2 instanceof Error ? err2.message : String(err2));
       }
     }
   }

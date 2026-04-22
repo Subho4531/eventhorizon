@@ -7,6 +7,7 @@ import ConnectWalletButton from "./ui/connectWalletButton";
 import { useWallet } from "./WalletProvider";
 import { Activity, BarChart2, Trophy, Search, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 const NAV_ITEMS = [
   { href: "/", label: "Terminal", Icon: Activity },
@@ -19,11 +20,12 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { publicKey } = useWallet();
+  const { publicKey: _ } = useWallet(); // Keep the hook call if needed for re-renders, but ignore value
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
 
   // Update search query when URL changes (e.g. back button)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchQuery(searchParams.get("q") || "");
   }, [searchParams]);
 
@@ -58,7 +60,7 @@ export default function Navbar() {
         className="flex items-center gap-3 px-8 h-full border-r border-white/5 hover:bg-white/[0.02] transition-colors shrink-0"
       >
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="Event Horizon Logo" className="w-7 h-7 object-contain rounded-full shadow-[0_0_15px_rgba(255,255,255,0.1)] brightness-0 invert" />
+          <Image src="/logo.png" alt="Event Horizon Logo" width={28} height={28} className="object-contain rounded-full shadow-[0_0_15px_rgba(255,255,255,0.1)] brightness-0 invert" />
           <span className="text-lg font-black tracking-widest text-white uppercase italic">Horizon</span>
         </div>
       </Link>

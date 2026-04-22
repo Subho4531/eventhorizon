@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Terminal, User, Activity } from "lucide-react";
+import { Terminal, Activity } from "lucide-react";
 
 interface Bet {
   id: string;

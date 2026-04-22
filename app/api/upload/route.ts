@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Upload error:", error);
+    console.error("Upload error:", error instanceof Error ? error.message : "Internal Error");
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

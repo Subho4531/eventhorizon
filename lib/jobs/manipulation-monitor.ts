@@ -5,7 +5,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { analyzeBet } from '@/lib/intelligence/manipulation-detector'
-import type { Bet } from '@prisma/client'
+import type { Bet, Prisma } from '@prisma/client'
 
 interface MonitorConfig {
   pollInterval: number // milliseconds
@@ -128,7 +128,7 @@ class ManipulationMonitor {
    * Get new bets since last check
    */
   private async getNewBets(): Promise<Bet[]> {
-    const query: any = {
+    const query: Prisma.BetFindManyArgs = {
       orderBy: {
         createdAt: 'asc'
       },
@@ -174,7 +174,7 @@ class ManipulationMonitor {
   /**
    * Handle errors with exponential backoff
    */
-  private async handleError(error: any): Promise<void> {
+  private async handleError(_error: unknown): Promise<void> {
     const backoffMs = Math.min(1000 * Math.pow(2, Math.min(this.processedCount % 5, 4)), 30000)
     console.log(`[ManipulationMonitor] Backing off for ${backoffMs}ms`)
     await new Promise(resolve => setTimeout(resolve, backoffMs))

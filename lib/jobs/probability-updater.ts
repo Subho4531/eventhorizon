@@ -178,7 +178,7 @@ class ProbabilityUpdater {
   /**
    * Handle errors with exponential backoff
    */
-  private async handleError(error: any): Promise<void> {
+  private async handleError(_error: unknown): Promise<void> {
     const backoffMs = Math.min(1000 * Math.pow(2, Math.min(this.cycleCount % 5, 4)), 30000)
     console.log(`[ProbabilityUpdater] Backing off for ${backoffMs}ms`)
     await new Promise(resolve => setTimeout(resolve, backoffMs))

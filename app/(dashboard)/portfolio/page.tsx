@@ -3,12 +3,13 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Copy, Check, Wallet, ExternalLink, ArrowDownCircle,
+  Copy, Check, Wallet, ArrowDownCircle,
   ArrowUpCircle, Edit3, Link as LinkIcon, Loader2,
-  TrendingUp, TrendingDown, MapPin, Star, AlertCircle,
-  RefreshCw, Zap, Shield, Trophy, Activity, ChevronRight,
+  TrendingUp, AlertCircle,
+  RefreshCw, Zap, Shield, Trophy, Activity,
   Lock,
 } from "lucide-react";
+import Image from "next/image";
 import { useWallet, UserLink } from "@/components/WalletProvider";
 import EditProfileModal from "@/components/EditProfileModal";
 import {
@@ -19,7 +20,7 @@ import {
   claimWinnings,
   getOnchainEscrowBalance,
 } from "@/lib/escrow";
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Transaction = {
@@ -45,7 +46,7 @@ type SealedPosition = {
   imageUrl?: string | null;
 };
 
-type TxStatus = "idle" | "proving" | "signing" | "submitting" | "verifying" | "confirming" | "done" | "error";
+type TxStatus = "idle" | "proving" | "signing" | "submitting" | "verifying" | "confirming" | "done" | "error" | "loading";
 
 const STATUS_MSG: Record<TxStatus, string | null> = {
   idle: null,
@@ -56,6 +57,7 @@ const STATUS_MSG: Record<TxStatus, string | null> = {
   confirming: "Awaiting Ledger Finality...",
   done: "✓ Protocol Action Complete",
   error: "Operation Terminated. Verify State.",
+  loading: "Processing..."
 };
 
 async function freighterSign(unsignedXdr: string): Promise<string> {
@@ -315,7 +317,7 @@ function TxRow({ tx }: { tx: Transaction }) {
   const config = {
     DEPOSIT: { label: "Liquidity In", icon: ArrowDownCircle, color: "text-[#FF8C00]", bg: "border-[#FF8C00]/20 bg-[#FF8C00]/5", sign: "+" },
     WITHDRAWAL: { label: "Liquidity Out", icon: ArrowUpCircle, color: "text-white/40", bg: "border-white/10 bg-white/5", sign: "-" },
-    BET: { label: "Position Seal", icon: TrendingDown, color: "text-white/40", bg: "border-white/10 bg-white/5", sign: "-" },
+    BET: { label: "Position Seal", icon: TrendingUp, color: "text-white/40", bg: "border-white/10 bg-white/5", sign: "-" },
     CLAIM: { label: "Winnings Recovery", icon: Trophy, color: "text-[#00C853]", bg: "border-[#00C853]/20 bg-[#00C853]/5", sign: "+" },
   };
 
@@ -343,7 +345,7 @@ function TxRow({ tx }: { tx: Transaction }) {
         <div className={`text-[12px] font-black ${color} tracking-tighter`}>
           {sign}{tx.amount.toLocaleString(undefined, { maximumFractionDigits: 4 })} XLM
         </div>
-        <div className="text-[9px] text-white/10 font-bold mt-1 uppercase tracking-widest">{formatted} // {time}</div>
+        <div className="text-[9px] text-white/10 font-bold mt-1 uppercase tracking-widest">{formatted} | {time}</div>
       </div>
     </div>
   );
@@ -353,9 +355,8 @@ function TxRow({ tx }: { tx: Transaction }) {
 function SealedPositionCard({ position, onClaimed }: { position: SealedPosition; onClaimed: () => void }) {
   const { publicKey } = useWallet();
   const [claiming, setClaiming] = useState(false);
-  const [marketState, setMarketState] = useState<any>(null);
+  const [marketState, setMarketState] = useState<{ status: number | string; outcome: number; payout_bps?: number } | null>(null);
   const [error, setError] = useState("");
-  const [status, setStatus] = useState<TxStatus>("idle");
 
   useEffect(() => {
     getMarket(position.contractMarketId).then(s => { if (s) setMarketState(s); });
@@ -370,7 +371,6 @@ function SealedPositionCard({ position, onClaimed }: { position: SealedPosition;
   const handleClaim = async () => {
     if (!publicKey || position.isLocalMissing) return;
     setClaiming(true);
-    setStatus("proving");
     setError("");
     try {
       const snarkjs = await import("snarkjs");
@@ -409,11 +409,11 @@ function SealedPositionCard({ position, onClaimed }: { position: SealedPosition;
 
       const portfolio = JSON.parse(localStorage.getItem("zk_portfolio") || "[]");
       localStorage.setItem("zk_portfolio", JSON.stringify(
-        portfolio.map((p: any) => p.commitment === position.commitment ? { ...p, status: "CLAIMED" } : p)
+        portfolio.map((p: SealedPosition) => p.commitment === position.commitment ? { ...p, status: "CLAIMED" } : p)
       ));
       onClaimed();
-    } catch (err: any) {
-      setError(err.message?.toUpperCase() || "CLAIM FAILED");
+    } catch (err) {
+      setError(err instanceof Error ? err.message.toUpperCase() : "CLAIM FAILED");
     } finally {
       setClaiming(false);
     }
@@ -428,7 +428,7 @@ function SealedPositionCard({ position, onClaimed }: { position: SealedPosition;
       {/* Market Image Background (Faded) */}
       {position.imageUrl && (
         <div className="absolute inset-0 opacity-[0.05] pointer-events-none">
-          <img src={position.imageUrl} alt="" className="w-full h-full object-cover grayscale" />
+          <Image fill src={position.imageUrl} alt="" className="object-cover grayscale" />
         </div>
       )}
       
@@ -585,9 +585,11 @@ export default function PortfolioPage() {
         try {
           const parsed = JSON.parse(stored);
           localPositions = Array.isArray(parsed) 
-            ? parsed.filter((p: any) => p.bettorKey === publicKey)
+            ? parsed.filter((p: SealedPosition) => p.bettorKey === publicKey)
             : [];
-        } catch (e) {}
+        } catch {
+          localPositions = [];
+        }
       }
 
       let remotePositions: SealedPosition[] = [];
@@ -595,7 +597,7 @@ export default function PortfolioPage() {
         const res = await fetch(`/api/bets?userPublicKey=${encodeURIComponent(publicKey)}`);
         if (res.ok) {
           const data = await res.json();
-          remotePositions = (data.bets || []).map((b: any) => ({
+          remotePositions = (data.bets || []).map((b: { marketId: string; market: { contractMarketId: number; title: string; imageUrl?: string }; userPublicKey: string; commitment: string; amount: number; txHash: string; revealed: boolean }) => ({
             marketId: b.marketId,
             contractMarketId: b.market?.contractMarketId ?? 0,
             marketTitle: b.market?.title,
@@ -610,7 +612,9 @@ export default function PortfolioPage() {
             imageUrl: b.market?.imageUrl,
           }));
         }
-      } catch (e) {}
+      } catch {
+        remotePositions = [];
+      }
 
       const mergedMap = new Map<string, SealedPosition>();
       remotePositions.forEach(p => mergedMap.set(p.commitment, p));
@@ -625,7 +629,9 @@ export default function PortfolioPage() {
       });
       
       setSealedPositions(sorted);
-    } catch (err) {}
+    } catch {
+      // Handle error silently or with state
+    }
   }, [publicKey]);
 
   const loadTransactions = useCallback(async () => {
@@ -635,7 +641,9 @@ export default function PortfolioPage() {
       const res = await fetch(`/api/transactions?publicKey=${encodeURIComponent(publicKey)}`, { cache: 'no-store' });
       const data = await res.json();
       setTransactions(data.transactions ?? []);
-    } catch (err) {} finally {
+    } catch {
+      // Handle error silently
+    } finally {
       setTxLoading(false);
     }
   }, [publicKey]);
@@ -717,7 +725,7 @@ export default function PortfolioPage() {
   const links: UserLink[] = Array.isArray(user?.links) ? user!.links : [];
   const liveBalance = onchainBalance !== null ? onchainBalance : (user?.balance ?? 0);
   
-  const deposits = transactions.filter(t => t.type === "DEPOSIT").reduce((s, t) => s + t.amount, 0);
+  // const _deposits = transactions.filter(t => t.type === "DEPOSIT").reduce((s, t) => s + t.amount, 0);
   const claimedPositions = sealedPositions.filter(p => p.status === "CLAIMED");
   const openPositionsValue = sealedPositions.filter(p => p.status === "SEALED").reduce((s, p) => s + parseFloat(p.amount), 0);
   const winRate = sealedPositions.length > 0 ? Math.round((claimedPositions.length / sealedPositions.length) * 100) : 0;
@@ -753,7 +761,7 @@ export default function PortfolioPage() {
                 className="w-24 h-24 border border-white/10 bg-black flex items-center justify-center overflow-hidden cursor-pointer group/avatar relative"
               >
                 {user?.pfpUrl ? (
-                  <img src={user.pfpUrl} alt={user.name} className="w-full h-full object-cover group-hover/avatar:opacity-50 transition-opacity" />
+                  <Image fill src={user.pfpUrl} alt={user.name ?? "Avatar"} className="object-cover group-hover/avatar:opacity-50 transition-opacity" />
                 ) : (
                   <span className="text-4xl font-black text-white/20 uppercase italic group-hover/avatar:opacity-50 transition-opacity">{initials}</span>
                 )}

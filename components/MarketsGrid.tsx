@@ -1,19 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   TrendingUp,
   Clock,
-  AlertCircle,
-  Brain,
   ArrowRight,
 } from "lucide-react";
-import QualityIndicator from "./QualityIndicator";
-import RiskAlert from "./RiskAlert";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import Image from "next/image";
 
 interface Market {
   id: string;
@@ -77,7 +73,7 @@ export default function MarketsGrid() {
         setMarkets(marketList);
         fetchIntelligenceData(marketList);
       } catch (err) {
-        console.error(err);
+        console.error(err instanceof Error ? err.message : "Internal Error");
       } finally {
         setLoading(false);
       }
@@ -110,7 +106,7 @@ export default function MarketsGrid() {
             riskFlags: riskData?.flags?.map((f: { type: string }) => f.type) ?? [],
           };
         } catch (err) {
-          console.error(`Failed to fetch intelligence for market ${market.id}:`, err);
+          console.error(`Failed to fetch intelligence for market ${market.id}:`, err instanceof Error ? err.message : "Internal Error");
         }
       })
     );
@@ -208,8 +204,8 @@ export default function MarketsGrid() {
           {filteredMarkets.map((market, i) => {
             const odds = calculateOdds(market.yesPool, market.noPool);
             const intel = intelligence[market.id] || {};
-            const showRiskAlert =
-              intel.manipulationScore && intel.manipulationScore >= 70;
+            // const showRiskAlert =
+            //   intel.manipulationScore && intel.manipulationScore >= 70;
             const categoryColor =
               CATEGORY_COLORS[market.category] ||
               "text-white/40 bg-white/5 border-white/10";
@@ -260,10 +256,11 @@ export default function MarketsGrid() {
                   {/* Image Section */}
                   {market.imageUrl && (
                     <div className="relative w-full h-32 mb-2 border border-white/5 overflow-hidden">
-                      <img 
+                      <Image 
                         src={market.imageUrl} 
                         alt={market.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 opacity-80 group-hover:opacity-100"
+                        fill
+                        className="object-cover group-hover:scale-105 transition-all duration-700 opacity-80 group-hover:opacity-100"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-transparent to-transparent" />
                       

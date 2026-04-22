@@ -1,13 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Mic, CheckCircle2, TrendingUp, Calendar, Sparkles, Link } from "lucide-react";
-import { redirect } from "next/dist/server/api-utils";
+import { Mic, CheckCircle2, TrendingUp, Calendar, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import Image from "next/image";
 
 
 export default function HeroUI() {
   const router = useRouter();
+  const [randomHeights] = useState(() => [...Array(20)].map(() => Math.max(15, Math.random() * 100)));
   return (
     <div className="relative z-10 w-full">
       {/* Spacer to push content down into the scroll zone */}
@@ -22,7 +24,7 @@ export default function HeroUI() {
             transition={{ duration: 1.5, ease: "easeOut" }}
             className="mb-8"
           >
-            <img src="/logo.png" alt="Event Horizon Logo" className="w-32 h-32 object-contain rounded-full shadow-[0_0_50px_rgba(255,255,255,0.1)]" />
+            <Image src="/logo.png" alt="Event Horizon Logo" width={128} height={128} className="object-contain rounded-full shadow-[0_0_50px_rgba(255,255,255,0.1)]" priority />
           </motion.div>
 
           <motion.div
@@ -103,12 +105,12 @@ export default function HeroUI() {
               <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500"></span>
             </div>
             <div className="flex items-end gap-1 h-10 mb-5">
-              {[...Array(20)].map((_, i) => (
-                <div key={i} className="flex-1 bg-white/20 rounded-full" style={{ height: `${Math.max(15, Math.random() * 100)}%` }}></div>
+              {randomHeights.map((h, i) => (
+                <div key={i} className="flex-1 bg-white/20 rounded-full" style={{ height: `${h}%` }}></div>
               ))}
             </div>
             <p className="text-xs text-white/80 leading-relaxed">
-              "Oracle has signed the outcome. Reveal your cryptographically sealed commitment to claim the payout."
+              &quot;Oracle has signed the outcome. Reveal your cryptographically sealed commitment to claim the payout.&quot;
             </p>
           </motion.div>
 
@@ -135,6 +137,7 @@ export default function HeroUI() {
                 <span className="text-red-400">45% NO</span>
               </div>
             </div>
+            &quot;The cosmic event horizon of prediction markets.&quot; &mdash; Horizon Protocol Terminal v4.2
           </motion.div>
 
           {/* Left Card 2 */}

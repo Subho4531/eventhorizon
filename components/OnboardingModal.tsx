@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, ImageIcon, ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { useWallet } from "./WalletProvider";
+import Image from "next/image";
 
 export default function OnboardingModal() {
   const { publicKey, needsOnboarding, refreshUser } = useWallet();
@@ -82,8 +83,7 @@ export default function OnboardingModal() {
               <div className="flex justify-center mb-6">
                 <div className="relative w-20 h-20 rounded-full border-2 border-blue-500/30 overflow-hidden bg-gradient-to-br from-blue-600/20 to-violet-600/20 flex items-center justify-center shadow-[0_0_30px_rgba(37,99,235,0.3)]">
                   {pfpUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={pfpUrl} alt="Preview" className="w-full h-full object-cover" onError={() => setPfpUrl("")} />
+                    <Image src={pfpUrl} alt="Preview" width={80} height={80} className="w-full h-full object-cover" onError={() => setPfpUrl("")} />
                   ) : (
                     <span className="text-2xl font-bold text-white/60">{initials}</span>
                   )}

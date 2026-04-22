@@ -14,13 +14,12 @@ import { Loader2 } from "lucide-react";
 import {
   Plus,
   Shield,
-  TrendingUp,
   ChevronUp,
   ChevronDown,
-  LayoutGrid,
-  List,
   ArrowUpDown,
 } from "lucide-react";
+import Image from "next/image";
+import { useCallback } from "react";
 
 interface Market {
   id: string;
@@ -94,7 +93,7 @@ export default function AdminPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Oracle reputation
-  const [oracleReputation, setOracleReputation] = useState<any>(null);
+  const [oracleReputation, setOracleReputation] = useState<{ score: number; tier: string } | null>(null);
 
   // Markets table sort/filter
   const [marketSearch, setMarketSearch] = useState("");
@@ -121,20 +120,7 @@ export default function AdminPage() {
   const [creatingBet, setCreatingBet] = useState(false);
 
   // ── Data fetching ────────────────────────────────────────────────────────────
-  useEffect(() => {
-    fetchMarkets();
-  }, []);
-
-  useEffect(() => {
-    if (publicKey) fetchOracleReputation();
-  }, [publicKey]);
-
-  useEffect(() => {
-    fetchBets();
-    fetchBetStats();
-  }, [selectedMarketFilter, sortBy, sortOrder]);
-
-  async function fetchMarkets() {
+  const fetchMarkets = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/markets");
@@ -147,17 +133,17 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  const fetchOracleReputation = async () => {
+  const fetchOracleReputation = useCallback(async () => {
     if (!publicKey) return;
     try {
       const res = await fetch(`/api/users/${publicKey}/reputation`);
       if (res.ok) setOracleReputation(await res.json());
     } catch {}
-  };
+  }, [publicKey]);
 
-  const fetchBets = async () => {
+  const fetchBets = useCallback(async () => {
     setBetsLoading(true);
     try {
       const params = new URLSearchParams({ sortBy, sortOrder, limit: "50" });
@@ -166,16 +152,29 @@ export default function AdminPage() {
       if (res.ok) setBets((await res.json()).bets ?? []);
     } catch {}
     finally { setBetsLoading(false); }
-  };
+  }, [selectedMarketFilter, sortBy, sortOrder]);
 
-  const fetchBetStats = async () => {
+  const fetchBetStats = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (selectedMarketFilter !== "all") params.append("marketId", selectedMarketFilter);
       const res = await fetch(`/api/bets/stats?${params.toString()}`);
       if (res.ok) setBetStats(await res.json());
     } catch {}
-  };
+  }, [selectedMarketFilter]);
+
+  useEffect(() => {
+    fetchMarkets();
+  }, [fetchMarkets]);
+
+  useEffect(() => {
+    if (publicKey) fetchOracleReputation();
+  }, [publicKey, fetchOracleReputation]);
+
+  useEffect(() => {
+    fetchBets();
+    fetchBetStats();
+  }, [fetchBets, fetchBetStats]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleCreateBet = async (e: React.FormEvent) => {
@@ -210,8 +209,8 @@ export default function AdminPage() {
       setBetFormData({ marketId: "", userPublicKey: "", amount: "", commitment: "" });
       fetchBets();
       fetchBetStats();
-    } catch (err: any) {
-      alert(err.message || "Failed to create bet");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to create bet");
     } finally {
       setCreatingBet(false);
     }
@@ -241,8 +240,8 @@ export default function AdminPage() {
       alert("Market resolved successfully!");
       router.refresh();
       fetchMarkets();
-    } catch (err: any) {
-      const msg = err.message || "Resolution failed";
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Resolution failed";
       if (msg.includes("not the registered oracle")) {
         alert("Resolution failed: Your wallet is not the registered oracle for this market.");
       } else if (msg.includes("already resolved")) {
@@ -275,11 +274,11 @@ export default function AdminPage() {
       return matchesStatus && matchesSearch;
     })
     .sort((a, b) => {
-      let av: any = a[marketSortKey as keyof Market];
-      let bv: any = b[marketSortKey as keyof Market];
+      let av: string | number = a[marketSortKey] ?? "";
+      let bv: string | number = b[marketSortKey] ?? "";
       if (marketSortKey === "closeDate") {
-        av = av ? new Date(av).getTime() : 0;
-        bv = bv ? new Date(bv).getTime() : 0;
+        av = av ? new Date(av as string).getTime() : 0;
+        bv = bv ? new Date(bv as string).getTime() : 0;
       }
       if (typeof av === "string") av = av.toLowerCase();
       if (typeof bv === "string") bv = bv.toLowerCase();
@@ -383,7 +382,7 @@ export default function AdminPage() {
         ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
+            onClick={() => setActiveTab(tab.id as "resolution" | "markets" | "bets")}
             className={`px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative shrink-0 ${
               activeTab === tab.id
                 ? "text-[#FF8C00]"
@@ -537,12 +536,12 @@ export default function AdminPage() {
                   ].map(({ key, label }) => (
                     <th
                       key={key}
-                      onClick={() => toggleMarketSort(key as any)}
+                      onClick={() => toggleMarketSort(key as MarketSortKey)}
                       className="px-6 py-4 text-[9px] text-white/20 font-black uppercase tracking-widest cursor-pointer hover:text-[#FF8C00] transition-colors"
                     >
                       <div className="flex items-center gap-2">
                         {label}
-                        <SortIcon col={key as any} />
+                        <SortIcon col={key as MarketSortKey} />
                       </div>
                     </th>
                   ))}
@@ -560,8 +559,8 @@ export default function AdminPage() {
                       <td className="px-6 py-6 text-[11px] text-[#FF8C00] font-black italic">{m.contractMarketId}</td>
                       <td className="px-6 py-6">
                         {m.imageUrl ? (
-                          <div className="w-12 h-8 border border-white/10 overflow-hidden">
-                            <img src={m.imageUrl} alt="" className="w-full h-full object-cover grayscale opacity-50" />
+                          <div className="w-12 h-8 border border-white/10 overflow-hidden relative">
+                            <Image src={m.imageUrl} alt="" fill className="object-cover grayscale opacity-50" />
                           </div>
                         ) : (
                           <div className="w-12 h-8 border border-dashed border-white/5 flex items-center justify-center text-[6px] text-white/10 uppercase font-black">NO_DATA</div>
@@ -718,7 +717,7 @@ export default function AdminPage() {
                 <label className="text-[8px] text-white/20 uppercase font-black tracking-widest mb-2 block pl-1">SORT_BY</label>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
+                  onChange={(e) => setSortBy(e.target.value as "amount" | "createdAt")}
                   className="bg-[#0D0D0D] border border-white/10 px-6 py-4 text-white text-[11px] font-black uppercase focus:outline-none focus:border-[#FF8C00]/50 appearance-none min-w-[140px]"
                 >
                   <option value="createdAt">TIMESTAMP</option>
@@ -729,7 +728,7 @@ export default function AdminPage() {
                 <label className="text-[8px] text-white/20 uppercase font-black tracking-widest mb-2 block pl-1">ORDER</label>
                 <select
                   value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value as any)}
+                  onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
                   className="bg-[#0D0D0D] border border-white/10 px-6 py-4 text-white text-[11px] font-black uppercase focus:outline-none focus:border-[#FF8C00]/50 appearance-none min-w-[140px]"
                 >
                   <option value="desc">DESCENDING</option>

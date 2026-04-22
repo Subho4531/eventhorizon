@@ -122,9 +122,9 @@ export function checkRateLimit(request: NextRequest): NextResponse | null {
  * Usage: export const GET = withRateLimit(async (request) => { ... });
  */
 export function withRateLimit(
-  handler: (request: NextRequest, context?: any) => Promise<NextResponse>
+  handler: (request: NextRequest, context?: unknown) => Promise<NextResponse>
 ) {
-  return async (request: NextRequest, context?: any): Promise<NextResponse> => {
+  return async (request: NextRequest, context?: unknown): Promise<NextResponse> => {
     // Check rate limit
     const rateLimitResponse = checkRateLimit(request);
     if (rateLimitResponse) {

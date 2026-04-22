@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Sphere, Line } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
@@ -9,7 +9,7 @@ import * as THREE from "three";
 // The Original Vortex Background
 function Galaxy() {
   const ref = useRef<THREE.Points>(null);
-  const positions = useMemo(() => {
+  const [positions] = useState(() => {
     const pos = new Float32Array(20000 * 3);
     for (let i = 0; i < 20000; i++) {
         const radius = 2 + Math.pow(Math.random(), 2) * 15; 
@@ -22,9 +22,9 @@ function Galaxy() {
         pos[i * 3 + 2] = Math.sin(angle + twist) * radius;
     }
     return pos;
-  }, []);
+  });
 
-  useFrame((state, delta) => {
+  useFrame((_state, delta) => {
     if (ref.current) {
         ref.current.rotation.y += delta * 0.03; 
     }
@@ -33,7 +33,7 @@ function Galaxy() {
   return (
     <points ref={ref} rotation={[0.5, 0, 0]}>
         <bufferGeometry>
-             {/* @ts-ignore */}
+             {/* @ts-expect-error bufferAttribute attach type mismatch */}
              <bufferAttribute attach="attributes-position" count={positions.length / 3} array={positions} itemSize={3} />
         </bufferGeometry>
         <pointsMaterial size={0.015} color="#88aaff" transparent opacity={0.4} sizeAttenuation depthWrite={false} blending={THREE.AdditiveBlending} />

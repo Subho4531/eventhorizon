@@ -53,12 +53,12 @@ function generateSyntheticHistory(yesPool: number, noPool: number): DataPoint[] 
   return points;
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ dataKey: string; color: string; value: number }>; label?: string }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-zinc-900/95 border border-white/10 rounded-xl px-4 py-3 shadow-2xl text-xs">
         <p className="text-white/50 mb-2 font-medium">{label}</p>
-        {payload.map((p: any) => (
+        {payload.map((p: { dataKey: string; color: string; value: number }) => (
           <p key={p.dataKey} style={{ color: p.color }} className="font-bold">
             {p.dataKey.toUpperCase()}: {p.value}%
           </p>

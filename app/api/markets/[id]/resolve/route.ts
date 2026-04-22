@@ -40,7 +40,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, market: updatedMarket });
   } catch (err) {
-    console.error("[api/resolve] error:", err);
+    console.error("[api/resolve] error:", err instanceof Error ? err.message : "Internal Error");
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 }

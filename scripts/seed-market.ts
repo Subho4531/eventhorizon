@@ -7,7 +7,7 @@ import ws from "ws";
 neonConfig.webSocketConstructor = ws;
 const connectionString = process.env.DATABASE_URL;
 const adapter = new PrismaNeon({ connectionString });
-const prisma = new PrismaClient({ adapter } as any);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   const contractMarketId = 1;
@@ -65,7 +65,7 @@ async function main() {
 
 main()
   .catch(e => {
-    console.error(e);
+    console.error(e instanceof Error ? e.message : String(e));
     process.exit(1);
   })
   .finally(async () => {
