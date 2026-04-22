@@ -54,7 +54,7 @@ export const POST = withRateLimit(async (
       )
     }
 
-    await flagEvidence(disputeId, urlIndex, flaggerAddress)
+    await flagEvidence(disputeId, urlIndex)
 
     return NextResponse.json({ success: true }, { status: 200 })
   } catch (error) {

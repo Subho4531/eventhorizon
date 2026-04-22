@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 export interface MarketRisk {
   score: number
@@ -345,7 +346,7 @@ async function createManipulationAlert(marketId: string, flag: RiskFlag): Promis
       marketId,
       flagType: flag.type,
       severity,
-      details: flag as unknown as Record<string, unknown>,
+      details: flag as unknown as Prisma.InputJsonValue,
       resolved: false,
     },
   })

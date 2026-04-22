@@ -137,13 +137,6 @@ describe('Property 33: Alert Threshold Triggering', () => {
   })
 
   test('no alert when thresholds not exceeded', async () => {
-    const market = {
-      id: 'test-market',
-      title: 'Safe Market',
-      manipulationScore: 50,
-      status: 'OPEN',
-    }
-
     // Mock findMany to return empty arrays for both high-risk and delayed markets
     vi.mocked(prisma.market.findMany)
       .mockResolvedValueOnce([]) // high-risk markets (manipulationScore > 80)

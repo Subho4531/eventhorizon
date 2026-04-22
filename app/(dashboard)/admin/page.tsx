@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from "react";
 import { useWallet } from "@/components/WalletProvider";
 import { resolveMarket, submitSignedXdr } from "@/lib/escrow";
@@ -93,7 +95,7 @@ export default function AdminPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Oracle reputation
-  const [oracleReputation, setOracleReputation] = useState<{ score: number; tier: string } | null>(null);
+  const [oracleReputation, setOracleReputation] = useState<{ score: number; tier: "Novice" | "Intermediate" | "Expert" | "Master" } | null>(null);
 
   // Markets table sort/filter
   const [marketSearch, setMarketSearch] = useState("");
@@ -327,7 +329,7 @@ export default function AdminPage() {
           </p>
           {oracleReputation && (
             <div className="mt-6">
-              <ReputationBadge score={oracleReputation.score} tier={oracleReputation.tier} size="lg" />
+              <ReputationBadge score={oracleReputation.score} tier={oracleReputation.tier as "Novice" | "Intermediate" | "Expert" | "Master"} size="lg" />
             </div>
           )}
         </div>

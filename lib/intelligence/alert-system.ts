@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 export type AlertSeverity = 'INFO' | 'WARNING' | 'CRITICAL'
 
@@ -20,7 +21,7 @@ export async function createSystemAlert(data: SystemAlertData): Promise<void> {
       type: data.type,
       severity: data.severity,
       message: data.message,
-      metadata: data.metadata,
+      metadata: data.metadata as Prisma.InputJsonValue,
       resolved: false
     }
   })

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useWallet } from "@/components/WalletProvider";
 import MarketsGrid from "@/components/MarketsGrid";
 import CreateMarketModal from "@/components/CreateMarketModal";
@@ -36,7 +36,9 @@ export default function MarketsPage() {
         </header>
 
         <div className="pointer-events-auto">
-          <MarketsGrid />
+          <Suspense fallback={<div className="text-white/20 text-xs uppercase tracking-widest animate-pulse">Scanning Horizons...</div>}>
+            <MarketsGrid />
+          </Suspense>
         </div>
 
         {isCreateModalOpen && publicKey && (

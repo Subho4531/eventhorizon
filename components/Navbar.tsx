@@ -20,7 +20,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { publicKey: _ } = useWallet(); // Keep the hook call if needed for re-renders, but ignore value
+   useWallet(); // Keep the hook call for re-renders
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
 
   // Update search query when URL changes (e.g. back button)

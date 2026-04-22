@@ -8,7 +8,7 @@ import { vi } from 'vitest'
 // Make vi globally available
 (globalThis as typeof globalThis & { vi: typeof vi }).vi = vi;
 
-process.env.NODE_ENV = 'test'
+// process.env.NODE_ENV = 'test' // Removed as it is read-only in this environment
 
 // Mock console methods to reduce noise in test output
 global.console = {

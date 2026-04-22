@@ -86,8 +86,10 @@ export default function LaunchDashboard() {
                  t: new Date(h.createdAt).toLocaleTimeString()
                })).reverse() };
              }
-           } catch (_e) {}
-           return m;
+             return m;
+           } catch {
+             return m;
+           }
         }));
 
         setTrendingMarkets(marketsWithHistory);

@@ -19,6 +19,7 @@ import {
   getMarket,
   claimWinnings,
   getOnchainEscrowBalance,
+  MarketState,
 } from "@/lib/escrow";
 // import { Badge } from "@/components/ui/badge";
 
@@ -355,7 +356,7 @@ function TxRow({ tx }: { tx: Transaction }) {
 function SealedPositionCard({ position, onClaimed }: { position: SealedPosition; onClaimed: () => void }) {
   const { publicKey } = useWallet();
   const [claiming, setClaiming] = useState(false);
-  const [marketState, setMarketState] = useState<{ status: number | string; outcome: number; payout_bps?: number } | null>(null);
+  const [marketState, setMarketState] = useState<MarketState | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -381,24 +382,24 @@ function SealedPositionCard({ position, onClaimed }: { position: SealedPosition;
           side: position.side.toString(), 
           nonce: position.nonce, 
           bettor_key: bettorKeyNum, 
-          winning_side: marketState.outcome.toString(),
+          winning_side: marketState?.outcome?.toString() || "0",
           commitment: position.commitment
         },
         "/circuit/reveal/reveal_bet.wasm",
         "/circuit/reveal/reveal_0001.zkey"
       );
       
-      setStatus("signing");
+      // setStatus("signing");
       const nullifier = publicSignals[0];
       const res = await claimWinnings(publicKey, position.contractMarketId, position.commitment, nullifier, proof);
       if (!res.success || !res.unsignedXdr) throw new Error("CLAIM TX BUILD FAILURE");
       
       const signedXdr = await freighterSign(res.unsignedXdr);
-      setStatus("submitting");
+      // setStatus("submitting");
       const submitRes = await submitSignedXdr(signedXdr);
       if (!submitRes.hash) throw new Error("SUBMISSION FAILURE");
       
-      setStatus("verifying");
+      // setStatus("verifying");
       await new Promise(r => setTimeout(r, 1000));
 
       await fetch("/api/bets/claim", {

@@ -35,12 +35,6 @@ export default function VoteModal({
   const [reputation, setReputation] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (isOpen && publicKey) {
-      fetchReputation();
-    }
-  }, [isOpen, publicKey, fetchReputation]);
-
   const fetchReputation = useCallback(async () => {
     if (!publicKey) return;
     
@@ -56,6 +50,12 @@ export default function VoteModal({
       setLoading(false);
     }
   }, [publicKey]);
+
+  useEffect(() => {
+    if (isOpen && publicKey) {
+      fetchReputation();
+    }
+  }, [isOpen, publicKey, fetchReputation]);
 
   const handleSubmit = async () => {
     if (!publicKey) {

@@ -16,18 +16,12 @@ import {
   getProbabilityHistory,
   calculateAccuracy,
   clearCache,
-  type ProbabilityEstimate,
 } from './probability-model'
 import { prisma } from '@/lib/prisma'
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Test Helpers
 // ──────────────────────────────────────────────────────────────────────────────
-
-/**
- * Generate a random market ID
- */
-const marketIdArbitrary = fc.uuid()
 
 /**
  * Generate random pool sizes (0 to 10000 XLM)
@@ -158,7 +152,6 @@ describe('Property 3: Probability Fallback Behavior', () => {
           // Property: fallback probability should match volume-weighted calculation
           const total = market.yesPool + market.noPool
           if (total > 0) {
-            const expectedProb = Math.round((market.yesPool / total) * 100) / 100
             // Allow for blending with volume data
             expect(estimate.probability).toBeGreaterThanOrEqual(0.0)
             expect(estimate.probability).toBeLessThanOrEqual(1.0)
@@ -387,9 +380,8 @@ describe('Property 5: Exponential Decay Weighting', () => {
 
           // Property: probability should be closer to recent outcome than old outcome
           // due to exponential decay weighting
+          // due to exponential decay weighting
           if (estimate.sources.includes('historical')) {
-            const expectedBias = dominantOutcome === 'YES' ? 0.5 : 0.5
-            // With exponential decay, recent markets should dominate
             // We can't test exact values due to blending, but verify bounds
             expect(estimate.probability).toBeGreaterThanOrEqual(0.0)
             expect(estimate.probability).toBeLessThanOrEqual(1.0)

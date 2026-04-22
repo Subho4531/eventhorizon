@@ -17,7 +17,7 @@ async function sync() {
     // 1. Get Market Count
     const dummy = "GA2NUAFIJ6XN2QXRPWYGGGLSRIENLE4KISERJOSQS2IA37Z3PQVOLE43";
     const acc = await server.getAccount(dummy);
-    const { TransactionBuilder, Networks, BASE_FEE } = await import("@stellar/stellar-sdk");
+    const { TransactionBuilder, BASE_FEE } = await import("@stellar/stellar-sdk");
     const txCount = new TransactionBuilder(acc, { fee: BASE_FEE, networkPassphrase: "Test SDF Network ; September 2015" })
       .addOperation(contract.call("market_count"))
       .setTimeout(0)

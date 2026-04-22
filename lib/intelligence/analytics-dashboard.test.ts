@@ -8,7 +8,7 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest'
-import { getDashboardMetrics, type DashboardMetrics } from './analytics-dashboard'
+import { getDashboardMetrics } from './analytics-dashboard'
 import { prisma } from '@/lib/prisma'
 
 describe('Analytics Dashboard', () => {
@@ -84,8 +84,6 @@ describe('Analytics Dashboard', () => {
   })
 
   test('calculates 24h volume correctly', async () => {
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
-
     vi.mocked(prisma.market.count).mockResolvedValue(10)
     vi.mocked(prisma.market.aggregate).mockResolvedValue({
       _sum: { yesPool: 2000, noPool: 2000 },

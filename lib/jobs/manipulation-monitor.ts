@@ -118,7 +118,7 @@ class ManipulationMonitor {
       console.error('[ManipulationMonitor] Error during monitoring cycle:', error)
       
       // Exponential backoff on error
-      await this.handleError(error)
+      await this.handleError()
     } finally {
       this.isRunning = false
     }
@@ -174,7 +174,7 @@ class ManipulationMonitor {
   /**
    * Handle errors with exponential backoff
    */
-  private async handleError(_error: unknown): Promise<void> {
+  private async handleError(): Promise<void> {
     const backoffMs = Math.min(1000 * Math.pow(2, Math.min(this.processedCount % 5, 4)), 30000)
     console.log(`[ManipulationMonitor] Backing off for ${backoffMs}ms`)
     await new Promise(resolve => setTimeout(resolve, backoffMs))

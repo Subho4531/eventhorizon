@@ -423,8 +423,7 @@ export async function getDisputeEvidence(disputeId: string): Promise<{
  */
 export async function flagEvidence(
   disputeId: string,
-  urlIndex: number,
-  _flaggerAddress: string
+  urlIndex: number
 ): Promise<void> {
   await prisma.$transaction(async (tx) => {
     const dispute = await tx.disputeChallenge.findUnique({

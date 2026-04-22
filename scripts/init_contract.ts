@@ -1,4 +1,4 @@
-import { rpc, TransactionBuilder, Networks, Address, Keypair } from "@stellar/stellar-sdk";
+import { rpc, TransactionBuilder, Networks, Keypair } from "@stellar/stellar-sdk";
 
 async function run() {
   const server = new rpc.Server("https://soroban-testnet.stellar.org");
@@ -12,7 +12,7 @@ async function run() {
 
   const sourceAccount = await server.getAccount(kp.publicKey());
   
-  const tx = new TransactionBuilder(sourceAccount, {
+  new TransactionBuilder(sourceAccount, {
     fee: "1000000",
     networkPassphrase: Networks.TESTNET,
   })

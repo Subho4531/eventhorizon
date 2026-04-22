@@ -308,7 +308,7 @@ describe('Manipulation Detection - Property Tests', () => {
           const hasCloseTimedBets = bets.some((bet1, i) =>
             bets.slice(i + 1).some((bet2) => {
               const diff = Math.abs(bet2.createdAt.getTime() - bet1.createdAt.getTime())
-              return diff <= 600 * 1000 && bet1.userId !== bet2.userId
+              return diff <= 600 * 1000 && bet1.userPublicKey !== bet2.userPublicKey
             })
           )
 

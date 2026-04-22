@@ -20,6 +20,7 @@ import {
 import Navbar from "./Navbar";
 import OnboardingModal from "./OnboardingModal";
 import { setActiveMarketCategory } from "./MarketsGrid";
+import { Suspense } from "react";
 
 /* ─── Sidebar nav items ─────────────────────────────────────── */
 const MAIN_NAV = [
@@ -68,7 +69,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="font-sans bg-[#0D0D0D] text-white">
       <OnboardingModal />
-      <Navbar />
+      <Suspense fallback={<div className="h-[64px] bg-[#0D0D0D]" />}>
+        <Navbar />
+      </Suspense>
 
       <div className="flex min-h-screen pt-[64px]">
         {/* ── SIDEBAR EVENT HORIZON REDESIGN ── */}

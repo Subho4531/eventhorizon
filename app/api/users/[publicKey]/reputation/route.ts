@@ -35,3 +35,5 @@ export const GET = withRateLimit(async (
     )
   }
 })
+
+export const dynamic = 'force-dynamic'

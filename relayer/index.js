@@ -21,7 +21,7 @@ async function executeMandate() {
         let proofData = "00000000000000000000"; // Dummy fallback if file doesn't exist
         try {
             proofData = Buffer.from(fs.readFileSync("../circuit/proof.json", "utf8")).toString('hex');
-        } catch (_e) {
+        } catch {
             console.log("No proof.json found. Using mock bytes.");
         }
         
@@ -31,7 +31,7 @@ async function executeMandate() {
         let account;
         try {
             account = await server.getAccount(relayerKeypair.publicKey());
-        } catch (_e) {
+        } catch {
             console.error("Relayer account not found on Testnet. Please fund:", relayerKeypair.publicKey());
             return;
         }
@@ -40,7 +40,7 @@ async function executeMandate() {
         
         // In this implementation, the execute function expects: 
         // execute(env, relayer, request_amount, proof_bytes)
-        const _tx = new TransactionBuilder(account, { fee: "1000", networkPassphrase })
+        new TransactionBuilder(account, { fee: "1000", networkPassphrase })
             .addOperation(contract.call(
                 "execute",
                 // args

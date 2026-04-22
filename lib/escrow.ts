@@ -10,6 +10,7 @@
  *   - MOCK   (default when NEXT_PUBLIC_ESCROW_CONTRACT_ID is unset)
  *   - REAL   (when NEXT_PUBLIC_ESCROW_CONTRACT_ID is set): real Soroban invocation
  */
+import type { xdr } from "@stellar/stellar-sdk";
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Types
@@ -120,7 +121,7 @@ async function buildSorobanCall(
   const contract = new Contract(CONTRACT_ID);
 
   // Convert args to ScVal — args are already ScVal instances passed by callers.
-  const scArgs = args as unknown[];
+  const scArgs = args as xdr.ScVal[];
 
   const tx = new TransactionBuilder(account, {
     fee: BASE_FEE,
@@ -590,10 +591,31 @@ export async function placeBet(
   }
 }
 
+export interface MarketState {
+  id: number;
+  creator: string;
+  title: string;
+  resolver: string;
+  status: number | string;
+  outcome: number | null;
+  yes_pool: bigint;
+  no_pool: bigint;
+  total_bets: bigint;
+  payout_bps: number;
+  min_bet: bigint;
+  close_date: bigint;
+}
+
+export interface TradeResult {
+  amount: bigint;
+  side: number;
+  timestamp: bigint;
+}
+
 /**
- * Fetch a single market from on-chain state.
+ * Get market state from contract
  */
-export async function getMarket(marketId: number): Promise<unknown | null> {
+export async function getMarket(marketId: number): Promise<MarketState | null> {
   if (!CONTRACT_ID) return null;
   try {
     const { Contract, rpc, scValToNative, nativeToScVal } = await import("@stellar/stellar-sdk");

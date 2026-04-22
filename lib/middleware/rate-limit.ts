@@ -39,28 +39,30 @@ setInterval(cleanupExpiredEntries, 5 * 60 * 1000);
  * Uses wallet public key from header or query parameter
  */
 function getUserIdentifier(request: NextRequest): string | null {
+  if (!request) return null;
+
   // Try to get from Authorization header
-  const authHeader = request.headers.get('authorization');
+  const authHeader = request.headers?.get?.('authorization');
   if (authHeader?.startsWith('Bearer ')) {
     return authHeader.substring(7);
   }
 
   // Try to get from query parameter
   const url = new URL(request.url);
-  const publicKey = url.searchParams.get('publicKey') || url.searchParams.get('userPublicKey');
+  const publicKey = url.searchParams?.get('publicKey') || url.searchParams?.get('userPublicKey');
   if (publicKey) {
     return publicKey;
   }
 
   // Try to get from path parameter (for routes like /api/users/[publicKey])
-  const pathMatch = request.nextUrl.pathname.match(/\/users\/([^\/]+)/);
+  const pathMatch = request.nextUrl?.pathname?.match(/\/users\/([^\/]+)/);
   if (pathMatch) {
     return pathMatch[1];
   }
 
   // Fallback to IP address for anonymous requests
-  const ip = request.headers.get('x-forwarded-for') || 
-             request.headers.get('x-real-ip') || 
+  const ip = request.headers?.get?.('x-forwarded-for') || 
+             request.headers?.get?.('x-real-ip') || 
              'unknown';
   return `ip:${ip}`;
 }
@@ -70,6 +72,8 @@ function getUserIdentifier(request: NextRequest): string | null {
  * Returns null if allowed, or NextResponse with 429 status if rate limited
  */
 export function checkRateLimit(request: NextRequest): NextResponse | null {
+  if (!request) return null;
+  
   const identifier = getUserIdentifier(request);
   if (!identifier) {
     // If we can't identify the user, allow the request but log warning
@@ -121,10 +125,10 @@ export function checkRateLimit(request: NextRequest): NextResponse | null {
  * Middleware wrapper for API routes
  * Usage: export const GET = withRateLimit(async (request) => { ... });
  */
-export function withRateLimit(
-  handler: (request: NextRequest, context?: unknown) => Promise<NextResponse>
+export function withRateLimit<T = unknown>(
+  handler: (request: NextRequest, context: T) => Promise<NextResponse>
 ) {
-  return async (request: NextRequest, context?: unknown): Promise<NextResponse> => {
+  return async (request: NextRequest, context: T): Promise<NextResponse> => {
     // Check rate limit
     const rateLimitResponse = checkRateLimit(request);
     if (rateLimitResponse) {
@@ -137,7 +141,7 @@ export function withRateLimit(
     
     const response = await handler(request, context);
     
-    if (entry) {
+    if (entry && response && response.headers) {
       const remaining = Math.max(0, RATE_LIMIT_MAX_REQUESTS - entry.count);
       response.headers.set('X-RateLimit-Limit', RATE_LIMIT_MAX_REQUESTS.toString());
       response.headers.set('X-RateLimit-Remaining', remaining.toString());
