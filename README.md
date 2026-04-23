@@ -2,7 +2,7 @@
 
 Horizon is a next-generation prediction market platform built on the Stellar blockchain, leveraging Soroban smart contracts and Zero-Knowledge (ZK) proofs to ensure trader privacy while providing high-fidelity market intelligence.
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge&logo=vercel)](https://horizonx-ten.vercel.app/markets)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge&logo=vercel)](https://horizonmarkets.vercel.app/)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repo-black?style=for-the-badge&logo=github)](https://github.com/Subho4531/eventhorizon)
 ![Stellar](https://img.shields.io/badge/Stellar-Soroban-blueviolet?style=for-the-badge&logo=stellar)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
@@ -12,6 +12,16 @@ Horizon is a next-generation prediction market platform built on the Stellar blo
 ## 📖 Project Description
 
 Horizon redefines prediction markets by prioritizing user privacy and data integrity. By integrating **Zero-Knowledge Proofs (ZKPs)** on the **Stellar Network**, Horizon allows users to take positions on global events without revealing their specific bets until the market is resolved. This prevents front-running and manipulation, creating a fairer ecosystem for all participants.
+
+---
+
+## 🎥 Video Demo
+
+Experience Horizon in action:
+
+[![Horizon Video Demo](https://img.youtube.com/vi/zxn6RVdhBBU/0.jpg)](https://youtu.be/zxn6RVdhBBU)
+
+*Watch the full walkthrough of the Privacy-First Prediction Market on Stellar.*
 
 ---
 
