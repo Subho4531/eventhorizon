@@ -28,26 +28,28 @@ export interface JobConfig {
 
 const isDevelopment = process.env.NODE_ENV === 'development'
 const isTest = process.env.NODE_ENV === 'test'
+const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL_URL
 
 // Default configuration
+// Disable background jobs in Vercel to avoid connection pool exhaustion
 export const defaultJobConfig: JobConfig = {
   probabilityUpdater: {
-    enabled: !isTest, // Disable in tests
+    enabled: !isTest && !isVercel, // Disable in tests and Vercel
     interval: isDevelopment ? 60000 : 30000, // 60s in dev, 30s in prod
     batchSize: 20
   },
   liquidityAdjuster: {
-    enabled: !isTest,
+    enabled: !isTest && !isVercel,
     interval: isDevelopment ? 600000 : 300000, // 10min in dev, 5min in prod
     batchSize: 50
   },
   qualityUpdater: {
-    enabled: !isTest,
+    enabled: !isTest && !isVercel,
     interval: isDevelopment ? 7200000 : 3600000, // 2h in dev, 1h in prod
     batchSize: 100
   },
   manipulationMonitor: {
-    enabled: !isTest,
+    enabled: !isTest && !isVercel,
     pollInterval: isDevelopment ? 10000 : 5000, // 10s in dev, 5s in prod
     maxLatency: 10000
   }

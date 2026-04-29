@@ -9,22 +9,24 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  // Use DIRECT_URL if available for better stability with driver-level pooling
-  // Fallback to DATABASE_URL if DIRECT_URL is not set
-  const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
+  // Use DATABASE_URL (Transaction Pooler) by default for serverless environments.
+  // DIRECT_URL (Session) should only be used for migrations or administrative tasks.
+  const connectionString = process.env.DATABASE_URL || process.env.DIRECT_URL;
   
   if (!connectionString) {
     throw new Error(
-      "Neither DIRECT_URL nor DATABASE_URL is set. Add them to your environment variables."
+      "Neither DATABASE_URL nor DIRECT_URL is set. Add them to your environment variables."
     );
   }
+  
+  const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL_URL;
   
   const pool = new Pool({ 
     connectionString,
     ssl: { rejectUnauthorized: false }, // Required for Supabase/Neon DB
-    max: 20, // Increased from 10 to 20
-    idleTimeoutMillis: 60000, // Increased from 30000 to 60000
-    connectionTimeoutMillis: 30000, // Increased to 30s to handle pooler latency
+    max: isVercel ? 2 : 10, // Reduced from 20 to 2 in serverless, 10 in dev
+    idleTimeoutMillis: 30000, 
+    connectionTimeoutMillis: 10000, 
   });
 
   // Important: handle background connection errors
