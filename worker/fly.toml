@@ -1,0 +1,35 @@
+# fly.toml — GravityFlow Worker Service (Fly.io)
+# Deploy: flyctl deploy --config worker/fly.toml
+
+app = "gravityflow-worker"
+primary_region = "sin"  # Singapore — closest to AWS ap-southeast-2 (Supabase)
+
+[build]
+  dockerfile = "worker/Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+
+  [[services.ports]]
+    handlers = ["http"]
+    port = 80
+
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+  [[services.http_checks]]
+    interval = 30000
+    timeout = 5000
+    grace_period = "10s"
+    path = "/health"
+
+[metrics]
+  port = 9091
+  path = "/metrics"
