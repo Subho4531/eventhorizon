@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
 }
+
 
 model User {
   publicKey           String             @id @map("public_key")
@@ -68,8 +69,15 @@ model Market {
   updatedAt           DateTime             @updatedAt @map("updated_at")
   category            String               @default("Crypto")
   imageUrl            String?              @default("") @map("image_url")
+  imageSource         String?              @map("image_source")
+  imageSearchQuery    String?              @map("image_search_query")
   oracleAddress       String?              @map("oracle_address")
   payoutBps           Int?                 @default(10000) @map("payout_bps")
+  agentCreated        Boolean              @default(false) @map("agent_created")
+  scheduledResolveAt  DateTime?            @map("scheduled_resolve_at")
+  resolvedAt          DateTime?            @map("resolved_at")
+  resolutionTxHash    String?              @map("resolution_tx_hash")
+  creationTxHash      String?              @map("creation_tx_hash")
   bets                Bet[]
   challenges          DisputeChallenge[]
   riskFlags           ManipulationAlert[]
@@ -211,6 +219,27 @@ model SystemAlert {
   @@index([severity, resolved])
   @@index([createdAt])
   @@map("system_alerts")
+}
+
+model AgentJob {
+  id          String    @id @default(cuid())
+  type        String
+  marketId    String?   @map("market_id")
+  status      String    @default("PENDING")
+  payload     Json
+  result      Json?
+  error       String?
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3) @map("max_attempts")
+  scheduledAt DateTime  @map("scheduled_at")
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([type, status])
+  @@index([scheduledAt])
+  @@index([status, scheduledAt])
+  @@map("agent_jobs")
 }
 
 enum MarketStatus {
