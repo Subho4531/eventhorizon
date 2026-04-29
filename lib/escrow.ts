@@ -740,3 +740,77 @@ export async function claimWinnings(
     return { success: false, hash: "" };
   }
 }
+
+export type SealedPosition = {
+  marketId: string;
+  contractMarketId: number;
+  marketTitle: string;
+  side: number;
+  nonce: string;
+  bettorKey: string;
+  commitment: string;
+  amount: string;
+  txHash: string;
+  status: "SEALED" | "CLAIMED";
+  isLocalMissing: boolean;
+  imageUrl?: string | null;
+};
+
+export async function fetchSealedPositions(publicKey: string): Promise<SealedPosition[]> {
+  try {
+    const stored = typeof window !== 'undefined' ? localStorage.getItem("zk_portfolio") : null;
+    let localPositions: SealedPosition[] = [];
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        localPositions = Array.isArray(parsed) 
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ? parsed.filter((p: any) => p.bettorKey === publicKey)
+          : [];
+      } catch {
+        localPositions = [];
+      }
+    }
+
+    let remotePositions: SealedPosition[] = [];
+    try {
+      const res = await fetch(`/api/bets?userPublicKey=${encodeURIComponent(publicKey)}`);
+      if (res.ok) {
+        const data = await res.json();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        remotePositions = (data.bets || []).map((b: any) => ({
+          marketId: b.marketId,
+          contractMarketId: b.market?.contractMarketId ?? 0,
+          marketTitle: b.market?.title,
+          side: 0,
+          nonce: "",
+          bettorKey: b.userPublicKey,
+          commitment: b.commitment,
+          amount: b.amount.toString(),
+          txHash: b.txHash,
+          status: b.revealed ? "CLAIMED" : "SEALED",
+          isLocalMissing: true,
+          imageUrl: b.market?.imageUrl,
+        }));
+      }
+    } catch {
+      remotePositions = [];
+    }
+
+    const mergedMap = new Map<string, SealedPosition>();
+    remotePositions.forEach(p => mergedMap.set(p.commitment, p));
+    localPositions.forEach(p => mergedMap.set(p.commitment, { ...p, isLocalMissing: false }));
+    
+    const allPositions = Array.from(mergedMap.values());
+    const sorted = allPositions.sort((a, b) => {
+      if (a.status === "SEALED" && b.status === "CLAIMED") return -1;
+      if (a.status === "CLAIMED" && b.status === "SEALED") return 1;
+      return 0;
+    });
+    
+    return sorted;
+  } catch {
+    return [];
+  }
+}
+
