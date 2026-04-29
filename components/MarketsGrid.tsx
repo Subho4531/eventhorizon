@@ -266,7 +266,7 @@ export default function MarketsGrid() {
   };
 
   return (
-    <div className="">
+    <div className="max-w-7xl mx-auto">
       {/* Results count */}
       {!loading && (
         <div className="flex items-center justify-between mb-6">
@@ -318,7 +318,7 @@ export default function MarketsGrid() {
           </span>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-center">
           {filteredMarkets.map((market, i) => {
             const odds = calculateOdds(market.yesPool, market.noPool);
             const intel = intelligence[market.id] || {};
@@ -350,7 +350,7 @@ export default function MarketsGrid() {
                         alt={market.title}
                         fill
                         unoptimized={true}
-                        className="object-cover object-top group-hover:scale-[1.08] transition-all duration-[800ms] ease-out"
+                        className="object-cover object-center group-hover:scale-[1.08] transition-all duration-[800ms] ease-out"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none';
                         }}
@@ -412,7 +412,7 @@ export default function MarketsGrid() {
                     )}
 
                     {/* Title */}
-                    <h3 className="text-[13px] font-bold text-white/85 leading-snug tracking-tight group-hover:text-white transition-colors duration-300 line-clamp-2">
+                    <h3 className="text-[14px] font-medium text-white/90 leading-snug tracking-tight group-hover:text-white transition-colors duration-300 line-clamp-2">
                       {market.title}
                     </h3>
 

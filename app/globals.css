@@ -83,12 +83,20 @@
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
-  font-family: var(--font-headline);
+  font-family: var(--font-body);
   margin: 0;
   overscroll-behavior: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-headline);
+}
+
+code, kbd, pre, samp, .font-mono {
+  font-family: var(--font-mono) !important;
 }
 
 /* ── Utility Layer ── */

@@ -16,8 +16,10 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
-  BarChart2
+  BarChart2,
+  Image as ImageIcon
 } from "lucide-react";
+import Image from "next/image";
 import {
   AreaChart,
   Area,
@@ -40,6 +42,7 @@ interface Market {
   yesPool: number;
   noPool: number;
   status: string;
+  imageUrl?: string | null;
   history?: { p: number; t: string }[];
 }
 
@@ -169,7 +172,28 @@ export default function LaunchDashboard() {
         ))}
       </div>
 
-      {featured && (
+      {/* Scrolling Ribbon for Trending Markets */}
+      {trendingMarkets.length > 0 && (
+        <div className="w-full overflow-hidden bg-indigo-500/10 border-y border-indigo-500/20 py-2 relative flex items-center">
+          <div className="absolute left-0 w-20 h-full bg-gradient-to-r from-[#000000] to-transparent z-10" />
+          <div className="absolute right-0 w-20 h-full bg-gradient-to-l from-[#000000] to-transparent z-10" />
+          <motion.div 
+            className="flex whitespace-nowrap items-center gap-8"
+            animate={{ x: ["0%", "-50%"] }}
+            transition={{ repeat: Infinity, ease: "linear", duration: 20 }}
+          >
+            {[...trendingMarkets, ...trendingMarkets, ...trendingMarkets].map((m, i) => (
+              <span key={i} className="text-xs font-mono text-indigo-300 flex items-center gap-2 tracking-widest uppercase cursor-pointer hover:text-white transition-colors" onClick={() => router.push(`/markets/${m.id}`)}>
+                <Activity className="w-3 h-3 text-indigo-500" />
+                {m.title}
+                <span className="text-white/50 ml-2">({m.totalVolume.toLocaleString()} XLM)</span>
+              </span>
+            ))}
+          </motion.div>
+        </div>
+      )}
+
+      {featured ? (
         <GlowCard className="relative overflow-hidden bg-black/40 border-white/5">
           <AnimatePresence mode="wait">
             <motion.div
@@ -180,9 +204,13 @@ export default function LaunchDashboard() {
               transition={{ duration: 0.4 }}
               className="relative aspect-[21/9] min-h-[420px] flex items-center p-8 lg:p-16"
             >
-              <div className="absolute inset-0 z-0 opacity-20 pointer-events-none">
-                 <div className="absolute top-0 right-0 w-[60%] h-[120%] bg-gradient-to-bl from-blue-500/30 via-blue-500/5 to-transparent blur-3xl rounded-full translate-x-1/4 -translate-y-1/4" />
-                 <div className="absolute bottom-0 left-0 w-[50%] h-[100%] bg-gradient-to-tr from-blue-400/20 to-transparent blur-2xl rounded-full -translate-x-1/4 translate-y-1/4" />
+              <div className="absolute inset-0 z-0 opacity-30 pointer-events-none overflow-hidden rounded-[1.5rem]">
+                 {featured.imageUrl && (
+                   <Image src={featured.imageUrl} alt={featured.title} fill className="object-cover opacity-50" unoptimized />
+                 )}
+                 <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
+                 <div className="absolute top-0 right-0 w-[60%] h-[120%] bg-gradient-to-bl from-indigo-500/30 via-purple-500/5 to-transparent blur-3xl rounded-full translate-x-1/4 -translate-y-1/4" />
+                 <div className="absolute bottom-0 left-0 w-[50%] h-[100%] bg-gradient-to-tr from-indigo-400/20 to-transparent blur-2xl rounded-full -translate-x-1/4 translate-y-1/4" />
               </div>
 
               <div className="relative z-10 w-full max-w-2xl space-y-8">
@@ -191,25 +219,25 @@ export default function LaunchDashboard() {
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.5 }}
-                      className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-sm text-blue-300 backdrop-blur-md"
+                      className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-sm text-indigo-300 backdrop-blur-md"
                   >
-                      <span className="flex h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
+                      <span className="flex h-2 w-2 rounded-full bg-indigo-400 animate-pulse" />
                       <span>Featured Market</span>
                   </motion.div>
-                  <h2 className="text-4xl lg:text-5xl font-bold tracking-tight leading-tight text-white">
+                  <h2 className="text-3xl lg:text-5xl font-light tracking-tight leading-tight text-white">
                     {featured.title}
                   </h2>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-6">
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-neutral-400 uppercase tracking-wider">Liquidity Pool</span>
+                    <span className="text-xs font-medium text-neutral-400 uppercase tracking-widest">Liquidity Pool</span>
                     <span className="text-xl font-bold font-mono text-white">{(featured.yesPool + featured.noPool).toLocaleString()} XLM</span>
                   </div>
                   <Separator orientation="vertical" className="h-10 hidden sm:block bg-white/10" />
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-neutral-400 uppercase tracking-wider">Confidence</span>
-                    <span className="text-xl font-bold font-mono text-blue-400">
+                    <span className="text-xs font-medium text-neutral-400 uppercase tracking-widest">Confidence</span>
+                    <span className="text-xl font-bold font-mono text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
                       {Math.round((featured.yesPool / (featured.yesPool + featured.noPool || 1)) * 100)}% YES
                     </span>
                   </div>
@@ -232,14 +260,14 @@ export default function LaunchDashboard() {
                      <AreaChart data={featured.history}>
                        <defs>
                          <linearGradient id="featuredGrad" x1="0" y1="0" x2="0" y2="1">
-                           <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                           <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                           <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3} />
+                           <stop offset="95%" stopColor="#818cf8" stopOpacity={0} />
                          </linearGradient>
                        </defs>
                        <Area 
                          type="stepAfter" 
                          dataKey="p" 
-                         stroke="#3b82f6" 
+                         stroke="#818cf8" 
                          strokeWidth={3}
                          fill="url(#featuredGrad)" 
                        />
@@ -276,17 +304,22 @@ export default function LaunchDashboard() {
             </button>
           </div>
         </GlowCard>
+      ) : (
+        <GlowCard className="relative overflow-hidden bg-black/40 border-white/5 min-h-[420px] flex items-center justify-center flex-col gap-4">
+          <Activity className="w-8 h-8 text-indigo-500/50" />
+          <p className="text-sm font-medium text-neutral-500 tracking-widest uppercase">No trending markets found</p>
+        </GlowCard>
       )}
 
       <div className="space-y-6 pt-12">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-              <BarChart2 className="w-5 h-5 text-blue-400" />
+            <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
+              <BarChart2 className="w-5 h-5 text-indigo-400" />
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-white">Trending Markets</h3>
-              <p className="text-sm text-neutral-400 mt-1">Highest volume activities in the last 24h</p>
+              <h3 className="text-2xl font-light tracking-tight text-white">Trending Markets</h3>
+              <p className="text-sm font-medium text-neutral-400 mt-1">Highest volume activities in the last 24h</p>
             </div>
           </div>
           <button onClick={() => router.push('/markets')} className="text-sm font-medium text-neutral-400 hover:text-white transition-colors flex items-center gap-2">
@@ -302,26 +335,42 @@ export default function LaunchDashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
             >
-              <GlowCard className="h-full flex flex-col bg-neutral-900 cursor-pointer">
+              <GlowCard className="h-full flex flex-col bg-neutral-900 cursor-pointer overflow-hidden group border border-white/5">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
+                
+                {market.imageUrl && (
+                  <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-40 transition-opacity duration-500">
+                    <Image src={market.imageUrl} alt={market.title} fill className="object-cover" unoptimized />
+                    <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/80 to-transparent" />
+                  </div>
+                )}
+                
+                {/* Ribbon */}
+                <div className="absolute top-0 right-0 overflow-hidden w-24 h-24 z-20 pointer-events-none">
+                  <div className="absolute bg-gradient-to-r from-indigo-500 to-purple-500 text-[9px] font-bold text-white shadow-lg text-center font-mono py-1 right-[-35px] top-[25px] w-[140px] rotate-45 transform tracking-widest uppercase">
+                    Trending
+                  </div>
+                </div>
+
                 <div 
                   className="p-6 flex-1 flex flex-col justify-between gap-6 relative z-10"
                   onClick={() => router.push(`/markets/${market.id}`)}
                 >
                   <div className="space-y-4">
                     <div className="flex justify-between items-start">
-                      <div className="inline-flex rounded-lg bg-white/5 px-3 py-1 text-sm text-neutral-300 border border-white/5">
+                      <div className="inline-flex rounded-lg bg-white/5 px-3 py-1 text-sm text-neutral-300 border border-white/5 font-medium tracking-wide">
                         {market.category}
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="relative flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-50" />
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-50" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500" />
                         </span>
-                        <span className="text-xs font-semibold uppercase text-neutral-400">Live</span>
+                        <span className="text-xs font-semibold uppercase text-neutral-400 tracking-widest">Live</span>
                       </div>
                     </div>
                     
-                    <h4 className="text-lg font-bold leading-tight text-white line-clamp-2">
+                    <h4 className="text-lg font-light tracking-tight leading-tight text-white line-clamp-2">
                       {market.title}
                     </h4>
                   </div>
@@ -333,14 +382,14 @@ export default function LaunchDashboard() {
                         <AreaChart data={market.history}>
                            <defs>
                              <linearGradient id={`grad-${market.id}`} x1="0" y1="0" x2="0" y2="1">
-                               <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                               <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                               <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3} />
+                               <stop offset="95%" stopColor="#818cf8" stopOpacity={0} />
                              </linearGradient>
                            </defs>
                           <Area 
                             type="monotone" 
                             dataKey="p" 
-                            stroke="#3b82f6" 
+                            stroke="#818cf8" 
                             strokeWidth={2}
                             fill={`url(#grad-${market.id})`}
                           />
