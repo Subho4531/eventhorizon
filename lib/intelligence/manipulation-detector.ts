@@ -85,11 +85,12 @@ export async function analyzeBet(bet: Bet): Promise<void> {
     })
   }
 
-  // Defer expensive wash_trading and sybil detection to background job
-  // These are called asynchronously without awaiting
-  detectWashTrading(marketId).catch(error => {
+  // Await wash trading detection to prevent connection exhaustion
+  try {
+    await detectWashTrading(marketId)
+  } catch (error) {
     console.error(`[ManipulationDetector] Wash trading detection failed for market ${marketId}:`, error)
-  })
+  }
 }
 
 /**

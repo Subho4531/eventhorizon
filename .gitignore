@@ -43,6 +43,7 @@ next-env.d.ts
 .agent
 .antigravity
 .design
+.agents
 
 /lib/generated/prisma
 

@@ -5,12 +5,14 @@
 
 import { jobManager } from './jobs/job-manager'
 
-let initialized = false
+const globalForServer = globalThis as unknown as {
+  initialized: boolean | undefined;
+};
 
 export function initializeServer() {
-  if (initialized) {
-    console.log('[ServerInit] Already initialized')
-    return
+  if (globalForServer.initialized) {
+    console.log('[ServerInit] Already initialized');
+    return;
   }
 
   console.log('[ServerInit] Initializing server...')
@@ -19,7 +21,7 @@ export function initializeServer() {
     // Start background jobs
     jobManager.startAll()
 
-    initialized = true
+    globalForServer.initialized = true
     console.log('[ServerInit] Server initialized successfully')
   } catch (error) {
     console.error('[ServerInit] Failed to initialize server:', error)

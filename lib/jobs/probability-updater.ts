@@ -21,7 +21,7 @@ class ProbabilityUpdater {
 
   constructor(config: Partial<UpdaterConfig> = {}) {
     this.config = {
-      interval: 30000, // 30 seconds
+      interval: 60000, // 60 seconds (increased from 30s)
       batchSize: 20,
       enabled: true,
       ...config

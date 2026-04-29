@@ -5,8 +5,9 @@
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
-    // Import and initialize server on Node.js runtime only
-    const { initializeServer } = await import('./lib/server-init')
-    initializeServer()
+    // Dynamically import the server initialization logic
+    // This ensures it only runs in the Node.js runtime (not Edge)
+    const { initializeServer } = await import('./lib/server-init');
+    await initializeServer();
   }
 }

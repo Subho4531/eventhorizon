@@ -15,6 +15,10 @@ export type UserProfile = {
   createdAt: string;
 };
 
+export const getDefaultPfp = (publicKey: string) => 
+  `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(publicKey)}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+
+
 type WalletContextType = {
   publicKey: string | null;
   isConnecting: boolean;

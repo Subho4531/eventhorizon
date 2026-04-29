@@ -7,21 +7,21 @@ datasource db {
 }
 
 model User {
-  publicKey           String             @id
+  publicKey           String             @id @map("public_key")
   name                String             @default("")
   bio                 String             @default("")
-  pfpUrl              String             @default("")
+  pfpUrl              String             @default("") @map("pfp_url")
   links               Json               @default("[]")
   balance             Float              @default(0)
-  totalWinnings       Float              @default(0)
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-  reputationScore     Int                @default(500)
-  reputationTier      String             @default("Intermediate")
-  oracleReliability   Float?
-  totalResolutions    Int                @default(0)
-  disputedResolutions Int                @default(0)
-  avgResolutionTime   Float?
+  totalWinnings       Float              @default(0) @map("total_winnings")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+  reputationScore     Int                @default(500) @map("reputation_score")
+  reputationTier      String             @default("Intermediate") @map("reputation_tier")
+  oracleReliability   Float?             @map("oracle_reliability")
+  totalResolutions    Int                @default(0) @map("total_resolutions")
+  disputedResolutions Int                @default(0) @map("disputed_resolutions")
+  avgResolutionTime   Float?             @map("avg_resolution_time")
   bets                Bet[]
   challenges          DisputeChallenge[]
   votes               DisputeVote[]
@@ -30,42 +30,46 @@ model User {
   transactions        Transaction[]
 
   @@index([reputationScore])
+  @@map("users")
 }
 
 model Transaction {
   id            String   @id @default(cuid())
-  userPublicKey String
+  userPublicKey String   @map("user_public_key")
   type          String
   amount        Float
   hash          String   @default("")
-  createdAt     DateTime @default(now())
+  createdAt     DateTime @default(now()) @map("created_at")
   user          User     @relation(fields: [userPublicKey], references: [publicKey])
+
+  @@index([userPublicKey, createdAt])
+  @@map("transactions")
 }
 
 model Market {
   id                  String               @id @default(cuid())
   title               String
   description         String?              @default("")
-  creatorId           String
-  openDate            DateTime             @default(now())
-  closeDate           DateTime
+  creatorId           String               @map("creator_id")
+  openDate            DateTime             @default(now()) @map("open_date")
+  closeDate           DateTime             @map("close_date")
   outcome             String?
-  yesPool             Float                @default(0)
-  noPool              Float                @default(0)
-  totalVolume         Float                @default(0)
-  contractMarketId    Int?                 @unique
+  yesPool             Float                @default(0) @map("yes_pool")
+  noPool              Float                @default(0) @map("no_pool")
+  totalVolume         Float                @default(0) @map("total_volume")
+  contractMarketId    Int?                 @unique @map("contract_market_id")
   status              MarketStatus         @default(OPEN)
-  qualityScore        Float?
-  manipulationScore   Float                @default(0)
-  minBetSize          Float                @default(10)
-  incentiveMultiplier Float                @default(1.0)
+  qualityScore        Float?               @map("quality_score")
+  manipulationScore   Float                @default(0) @map("manipulation_score")
+  minBetSize          Float                @default(10) @map("min_bet_size")
+  incentiveMultiplier Float                @default(1.0) @map("incentive_multiplier")
   volatility          Float                @default(0)
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
   category            String               @default("Crypto")
-  imageUrl            String?              @default("")
-  oracleAddress       String?
-  payoutBps           Int?                 @default(10000)
+  imageUrl            String?              @default("") @map("image_url")
+  oracleAddress       String?              @map("oracle_address")
+  payoutBps           Int?                 @default(10000) @map("payout_bps")
   bets                Bet[]
   challenges          DisputeChallenge[]
   riskFlags           ManipulationAlert[]
@@ -74,20 +78,22 @@ model Market {
 
   @@index([creatorId])
   @@index([status])
+  @@index([createdAt])
+  @@map("markets")
 }
 
 model Bet {
   id            String    @id @default(cuid())
-  marketId      String
-  userPublicKey String
+  marketId      String    @map("market_id")
+  userPublicKey String    @map("user_public_key")
   amount        Float
   commitment    String    @unique
   nullifier     String?   @unique
   revealed      Boolean   @default(false)
-  txHash        String?
-  claimedAt     DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  txHash        String?   @map("tx_hash")
+  claimedAt     DateTime? @map("claimed_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
   market        Market    @relation(fields: [marketId], references: [id])
   user          User      @relation(fields: [userPublicKey], references: [publicKey])
 
@@ -96,93 +102,101 @@ model Bet {
   @@index([commitment])
   @@index([userPublicKey, marketId, createdAt])
   @@index([marketId, createdAt])
+  @@map("bets")
 }
 
 model ProbabilityHistory {
   id          String   @id @default(cuid())
-  marketId    String
+  marketId    String   @map("market_id")
   probability Float
   confidence  Float
   sources     Json
-  createdAt   DateTime @default(now())
+  createdAt   DateTime @default(now()) @map("created_at")
   market      Market   @relation(fields: [marketId], references: [id])
 
   @@index([marketId, createdAt])
+  @@map("probability_history")
 }
 
 model DisputeChallenge {
   id              String        @id @default(cuid())
-  marketId        String
-  challengerId    String
+  marketId        String        @map("market_id")
+  challengerId    String        @map("challenger_id")
   evidence        String
-  proposedOutcome String
+  proposedOutcome String        @map("proposed_outcome")
   bond            Float         @default(100)
   status          String        @default("PENDING")
-  votingEndsAt    DateTime
-  createdAt       DateTime      @default(now())
+  votingEndsAt    DateTime      @map("voting_ends_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
   challenger      User          @relation(fields: [challengerId], references: [publicKey])
   market          Market        @relation(fields: [marketId], references: [id])
   votes           DisputeVote[]
 
   @@index([marketId])
   @@index([status])
+  @@map("dispute_challenges")
 }
 
 model DisputeVote {
   id        String           @id @default(cuid())
-  disputeId String
-  voterId   String
+  disputeId String           @map("dispute_id")
+  voterId   String           @map("voter_id")
   outcome   String
   stake     Float
   weight    Float
-  createdAt DateTime         @default(now())
+  createdAt DateTime         @default(now()) @map("created_at")
   dispute   DisputeChallenge @relation(fields: [disputeId], references: [id])
   voter     User             @relation(fields: [voterId], references: [publicKey])
 
   @@unique([disputeId, voterId])
   @@index([disputeId])
+  @@index([voterId])
+  @@map("dispute_votes")
 }
 
 model ManipulationAlert {
   id        String   @id @default(cuid())
-  marketId  String
-  flagType  String
+  marketId  String   @map("market_id")
+  flagType  String   @map("flag_type")
   severity  String
   details   Json
   resolved  Boolean  @default(false)
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
   market    Market   @relation(fields: [marketId], references: [id])
 
-  @@index([marketId])
+  @@index([marketId, resolved, createdAt])
   @@index([severity, resolved])
+  @@map("manipulation_alerts")
 }
 
 model LiquidityReward {
   id        String   @id @default(cuid())
-  userId    String
-  weekStart DateTime
+  userId    String   @map("user_id")
+  weekStart DateTime @map("week_start")
   points    Float
   reward    Float?
   claimed   Boolean  @default(false)
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
   user      User     @relation(fields: [userId], references: [publicKey])
 
   @@index([userId, weekStart])
+  @@map("liquidity_rewards")
 }
 
 model WalletRelationship {
   id           String   @id @default(cuid())
-  sourceWallet String
-  targetWallet String
+  sourceWallet String   @map("source_wallet")
+  targetWallet String   @map("target_wallet")
   relationship String
   confidence   Float
-  createdAt    DateTime @default(now())
+  createdAt    DateTime @default(now()) @map("created_at")
 
   @@unique([sourceWallet, targetWallet, relationship])
   @@index([sourceWallet])
   @@index([targetWallet])
   @@index([sourceWallet, relationship])
   @@index([targetWallet, relationship])
+  @@map("wallet_relationships")
 }
 
 model SystemAlert {
@@ -192,10 +206,11 @@ model SystemAlert {
   message   String
   metadata  Json
   resolved  Boolean  @default(false)
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([severity, resolved])
   @@index([createdAt])
+  @@map("system_alerts")
 }
 
 enum MarketStatus {

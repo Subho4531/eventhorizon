@@ -25,7 +25,7 @@ class LiquidityAdjuster {
 
   constructor(config: Partial<AdjusterConfig> = {}) {
     this.config = {
-      interval: 300000, // 300 seconds = 5 minutes
+      interval: 600000, // 600 seconds = 10 minutes (increased from 5m)
       batchSize: 50,
       enabled: true,
       ...config

@@ -23,8 +23,8 @@ class ManipulationMonitor {
 
   constructor(config: Partial<MonitorConfig> = {}) {
     this.config = {
-      pollInterval: 5000, // Check every 5 seconds
-      maxLatency: 10000, // Max 10s latency requirement
+      pollInterval: 30000, // Increased from 5s to 30s
+      maxLatency: 60000, // Increased from 10s to 60s
       enabled: true,
       ...config
     }

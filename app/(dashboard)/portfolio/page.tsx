@@ -10,7 +10,7 @@ import {
   Lock,
 } from "lucide-react";
 import Image from "next/image";
-import { useWallet, UserLink } from "@/components/WalletProvider";
+import { useWallet, UserLink, getDefaultPfp } from "@/components/WalletProvider";
 import EditProfileModal from "@/components/EditProfileModal";
 import {
   depositToEscrow,
@@ -788,8 +788,12 @@ export default function PortfolioPage() {
                 onClick={handleAvatarClick}
                 className="w-24 h-24 border border-white/10 bg-black flex items-center justify-center overflow-hidden cursor-pointer group/avatar relative"
               >
-                {user?.pfpUrl ? (
-                  <Image fill src={user.pfpUrl} alt={user.name ?? "Avatar"} className="object-cover group-hover/avatar:opacity-50 transition-opacity" />
+                {user?.pfpUrl || (publicKey ? getDefaultPfp(publicKey) : "") ? (
+                  <img 
+                    src={user?.pfpUrl || (publicKey ? getDefaultPfp(publicKey) : "")} 
+                    alt={user?.name ?? "Avatar"} 
+                    className="w-full h-full object-cover group-hover/avatar:opacity-50 transition-opacity" 
+                  />
                 ) : (
                   <span className="text-4xl font-black text-white/20 uppercase italic group-hover/avatar:opacity-50 transition-opacity">{initials}</span>
                 )}
