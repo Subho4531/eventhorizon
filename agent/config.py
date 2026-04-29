@@ -7,14 +7,13 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"), override=True)
 
 # ── LLM ─────────────────────────────────────────────────────────────────────
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-if OPENROUTER_API_KEY:
-    print(f"[Config] Loaded OpenRouter Key: {OPENROUTER_API_KEY[:8]}***")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+if GOOGLE_API_KEY:
+    print(f"[Config] Loaded Google API Key: {GOOGLE_API_KEY[:8]}***")
 else:
-    print("[Config] ❌ No OpenRouter Key found in .env!")
+    print("[Config] ❌ No GOOGLE_API_KEY found in .env!")
 
-LLM_MODEL = os.getenv("AGENT_LLM_MODEL", "mistralai/mistral-7b-instruct:free")
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+LLM_MODEL = os.getenv("AGENT_LLM_MODEL", "gemini-2.0-flash")
 
 # ── Image search ─────────────────────────────────────────────────────────────
 SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY", "")

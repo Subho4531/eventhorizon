@@ -12,7 +12,7 @@ import random
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from langchain_openai import ChatOpenAI
+import google.generativeai as genai
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 
@@ -20,8 +20,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from config import (
-    OPENROUTER_API_KEY,
-    OPENROUTER_BASE_URL,
+    GOOGLE_API_KEY,
     LLM_MODEL,
     MARKET_DURATION_HOURS,
     CATEGORIES,
@@ -30,22 +29,13 @@ from tools import serp_tool
 from schemas.market import MarketTemplate
 
 
-def _get_llm() -> ChatOpenAI:
-    if not OPENROUTER_API_KEY:
-        print("[TopicDiscovery] ⚠️  OPENROUTER_API_KEY is empty in config!")
-        
-    return ChatOpenAI(
-        model=LLM_MODEL,
-        openai_api_key=OPENROUTER_API_KEY,
-        openai_api_base=OPENROUTER_BASE_URL,
-        temperature=0.7,
-        max_tokens=1024,
-        # OpenRouter-specific headers
-        default_headers={
-            "HTTP-Referer": "http://localhost:3000",
-            "X-Title": "GravityFlow Prediction Market Agent",
-        },
-    )
+def _setup_gemini():
+    if not GOOGLE_API_KEY:
+        print("[TopicDiscovery] ⚠️  GOOGLE_API_KEY is empty in config!")
+        return None
+    
+    genai.configure(api_key=GOOGLE_API_KEY)
+    return genai.GenerativeModel(model_name=LLM_MODEL)
 
 
 # ── Prompt ────────────────────────────────────────────────────────────────────
@@ -105,42 +95,43 @@ def discover_market(
     else:
         news_context = f"No recent news fetched. Use your knowledge of {chosen_category} trends."
 
-    # ── LLM generation (Direct API call to bypass LangChain 401 issues) ───────
-    import httpx
+    # ── LLM generation (Direct Gemini API call) ──────────────────────────────
+    model = _setup_gemini()
+    if not model:
+        return _fallback_market(chosen_category)
+
+    # Prepare prompt with Pydantic schema instructions
+    parser = PydanticOutputParser(pydantic_object=MarketTemplate)
+    formatted_prompt = f"""
+    Current date: {datetime.now(timezone.utc).strftime("%Y-%m-%d")}
+    Category: {chosen_category}
     
-    prompt = DISCOVERY_PROMPT.format(
-        current_date=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-        category=chosen_category,
-        news_context=news_context,
-        format_instructions=PydanticOutputParser(pydantic_object=MarketTemplate).get_format_instructions()
-    )
+    Recent news for context:
+    {news_context}
+    
+    TASK: Create a single high-quality binary prediction market for the "{chosen_category}" category.
+    Output MUST be a valid JSON object matching this schema:
+    {parser.get_format_instructions()}
+    
+    Return ONLY the raw JSON object.
+    """
 
     try:
-        with httpx.Client(timeout=30.0) as client:
-            resp = client.post(
-                f"{OPENROUTER_BASE_URL}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-                    "HTTP-Referer": "http://localhost:3000",
-                    "X-Title": "GravityFlow",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": LLM_MODEL,
-                    "messages": [{"role": "user", "content": prompt}],
-                    "response_format": {"type": "json_object"},
-                }
+        response = model.generate_content(
+            formatted_prompt,
+            generation_config=genai.GenerationConfig(
+                temperature=0.7,
+                response_mime_type="application/json",
             )
+        )
+        
+        if not response.text:
+            raise Exception("Empty response from Gemini")
             
-            if resp.status_code != 200:
-                raise Exception(f"OpenRouter Error {resp.status_code}: {resp.text}")
-                
-            data = resp.json()
-            content = data["choices"][0]["message"]["content"]
-            market_dict = json.loads(content)
-            
-            # Convert dict to Pydantic object
-            market = MarketTemplate(**market_dict)
+        market_dict = json.loads(response.text)
+        
+        # Convert dict to Pydantic object
+        market = MarketTemplate(**market_dict)
 
         # Validate close date — must be in future
         now = datetime.now(timezone.utc)
