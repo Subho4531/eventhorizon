@@ -143,21 +143,28 @@ The journey has just begun. Our roadmap for the next 12-18 months includes:
 
 ---
 
-## 📝 User Feedback
+## 📝 User Feedback & Reviews
 
-We value community input and actively iterate on our platform based on user experiences.
+We value community input and actively iterate on platform features based on real-world usage data.
 
-**[View Full User Feedback Response Sheet](https://docs.google.com/spreadsheets/d/1ZWrlcff79a274MHBfSEh__zPHHFg-faftsk7UUYXess/edit?resourcekey=&gid=510073230#gid=510073230)**
+**[📊 View Full User Feedback Response Sheet](https://docs.google.com/spreadsheets/d/1ZWrlcff79a274MHBfSEh__zPHHFg-faftsk7UUYXess/edit?usp=sharing)**
+**[⭐ Review the Project / Submit Feedback](https://forms.gle/2gkJTvdxtBmSaDmU8)**
 
-### 💬 Feedback Summary & Implementation
+### 💬 Latest Survey Responses
 
-| User Name | User Wallet Address | User Feedback | Commit ID |
-| :--- | :--- | :--- | :--- |
-| **Nilarpan Jana** | `GCQM3X...Z3ULECUQ` | Appreciated unique markets and security. Suggested UX navigation tweaks. | [`6bbb519`](https://github.com/Subho4531/eventhorizon/commit/6bbb519) |
-| **Sumit Sarkar** | `GAVAIW...H3AJVAN` | Excellent decentralization focus. Suggested optimizing app loading times. | [`8512a70`](https://github.com/Subho4531/eventhorizon/commit/8512a70) |
+| Date | User Name | Wallet Address | Experience | UI/UX | Concepts | Performance | Key Feedback |
+| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| 16/04 | **Rohit Acharya** | `GCFJQC...KU54IQH` | 4/5 | 5/5 | 5/5 | 5/5 | Suggested adding live trading events. |
+| 16/04 | **Deep Saha** | `GAPZFL...BI7GMVL` | 5/5 | 5/5 | 5/5 | 5/5 | Liked unique markets; reported AI score discrepancy. |
+| 16/04 | **Sumit Sarkar** | `GAVAIW...H3AJVAN` | 4/5 | 5/5 | 5/5 | 5/5 | Appreciated security; suggested speed optimization. |
+| 17/04 | **Samrat Natta** | `GBTLRE...LXXB3FAI` | 5/5 | 5/5 | 5/5 | 5/5 | Excellent experience; praised unique tokenomics. |
+| 17/04 | **Nilarpan Jana** | `GCQM3X...Z3ULECUQ` | 5/5 | 4/5 | 5/5 | 5/5 | Suggested minor UX navigation improvements. |
+| 23/04 | **Samrat Trader** | `GCRG5U...QAP6T7L7` | 5/5 | 5/5 | 5/5 | 5/5 | Comprehensive praise for decentralization. |
+| 23/04 | **Cosmeon Trader** | `GAIQM3...ZW2XR7G` | 5/5 | 5/5 | 5/5 | 4/5 | Requested data filters in the market section. |
+| 23/04 | **Sylvia Barick** | `GBYOEY...4HPFIEIQ` | 5/5 | 5/5 | - | - | Solid performance and intuitive UI. |
 
-> [!TIP]
-> We actively monitor the [User Feedback Response Sheet](https://docs.google.com/spreadsheets/d/1ZWrlcff79a274MHBfSEh__zPHHFg-faftsk7UUYXess/edit?resourcekey=&gid=510073230#gid=510073230) for continuous improvements.
+> [!IMPORTANT]
+> All feedback is carefully analyzed. Recent optimizations (Build `ecf0df9`) addressed loading time and navigation concerns reported by users.
 
 ---
 
