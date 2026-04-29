@@ -110,15 +110,32 @@ def _build_query(title: str, category: str) -> str:
 
 
 def _select_best(candidates: list[ImageResult]) -> ImageResult:
-    """Pick the highest-scoring candidate by relevance + resolution."""
+    """Pick the highest-scoring candidate by relevance + resolution + aspect ratio."""
     def score(img: ImageResult) -> float:
-        # Combine relevance score with resolution bonus
-        resolution_bonus = 0.0
+        final_score = img.relevance_score
+        
+        # 1. Aspect Ratio Scoring (Prioritize Landscape 4:3 to 16:9)
+        if img.width and img.height:
+            aspect_ratio = img.width / img.height
+            
+            # Ideal landscape range (4:3 = 1.33, 16:9 = 1.77)
+            if 1.3 <= aspect_ratio <= 1.8:
+                final_score += 0.4  # Strong bonus for perfect landscape
+            elif aspect_ratio > 1.8:
+                final_score += 0.2  # Small bonus for cinematic/wide
+            elif aspect_ratio < 1.0:
+                final_score -= 1.0  # Heavy penalty for Portrait (taller than wide)
+        
+        # 2. Resolution Bonus
         if img.width and img.height:
             area = img.width * img.height
-            resolution_bonus = min(area / 3_000_000, 0.3)  # Up to 0.3 bonus
-        # Prefer SerpAPI slightly for editorial quality
-        source_bonus = 0.05 if img.source == "serpapi" else 0.0
-        return img.relevance_score + resolution_bonus + source_bonus
+            resolution_bonus = min(area / 3_000_000, 0.3)  # Up to 0.3 bonus for high-res
+            final_score += resolution_bonus
+            
+        # 3. Source Preference
+        if img.source == "serpapi":
+            final_score += 0.05  # Slight preference for editorial SerpAPI results
+            
+        return final_score
 
     return max(candidates, key=score)

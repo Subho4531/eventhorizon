@@ -1,65 +1,72 @@
 """
 agent/agents/market_resolver.py
 
-Market Resolver Agent — finds markets ready to resolve and determines outcomes:
+Market Resolver Agent — autonomous oracle for resolving prediction markets:
   1. Fetch markets past their close date
   2. For each: search for resolution evidence via SerpAPI
-  3. Use LLM to determine YES/NO outcome with confidence
+  3. Use Gemini LLM to determine YES/NO outcome with confidence
   4. Call Next.js API to resolve on-chain + update DB
 """
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from typing import Optional
 
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
+from google import genai
+from google.genai import types
 from langchain_core.output_parsers import PydanticOutputParser
 
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from config import (
-    OPENROUTER_API_KEY,
-    OPENROUTER_BASE_URL,
+    GOOGLE_API_KEY,
     LLM_MODEL,
 )
 from tools import serp_tool, nextjs_tool
 from schemas.market import ResolutionDecision
 
 
-def _get_llm() -> ChatOpenAI:
-    return ChatOpenAI(
-        model=LLM_MODEL,
-        openai_api_key=OPENROUTER_API_KEY,
-        openai_api_base=OPENROUTER_BASE_URL,
-        temperature=0.2,  # Low temperature for factual decisions
-        max_tokens=512,
-        default_headers={
-            "HTTP-Referer": "https://gravityflow.io",
-            "X-Title": "GravityFlow Resolver",
-        },
-    )
+def _get_genai_client():
+    if not GOOGLE_API_KEY:
+        print("[MarketResolver] ⚠️  GOOGLE_API_KEY is empty in config!")
+        return None
+    
+    return genai.Client(api_key=GOOGLE_API_KEY)
 
 
-RESOLUTION_PROMPT = ChatPromptTemplate.from_messages([
-    ("system", """You are an impartial oracle for a blockchain prediction market.
-Your task is to determine whether a market resolved YES or NO based on available evidence.
+# ── Oracle System Prompt ──────────────────────────────────────────────────────
 
-Be conservative: if you cannot determine the outcome with confidence >= 0.7, output "NO" as the safe default.
-Always cite your sources in the evidence field.
+RESOLVER_SYSTEM_PROMPT = """You are GravityFlow's autonomous resolution oracle — an impartial judge that determines the outcome of prediction markets on the Stellar blockchain.
 
-{format_instructions}"""),
-    ("human", """Market Title: {title}
-Description: {description}
+Your decision directly controls real money payouts. Be rigorous, fair, and evidence-based.
 
-News & evidence gathered:
-{evidence}
+═══ RESOLUTION PROTOCOL ═══
 
-Based on the evidence above, did the market resolve YES or NO?
-Market close date was: {close_date}
-"""),
-])
+1. ANALYZE all provided evidence carefully.
+2. DETERMINE if the market condition was MET (YES) or NOT MET (NO).
+3. CITE specific sources in your evidence field.
+4. ASSIGN confidence honestly:
+   - 0.9–1.0: Definitive proof (official results, confirmed data)
+   - 0.7–0.89: Strong evidence from credible sources
+   - 0.5–0.69: Mixed signals, lean towards conservative answer
+   - Below 0.5: Insufficient evidence — default to NO
+
+═══ CRITICAL RULES ═══
+
+- When in DOUBT, resolve NO. This is the conservative safe default.
+- NEVER guess. If evidence is insufficient, say so and resolve NO.
+- The close_date is the DEADLINE. Only events BEFORE the close_date count.
+- Use exact numbers, dates, and facts from the evidence.
+- Your "evidence" field must cite at least one source.
+
+═══ CURRENT TIMESTAMP ═══
+{current_datetime}
+
+═══ OUTPUT FORMAT ═══
+{format_instructions}
+"""
 
 
 def resolve_pending_markets() -> list[dict]:
@@ -115,36 +122,86 @@ def resolve_pending_markets() -> list[dict]:
 
 
 def _resolve_single_market(market: dict) -> Optional[dict]:
-    """Resolve a single market using LLM + news evidence."""
+    """Resolve a single market using LLM + web evidence."""
     market_id = market["id"]
     title = market.get("title", "Unknown")
     description = market.get("description", "")
     close_date = market.get("closeDate", "")
+    category = market.get("category", "General")
 
     print(f"\n[MarketResolver] Resolving: {title!r}")
 
-    # ── Step 1: Gather evidence ─────────────────────────────────────────────
+    # ── Step 1: Gather evidence from multiple queries ────────────────────────
+    evidence_pieces = []
+
+    # Primary search: direct title
     news = serp_tool.search_news(title, num=5)
-    evidence_text = "\n".join(
-        f"[{n['source']}] {n['date']}: {n['title']} — {n['snippet']}"
-        for n in news
-    ) if news else "No recent news found. Insufficient evidence."
+    if news:
+        evidence_pieces.extend(
+            f"[{n['source']}] {n.get('date', 'N/A')}: {n['title']} — {n['snippet']}"
+            for n in news
+        )
+    
+    # Secondary search: extract key terms for broader context
+    key_terms = title.replace("Will ", "").replace("?", "").strip()
+    if len(key_terms.split()) > 3:
+        extra_news = serp_tool.search_news(key_terms, num=3)
+        if extra_news:
+            evidence_pieces.extend(
+                f"[{n['source']}] {n.get('date', 'N/A')}: {n['title']} — {n['snippet']}"
+                for n in extra_news
+                if n['title'] not in [e.split(': ', 1)[-1].split(' — ')[0] for e in evidence_pieces]  # Deduplicate
+            )
+
+    evidence_text = "\n".join(evidence_pieces) if evidence_pieces else "No recent news found. Insufficient evidence to determine outcome."
+    
+    print(f"[MarketResolver] Gathered {len(evidence_pieces)} evidence items")
 
     # ── Step 2: LLM decision ────────────────────────────────────────────────
+    client = _get_genai_client()
+    if not client:
+        print("[MarketResolver] ⚠️ No Gemini client — cannot resolve intelligently")
+        return None
+
+    now = datetime.now(timezone.utc)
     parser = PydanticOutputParser(pydantic_object=ResolutionDecision)
-    llm = _get_llm()
-    chain = RESOLUTION_PROMPT | llm | parser
+    
+    formatted_prompt = f"""{RESOLVER_SYSTEM_PROMPT.format(
+        current_datetime=now.isoformat(),
+        format_instructions=parser.get_format_instructions(),
+    )}
+
+═══ MARKET TO RESOLVE ═══
+Title: {title}
+Description: {description}
+Category: {category}
+Close Date: {close_date}
+Market ID: {market_id}
+
+═══ GATHERED EVIDENCE ═══
+{evidence_text}
+
+═══ TASK ═══
+Based on the evidence above, did this market resolve YES or NO?
+Return ONLY valid JSON matching the schema above. Set market_id to "{market_id}"."""
 
     try:
-        decision: ResolutionDecision = chain.invoke({
-            "title": title,
-            "description": description,
-            "evidence": evidence_text,
-            "close_date": close_date,
-            "format_instructions": parser.get_format_instructions(),
-        })
+        response = client.models.generate_content(
+            model=LLM_MODEL,
+            contents=formatted_prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.1,  # Ultra-low for factual resolution
+                response_mime_type="application/json",
+            )
+        )
+        
+        if not response.text:
+            raise Exception("Empty response from Gemini")
+            
+        decision_dict = json.loads(response.text)
+        decision = ResolutionDecision(**decision_dict)
 
-        # Force market_id to match
+        # Force market_id to match (in case LLM hallucinated)
         decision.market_id = market_id
 
         print(
@@ -153,10 +210,10 @@ def _resolve_single_market(market: dict) -> Optional[dict]:
         )
 
         # Only resolve if confidence is high enough
-        if decision.confidence < 0.6:
+        if decision.confidence < 0.55:
             print(
                 f"[MarketResolver] ⚠️  Low confidence ({decision.confidence:.2f}) "
-                "— skipping resolution"
+                "— skipping resolution, will retry next scan"
             )
             return None
 
@@ -183,6 +240,7 @@ def _resolve_single_market(market: dict) -> Optional[dict]:
             "title": title,
             "outcome": decision.outcome,
             "confidence": decision.confidence,
+            "evidence": decision.evidence[:200],
             "txHash": result.get("chain", {}).get("hash"),
         }
 
