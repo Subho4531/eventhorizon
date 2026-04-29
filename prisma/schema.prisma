@@ -10,7 +10,6 @@ datasource db {
 model User {
   publicKey           String             @id @map("public_key")
   name                String             @default("")
-  email               String?            @unique
   bio                 String             @default("")
   pfpUrl              String             @default("") @map("pfp_url")
   links               Json               @default("[]")

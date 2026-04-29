@@ -53,12 +53,10 @@ async function main() {
         where: { publicKey: user.publicKey },
         update: {
           name: user.name,
-          email: user.email,
         },
         create: {
           publicKey: user.publicKey,
           name: user.name,
-          email: user.email,
           balance: 1000, // Initial balance for testers
         },
       });
