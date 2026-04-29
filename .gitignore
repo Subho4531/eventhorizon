@@ -67,3 +67,5 @@ circuit/*_js/
 /diff.txt
 /test.css
 /tmp_script.py
+/agent/venv
+/**/__pycache__/
