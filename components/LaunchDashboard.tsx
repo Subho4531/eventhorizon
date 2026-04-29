@@ -1,19 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useRef, useState, useEffect } from "react";
+import {
+  motion,
+  useMotionValue,
+  useMotionTemplate,
+  AnimatePresence
+} from "framer-motion";
 import { 
   TrendingUp, 
   Activity, 
-  Zap, 
-  Cpu,
-  ChevronRight,
-  ChevronLeft,
-  ArrowUpRight,
-  BarChart2,
   Database,
   Layers,
   Sparkles,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  BarChart2
 } from "lucide-react";
 import {
   AreaChart,
@@ -21,7 +24,13 @@ import {
   ResponsiveContainer
 } from "recharts";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+
+import { GlowCard } from "@/components/ui/glow-card";
 
 interface Market {
   id: string;
@@ -30,7 +39,6 @@ interface Market {
   category: string;
   yesPool: number;
   noPool: number;
-  imageUrl?: string;
   status: string;
   history?: { p: number; t: string }[];
 }
@@ -50,14 +58,13 @@ export default function LaunchDashboard() {
   const CACHE_KEY = "gravityflow_dashboard_cache";
 
   useEffect(() => {
-    // 1. Try to load from cache first
     const cachedData = localStorage.getItem(CACHE_KEY);
     if (cachedData) {
       try {
         const parsed = JSON.parse(cachedData);
         if (parsed.markets) setTrendingMarkets(parsed.markets);
         if (parsed.metrics) setMetrics(parsed.metrics);
-        setLoading(false); // We have something to show, so stop the full-page loader
+        if (parsed.markets?.length > 0) setLoading(false);
       } catch (e) {
         console.error("Cache parse error:", e);
       }
@@ -76,22 +83,19 @@ export default function LaunchDashboard() {
         const data = await marketsRes.json();
         const allMarkets: Market[] = data.markets || [];
         
-        // Metrics calculation
         const totalVol = allMarkets.reduce((sum, m) => sum + m.totalVolume, 0);
-        const active = allMarkets.filter(m => m.status === 'active').length;
+        const active = allMarkets.filter(m => m.status === 'OPEN').length;
         const liquidity = allMarkets.reduce((sum, m) => sum + m.yesPool + m.noPool, 0);
         
         setMetrics({
           totalVolume: totalVol,
           activeMarkets: active,
           totalLiquidity: liquidity,
-          change24h: 5.2 // Mocked for now
+          change24h: 5.2 
         });
 
-        // Top 5 by volume
         const topMarkets = [...allMarkets].sort((a, b) => b.totalVolume - a.totalVolume).slice(0, 5);
         
-        // Fetch history for each top market
         const marketsWithHistory = await Promise.all(topMarkets.map(async (m) => {
            try {
              const hRes = await fetch(`/api/markets/${m.id}/probability?history=true&limit=20`);
@@ -109,16 +113,9 @@ export default function LaunchDashboard() {
         }));
 
         setTrendingMarkets(marketsWithHistory);
-
-        // 2. Save to cache for next time
         localStorage.setItem(CACHE_KEY, JSON.stringify({
           markets: marketsWithHistory,
-          metrics: {
-            totalVolume: totalVol,
-            activeMarkets: active,
-            totalLiquidity: liquidity,
-            change24h: 5.2
-          },
+          metrics: { totalVolume: totalVol, activeMarkets: active, totalLiquidity: liquidity, change24h: 5.2 },
           updatedAt: Date.now()
         }));
       }
@@ -129,24 +126,19 @@ export default function LaunchDashboard() {
     }
   };
 
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % trendingMarkets.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + trendingMarkets.length) % trendingMarkets.length);
-  };
+  const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % trendingMarkets.length);
+  const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + trendingMarkets.length) % trendingMarkets.length);
 
   if (loading && trendingMarkets.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <div className="relative">
-          <div className="w-16 h-16 rounded-2xl border border-[#00F2FF]/20 bg-[#00F2FF]/[0.03] flex items-center justify-center">
-            <Cpu className="w-8 h-8 text-[#00F2FF]/60 animate-spin" />
-          </div>
-          <div className="absolute inset-0 bg-[#00F2FF]/10 blur-3xl animate-pulse rounded-full" />
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <Skeleton className="h-[120px] w-full rounded-[2rem] bg-neutral-900/50" />
+        <Skeleton className="h-[400px] w-full rounded-[2rem] bg-neutral-900/50" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+          <Skeleton className="h-[200px] rounded-[2rem] bg-neutral-900/50" />
+          <Skeleton className="h-[200px] rounded-[2rem] bg-neutral-900/50" />
+          <Skeleton className="h-[200px] rounded-[2rem] bg-neutral-900/50" />
         </div>
-        <span className="mt-8 text-[10px] font-semibold uppercase tracking-[0.5em] text-[#00F2FF]/40">Initializing Protocol</span>
       </div>
     );
   }
@@ -157,277 +149,226 @@ export default function LaunchDashboard() {
     { label: "PROTOCOL VOLUME", value: metrics.totalVolume.toLocaleString() + " XLM", icon: Database, color: "text-white" },
     { label: "ACTIVE MARKETS", value: metrics.activeMarkets.toString(), icon: Layers, color: "text-white" },
     { label: "TOTAL LIQUIDITY", value: metrics.totalLiquidity.toLocaleString() + " XLM", icon: Activity, color: "text-white" },
-    { label: "24H MOMENTUM", value: "+" + metrics.change24h + "%", icon: TrendingUp, color: "text-emerald-400" },
+    { label: "24H MOMENTUM", value: "+" + metrics.change24h + "%", icon: TrendingUp, color: "text-blue-400" },
   ];
 
   return (
-    <div className="space-y-8 pb-20 max-w-[1400px] mx-auto">
-      {/* ── METRICS BAR ── */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/[0.03] rounded-2xl border border-white/[0.06] overflow-hidden">
+    <div className="space-y-8 pb-20 max-w-6xl mx-auto font-sans pt-12">
+      
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {metricItems.map((item, i) => (
-          <motion.div 
-            key={i} 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1, duration: 0.4 }}
-            className="p-6 bg-[#050505] hover:bg-white/[0.02] transition-all duration-300 relative group cursor-default"
-          >
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-7 h-7 rounded-lg bg-white/[0.03] flex items-center justify-center group-hover:bg-[#00F2FF]/[0.06] transition-all duration-300">
-                <item.icon className="w-3.5 h-3.5 text-[#00F2FF]/40 group-hover:text-[#00F2FF]/80 transition-colors duration-300" />
-              </div>
-              <span className="text-[9px] font-semibold text-white/20 uppercase tracking-[0.15em] group-hover:text-white/35 transition-colors duration-300">{item.label}</span>
+          <GlowCard key={i} className="p-6 flex flex-col gap-2 bg-neutral-900/40 rounded-[1.5rem]">
+            <div className="flex items-center gap-2">
+              <item.icon className="w-4 h-4 text-neutral-400" />
+              <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">{item.label}</span>
             </div>
-            <div className={`text-xl font-bold tracking-tight font-mono ${item.color}`}>
+            <div className={`text-2xl font-bold tracking-tight font-mono ${item.color}`}>
               {item.value}
             </div>
-            <div className="absolute bottom-0 left-0 w-0 h-[2px] bg-gradient-to-r from-[#00F2FF]/40 to-transparent group-hover:w-full transition-all duration-700 ease-out" />
-          </motion.div>
+          </GlowCard>
         ))}
-      </section>
+      </div>
 
-      {/* ── FEATURED TERMINAL ── */}
-      <section className="relative group">
-        <AnimatePresence mode="wait">
-          {featured && (
+      {featured && (
+        <GlowCard className="relative overflow-hidden bg-black/40 border-white/5">
+          <AnimatePresence mode="wait">
             <motion.div
               key={featured.id}
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.02 }}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-              className="relative aspect-[21/9] min-h-[420px] bg-[#050505] border border-white/[0.06] rounded-2xl overflow-hidden"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.4 }}
+              className="relative aspect-[21/9] min-h-[420px] flex items-center p-8 lg:p-16"
             >
-              {/* Poster Background */}
-              <div className="absolute inset-0">
-                <Image 
-                  fill
-                  src={featured.imageUrl || `https://source.unsplash.com/featured/?${featured.category},future`} 
-                  alt="" 
-                  className="w-full h-full object-cover opacity-35 grayscale group-hover:grayscale-0 transition-all duration-[1200ms] scale-105 group-hover:scale-100"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/70 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-[#050505]/30" />
+              <div className="absolute inset-0 z-0 opacity-20 pointer-events-none">
+                 <div className="absolute top-0 right-0 w-[60%] h-[120%] bg-gradient-to-bl from-blue-500/30 via-blue-500/5 to-transparent blur-3xl rounded-full translate-x-1/4 -translate-y-1/4" />
+                 <div className="absolute bottom-0 left-0 w-[50%] h-[100%] bg-gradient-to-tr from-blue-400/20 to-transparent blur-2xl rounded-full -translate-x-1/4 translate-y-1/4" />
               </div>
 
-              {/* Content Overlay */}
-              <div className="relative h-full flex items-center p-10 lg:p-16">
-                <div className="max-w-2xl space-y-7">
-                  <div className="space-y-4">
-                    <motion.div 
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="inline-flex items-center gap-2.5 px-3.5 py-1.5 bg-[#00F2FF]/[0.06] border border-[#00F2FF]/15 rounded-lg text-[#00F2FF] text-[9px] font-semibold uppercase tracking-[0.2em]"
-                    >
-                      <Sparkles className="w-3 h-3 animate-pulse" />
-                      Featured Prediction
-                    </motion.div>
-                    <motion.h2 
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 }}
-                      className="text-4xl lg:text-5xl xl:text-6xl font-black text-white tracking-tight leading-[1.1]"
-                    >
-                      {featured.title}
-                    </motion.h2>
+              <div className="relative z-10 w-full max-w-2xl space-y-8">
+                <div className="space-y-4">
+                  <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5 }}
+                      className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-sm text-blue-300 backdrop-blur-md"
+                  >
+                      <span className="flex h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
+                      <span>Featured Market</span>
+                  </motion.div>
+                  <h2 className="text-4xl lg:text-5xl font-bold tracking-tight leading-tight text-white">
+                    {featured.title}
+                  </h2>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-6">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-neutral-400 uppercase tracking-wider">Liquidity Pool</span>
+                    <span className="text-xl font-bold font-mono text-white">{(featured.yesPool + featured.noPool).toLocaleString()} XLM</span>
                   </div>
-
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="flex items-center gap-8"
-                  >
-                    <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                      <div className="text-[9px] font-semibold text-white/25 uppercase tracking-[0.15em] mb-1">Market Pool</div>
-                      <div className="text-xl font-bold text-white font-mono">{(featured.yesPool + featured.noPool).toLocaleString()} <span className="text-xs text-white/30">XLM</span></div>
-                    </div>
-                    <div className="p-4 rounded-xl bg-[#00F2FF]/[0.03] border border-[#00F2FF]/10">
-                      <div className="text-[9px] font-semibold text-[#00F2FF]/40 uppercase tracking-[0.15em] mb-1">Confidence</div>
-                      <div className="text-xl font-bold text-[#00F2FF] font-mono">
-                        {Math.round((featured.yesPool / (featured.yesPool + featured.noPool || 1)) * 100)}%
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="flex items-center gap-3"
-                  >
-                    <button 
-                      onClick={() => router.push(`/markets/${featured.id}`)}
-                      className="px-8 py-3.5 bg-gradient-to-r from-[#00F2FF] to-[#00C4CC] text-black font-bold text-xs uppercase tracking-[0.15em] hover:brightness-110 transition-all duration-300 rounded-xl shadow-[0_4px_20px_rgba(0,242,255,0.2)]"
-                    >
-                      Trade Now
-                    </button>
-                    <button 
-                      onClick={() => router.push(`/markets/${featured.id}`)}
-                      className="px-8 py-3.5 border border-white/10 text-white/70 font-bold text-xs uppercase tracking-[0.15em] hover:bg-white/[0.05] hover:border-white/20 hover:text-white transition-all duration-300 rounded-xl"
-                    >
-                      Analysis
-                    </button>
-                  </motion.div>
+                  <Separator orientation="vertical" className="h-10 hidden sm:block bg-white/10" />
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-neutral-400 uppercase tracking-wider">Confidence</span>
+                    <span className="text-xl font-bold font-mono text-blue-400">
+                      {Math.round((featured.yesPool / (featured.yesPool + featured.noPool || 1)) * 100)}% YES
+                    </span>
+                  </div>
                 </div>
 
-                {/* Right Side: Graph Overlay */}
-                <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 w-1/3 h-2/3 pr-16 opacity-50 group-hover:opacity-80 transition-opacity duration-500">
-                   <div className="h-full w-full relative">
-                      <div className="absolute inset-0 bg-[#00F2FF]/[0.03] blur-[60px] rounded-full" />
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={featured.history}>
-                          <defs>
-                            <linearGradient id="techGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#00F2FF" stopOpacity={0.25} />
-                              <stop offset="95%" stopColor="#00F2FF" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <Area 
-                            type="monotone" 
-                            dataKey="p" 
-                            stroke="#00F2FF" 
-                            strokeWidth={2}
-                            fillOpacity={1} 
-                            fill="url(#techGrad)" 
-                            animationDuration={2000}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                      <div className="absolute top-0 right-0 text-[9px] text-[#00F2FF]/50 font-semibold uppercase tracking-[0.15em] flex items-center gap-2">
-                        <Activity className="w-3 h-3" />
-                        Probability
-                      </div>
-                   </div>
+                <div className="flex items-center gap-4 pt-4">
+                  <button onClick={() => router.push(`/markets/${featured.id}`)} className="group flex items-center gap-2 rounded-full bg-white px-8 py-3.5 text-base font-bold text-black transition-transform hover:scale-105">
+                      Trade Now
+                      <ArrowRight className="transition-transform group-hover:translate-x-1" size={18} />
+                  </button>
+                  <button onClick={() => router.push(`/markets/${featured.id}`)} className="flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-8 py-3.5 text-base font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/10">
+                      View Analysis
+                  </button>
                 </div>
               </div>
 
-              {/* Navigation Controls */}
-              <div className="absolute bottom-8 right-8 flex gap-2">
-                {/* Slide indicators */}
-                <div className="flex items-center gap-1.5 mr-3">
-                  {trendingMarkets.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentIndex(i)}
-                      className={`transition-all duration-300 rounded-full ${
-                        i === currentIndex 
-                          ? "w-6 h-1.5 bg-[#00F2FF]" 
-                          : "w-1.5 h-1.5 bg-white/15 hover:bg-white/30"
-                      }`}
-                    />
-                  ))}
-                </div>
-                <button onClick={prevSlide} className="w-10 h-10 rounded-xl border border-white/10 bg-[#050505]/60 backdrop-blur-md text-white/50 hover:bg-[#00F2FF]/10 hover:text-[#00F2FF] hover:border-[#00F2FF]/20 transition-all duration-300 flex items-center justify-center">
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button onClick={nextSlide} className="w-10 h-10 rounded-xl border border-white/10 bg-[#050505]/60 backdrop-blur-md text-white/50 hover:bg-[#00F2FF]/10 hover:text-[#00F2FF] hover:border-[#00F2FF]/20 transition-all duration-300 flex items-center justify-center">
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+              <div className="hidden lg:block absolute right-8 top-1/2 -translate-y-1/2 w-1/3 h-[60%] z-10 opacity-70 hover:opacity-100 transition-opacity">
+                 {featured.history && featured.history.length > 1 ? (
+                   <ResponsiveContainer width="100%" height="100%">
+                     <AreaChart data={featured.history}>
+                       <defs>
+                         <linearGradient id="featuredGrad" x1="0" y1="0" x2="0" y2="1">
+                           <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                           <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                         </linearGradient>
+                       </defs>
+                       <Area 
+                         type="stepAfter" 
+                         dataKey="p" 
+                         stroke="#3b82f6" 
+                         strokeWidth={3}
+                         fill="url(#featuredGrad)" 
+                       />
+                     </AreaChart>
+                   </ResponsiveContainer>
+                 ) : (
+                    <div className="h-full flex items-center justify-center text-sm text-neutral-500 font-mono">
+                      Gathering initial data...
+                    </div>
+                 )}
               </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </section>
+          </AnimatePresence>
 
-      {/* ── LIVE SIGNAL STREAM ── */}
-      <section className="space-y-6">
+          <div className="absolute bottom-6 right-6 z-20 flex items-center gap-2">
+            <div className="flex items-center gap-1.5 mr-4">
+              {trendingMarkets.map((_, i) => (
+                <div
+                  key={i}
+                  className={`transition-all duration-300 rounded-full ${
+                    i === currentIndex 
+                      ? "w-6 h-1.5 bg-blue-500" 
+                      : "w-2 h-2 bg-white/20 hover:bg-white/40 cursor-pointer"
+                  }`}
+                  onClick={() => setCurrentIndex(i)}
+                />
+              ))}
+            </div>
+            <button onClick={prevSlide} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/60 text-white backdrop-blur-md transition-colors hover:bg-white/10">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button onClick={nextSlide} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/60 text-white backdrop-blur-md transition-colors hover:bg-white/10">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </GlowCard>
+      )}
+
+      <div className="space-y-6 pt-12">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-[#00F2FF]/[0.06] border border-[#00F2FF]/10 flex items-center justify-center">
-              <BarChart2 className="w-4 h-4 text-[#00F2FF]/60" />
+            <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+              <BarChart2 className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white tracking-tight">Signal Stream</h3>
-              <p className="text-[9px] text-white/20 font-medium">Live market activity</p>
+              <h3 className="text-2xl font-bold text-white">Trending Markets</h3>
+              <p className="text-sm text-neutral-400 mt-1">Highest volume activities in the last 24h</p>
             </div>
           </div>
-          <button 
-            onClick={() => router.push('/markets')}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-[10px] font-semibold text-white/30 hover:text-white/60 hover:border-white/[0.1] transition-all duration-300 group/all"
-          >
-            View All
-            <ArrowUpRight className="w-3 h-3 group-hover/all:translate-x-0.5 group-hover/all:-translate-y-0.5 transition-transform duration-300" />
+          <button onClick={() => router.push('/markets')} className="text-sm font-medium text-neutral-400 hover:text-white transition-colors flex items-center gap-2">
+            View All Markets <ArrowRight size={16} />
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {trendingMarkets.slice(0, 6).map((market, i) => (
             <motion.div
               key={market.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08 }}
-              onClick={() => router.push(`/markets/${market.id}`)}
-              className="group cursor-pointer bg-[#0A0A0A] border border-white/[0.06] rounded-2xl p-6 hover:bg-white/[0.02] hover:border-white/[0.12] transition-all duration-500 relative overflow-hidden hover-lift"
+              transition={{ delay: i * 0.1 }}
             >
-              {/* Background Glow */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#00F2FF]/[0.02] blur-[40px] group-hover:bg-[#00F2FF]/[0.05] transition-all duration-500 rounded-full" />
-              
-              <div className="relative space-y-4">
-                <div className="flex justify-between items-start">
-                  <span className="text-[8px] font-bold text-[#00F2FF]/70 bg-[#00F2FF]/[0.06] px-2.5 py-1 border border-[#00F2FF]/15 uppercase tracking-[0.12em] rounded-lg">
-                    {market.category}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-50" />
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
-                    </span>
-                    <span className="text-[8px] text-white/15 font-semibold uppercase tracking-[0.1em]">Live</span>
-                  </div>
-                </div>
-
-                <h4 className="text-[14px] font-bold text-white/85 group-hover:text-white transition-colors duration-300 leading-tight line-clamp-2">
-                  {market.title}
-                </h4>
-
-                {/* Yes/No Probability Graph */}
-                <div className="h-16 w-full opacity-30 group-hover:opacity-80 transition-opacity duration-500">
-                  {market.history && market.history.length > 1 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={market.history}>
-                        <defs>
-                          <linearGradient id={`signalGrad-${market.id}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#00F2FF" stopOpacity={0.2} />
-                            <stop offset="95%" stopColor="#00F2FF" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <Area 
-                          type="monotone" 
-                          dataKey="p" 
-                          stroke="#00F2FF" 
-                          strokeWidth={1.5}
-                          fill={`url(#signalGrad-${market.id})`}
-                          animationDuration={1000}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-full flex items-center justify-center text-[9px] text-white/8 uppercase tracking-[0.2em] font-medium">
-                      Gathering signal...
+              <GlowCard className="h-full flex flex-col bg-neutral-900 cursor-pointer">
+                <div 
+                  className="p-6 flex-1 flex flex-col justify-between gap-6 relative z-10"
+                  onClick={() => router.push(`/markets/${market.id}`)}
+                >
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div className="inline-flex rounded-lg bg-white/5 px-3 py-1 text-sm text-neutral-300 border border-white/5">
+                        {market.category}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-50" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+                        </span>
+                        <span className="text-xs font-semibold uppercase text-neutral-400">Live</span>
+                      </div>
                     </div>
-                  )}
-                </div>
+                    
+                    <h4 className="text-lg font-bold leading-tight text-white line-clamp-2">
+                      {market.title}
+                    </h4>
+                  </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-white/[0.04]">
-                  <div className="text-[9px] font-semibold text-white/20 font-mono">
-                    Vol: {market.totalVolume.toLocaleString()} XLM
+                  <div className="h-16 w-full relative">
+                    <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 to-transparent z-10" />
+                    {market.history && market.history.length > 1 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={market.history}>
+                           <defs>
+                             <linearGradient id={`grad-${market.id}`} x1="0" y1="0" x2="0" y2="1">
+                               <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                               <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                             </linearGradient>
+                           </defs>
+                          <Area 
+                            type="monotone" 
+                            dataKey="p" 
+                            stroke="#3b82f6" 
+                            strokeWidth={2}
+                            fill={`url(#grad-${market.id})`}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-full w-full rounded flex items-center justify-center">
+                        <Activity className="w-5 h-5 text-neutral-600" />
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-[#00F2FF]/50 group-hover:text-[#00F2FF] transition-colors duration-300">
-                    Analyze <ArrowUpRight className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
+
+                  <Separator className="bg-white/10" />
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase tracking-wider text-neutral-500">Volume</span>
+                      <span className="text-sm font-bold font-mono text-white">{market.totalVolume.toLocaleString()} XLM</span>
+                    </div>
+                    <button className="flex items-center justify-center rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/20">
+                      Analyze
+                    </button>
                   </div>
                 </div>
-              </div>
+              </GlowCard>
             </motion.div>
           ))}
         </div>
-      </section>
-
-      {/* Background Subtle Elements */}
-      <div className="fixed inset-0 pointer-events-none opacity-15">
-         <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#00F2FF]/[0.03] blur-[150px] rounded-full" />
-         <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-[#FF8C00]/[0.03] blur-[180px] rounded-full" />
       </div>
     </div>
   );

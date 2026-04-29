@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
+import { GlowCard } from "@/components/ui/glow-card";
 
 interface Market {
   id: string;
@@ -332,24 +333,14 @@ export default function MarketsGrid() {
                 transition={{ delay: i * 0.04, duration: 0.4, ease: "easeOut" }}
                 className="h-full"
               >
+                <GlowCard className="h-full">
                 <div
                   onClick={() => router.push(`/markets/${market.id}`)}
-                  className={`cursor-pointer group h-full flex flex-col rounded-2xl border bg-[#0A0A0A] transition-all duration-500 relative overflow-hidden hover-lift ${
+                  className={`cursor-pointer group h-full flex flex-col rounded-[2rem] bg-transparent transition-all duration-500 relative overflow-hidden hover-lift ${
                     isResolved 
-                      ? "border-white/[0.04] opacity-50"
-                      : "border-white/[0.06] hover:border-white/[0.15]"
+                      ? "opacity-50"
+                      : ""
                   }`}
-                  style={{
-                    boxShadow: isResolved ? "none" : `0 0 0 0px ${catColors.glow}`,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isResolved) {
-                      e.currentTarget.style.boxShadow = `0 8px 48px ${catColors.glow}, 0 2px 16px rgba(0,0,0,0.4)`;
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = `0 0 0 0px ${catColors.glow}`;
-                  }}
                 >
                   {/* Image Section */}
                   {market.imageUrl && (
@@ -458,6 +449,7 @@ export default function MarketsGrid() {
                     </div>
                   </div>
                 </div>
+                </GlowCard>
               </motion.div>
             );
           })}

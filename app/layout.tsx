@@ -26,6 +26,8 @@ const michroma = Michroma({
 
 import { WalletProvider } from "@/components/WalletProvider";
 
+import { TooltipProvider } from "@/components/ui/tooltip";
+
 export const metadata: Metadata = {
   title: {
     default: "Event Horizon | ZK Prediction Market",
@@ -64,9 +66,11 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col font-sans bg-black">
         <WalletProvider>
-          <SmoothScroll>
-            {children}
-          </SmoothScroll>
+          <TooltipProvider>
+            <SmoothScroll>
+              {children}
+            </SmoothScroll>
+          </TooltipProvider>
         </WalletProvider>
       </body>
     </html>
