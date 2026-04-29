@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, ImageIcon, ArrowRight, Loader2, Sparkles } from "lucide-react";
+import { User, ImageIcon, ArrowRight, Loader2, Sparkles, Plus } from "lucide-react";
 import { useWallet, getDefaultPfp } from "./WalletProvider";
 import Image from "next/image";
 
@@ -11,6 +11,7 @@ export default function OnboardingModal() {
   const [name, setName] = useState("");
   const [pfpUrl, setPfpUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,6 +32,32 @@ export default function OnboardingModal() {
       console.error(err);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      setPfpUrl(data.secure_url);
+    } catch (err) {
+      setError("Upload failed. Please try again.");
+      console.error(err);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -81,21 +108,36 @@ export default function OnboardingModal() {
 
               {/* Avatar Preview */}
               <div className="flex justify-center mb-6">
-                <div className="relative w-20 h-20 rounded-full border-2 border-blue-500/30 overflow-hidden bg-gradient-to-br from-blue-600/20 to-violet-600/20 flex items-center justify-center shadow-[0_0_30px_rgba(37,99,235,0.3)]">
+                <label className="relative w-24 h-24 rounded-full border border-indigo-500/30 overflow-hidden bg-gradient-to-br from-indigo-600/20 to-purple-600/20 flex items-center justify-center shadow-[0_0_30px_rgba(99,102,241,0.2)] cursor-pointer group/avatar">
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handleFileUpload} 
+                    disabled={isUploading} 
+                  />
                   {pfpUrl || (publicKey ? getDefaultPfp(publicKey) : "") ? (
                     <img 
                       src={pfpUrl || (publicKey ? getDefaultPfp(publicKey) : "")} 
                       alt="Preview" 
-                      className="w-full h-full object-cover" 
+                      className="w-full h-full object-cover group-hover/avatar:opacity-40 transition-opacity" 
                       onError={() => setPfpUrl("")} 
                     />
                   ) : (
-                    <span className="text-2xl font-bold text-white/60">{initials}</span>
+                    <span className="text-2xl font-bold text-white/60 group-hover/avatar:opacity-40 transition-opacity">{initials}</span>
                   )}
-                  <div className="absolute bottom-1 right-1 w-4 h-4 bg-blue-500 rounded-full border border-black flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                  
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
+                    {isUploading ? (
+                      <Loader2 className="w-6 h-6 text-white animate-spin" />
+                    ) : (
+                      <Plus className="w-6 h-6 text-white" />
+                    )}
                   </div>
-                </div>
+                  <div className="absolute bottom-1 right-1 w-5 h-5 bg-indigo-500 rounded-full border border-black flex items-center justify-center">
+                    <div className="w-2 h-2 bg-white rounded-full" />
+                  </div>
+                </label>
               </div>
 
               {/* Form */}
@@ -114,7 +156,7 @@ export default function OnboardingModal() {
                       placeholder="Cosmic Trader"
                       required
                       maxLength={40}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-blue-500/50 focus:bg-blue-500/5 transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-500/50 focus:bg-indigo-500/5 transition-all"
                     />
                   </div>
                 </div>
@@ -131,7 +173,7 @@ export default function OnboardingModal() {
                       value={pfpUrl}
                       onChange={(e) => setPfpUrl(e.target.value)}
                       placeholder="https://..."
-                      className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-blue-500/50 focus:bg-blue-500/5 transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-500/50 focus:bg-indigo-500/5 transition-all"
                     />
                   </div>
                 </div>
@@ -146,7 +188,7 @@ export default function OnboardingModal() {
                   disabled={isSubmitting || !name.trim()}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full mt-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-xl py-3 flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)]"
+                  className="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-xl py-3 flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(99,102,241,0.4)]"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
