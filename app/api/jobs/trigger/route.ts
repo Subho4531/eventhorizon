@@ -28,16 +28,16 @@ export async function POST(req: NextRequest) {
     const results: Record<string, unknown> = {}
 
     if (job === 'all' || job === 'probability') {
-      results.probability = await (probabilityUpdater as { updateAll: () => Promise<unknown> }).updateAll()
+      results.probability = await (probabilityUpdater as { runOnce: () => Promise<void> }).runOnce()
     }
     if (job === 'all' || job === 'liquidity') {
-      results.liquidity = await (liquidityAdjuster as { adjustAll: () => Promise<unknown> }).adjustAll()
+      results.liquidity = await (liquidityAdjuster as { runOnce: () => Promise<void> }).runOnce()
     }
     if (job === 'all' || job === 'quality') {
-      results.quality = await (qualityUpdater as { updateAll: () => Promise<unknown> }).updateAll()
+      results.quality = await (qualityUpdater as { runOnce: () => Promise<void> }).runOnce()
     }
     if (job === 'all' || job === 'monitor') {
-      results.monitor = await (manipulationMonitor as { monitorAll: () => Promise<unknown> }).monitorAll()
+      results.monitor = await (manipulationMonitor as { runOnce: () => Promise<void> }).runOnce()
     }
 
     return NextResponse.json({

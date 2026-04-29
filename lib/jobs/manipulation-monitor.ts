@@ -195,6 +195,13 @@ class ManipulationMonitor {
   }
 
   /**
+   * Execute one monitoring cycle manually
+   */
+  public async runOnce(): Promise<void> {
+    await this.run()
+  }
+
+  /**
    * Reset monitor state (useful for testing)
    */
   reset(): void {
