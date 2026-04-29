@@ -88,33 +88,43 @@ export async function POST(req: NextRequest) {
       closeDate.getTime() + 60 * 60 * 1000 // +1h after close
     );
 
-    const market = await prisma.market.create({
-      data: {
-        title,
-        description: description ?? "",
-        category: category ?? "General",
-        imageUrl: imageUrl ?? "",
-        imageSource: imageSource ?? null,
-        imageSearchQuery: imageSearchQuery ?? null,
-        closeDate,
-        scheduledResolveAt,
-        agentCreated: true,
-        creationTxHash: chainResult.hash || null,
-        contractMarketId: chainResult.contractMarketId ?? null,
-        oracleAddress: oraclePublicKey,
-        status: "OPEN",
-        creator: {
-          connectOrCreate: {
-            where: { publicKey: oraclePublicKey },
-            create: {
-              publicKey: oraclePublicKey,
-              name: "GravityFlow Oracle",
-              balance: 0,
+    let market;
+    try {
+      market = await prisma.market.create({
+        data: {
+          title,
+          description: description ?? "",
+          category: category ?? "General",
+          imageUrl: imageUrl ?? "",
+          imageSource: imageSource ?? null,
+          imageSearchQuery: imageSearchQuery ?? null,
+          closeDate,
+          scheduledResolveAt,
+          agentCreated: true,
+          creationTxHash: chainResult.hash || null,
+          contractMarketId: chainResult.contractMarketId ?? null,
+          oracleAddress: oraclePublicKey,
+          status: "OPEN",
+          creator: {
+            connectOrCreate: {
+              where: { publicKey: oraclePublicKey },
+              create: {
+                publicKey: oraclePublicKey,
+                name: "GravityFlow Oracle",
+                balance: 0,
+              },
             },
           },
         },
-      },
-    });
+      });
+    } catch (prismaErr) {
+      const prismaMsg = prismaErr instanceof Error ? prismaErr.message : String(prismaErr);
+      console.error("[/api/agent/create-market] DB insert failed:", prismaMsg);
+      return NextResponse.json(
+        { error: `DB insert failed: ${prismaMsg}` },
+        { status: 500 }
+      );
+    }
 
     // ── Schedule lifecycle jobs ───────────────────────────────────────────────
     try {
