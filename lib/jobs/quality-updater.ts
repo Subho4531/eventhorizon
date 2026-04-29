@@ -69,6 +69,13 @@ class QualityUpdater {
   }
 
   /**
+   * Execute one update cycle manually
+   */
+  public async runOnce(): Promise<void> {
+    await this.run()
+  }
+
+  /**
    * Execute one update cycle
    */
   private async run(): Promise<void> {

@@ -161,7 +161,7 @@ async function processMarketResolve(
       console.warn(
         `[Worker/Resolution] Python agent returned ${resp.status}, falling back to API`
       );
-    } catch (err) {
+    } catch {
       console.warn(
         `[Worker/Resolution] Python agent unavailable, falling back to API`
       );
@@ -180,7 +180,7 @@ async function processMarketResolve(
     );
 
     if (checkResp.ok) {
-      const marketData = await checkResp.json() as any;
+      const marketData = await checkResp.json() as { market?: { status?: string } };
       if (marketData.market?.status === "RESOLVED") {
         console.log(
           `[Worker/Resolution] Market ${marketId} already resolved, skipping`
@@ -236,7 +236,7 @@ async function processMarketCreate(
         console.log(`[Worker/Creation] ✅ Python agent created market`);
         return;
       }
-    } catch (err) {
+    } catch {
       console.warn(`[Worker/Creation] Python agent unavailable`);
     }
   }

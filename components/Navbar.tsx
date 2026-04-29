@@ -7,7 +7,7 @@ import ConnectWalletButton from "./ui/connectWalletButton";
 import { useWallet } from "./WalletProvider";
 import { Activity, BarChart2, Trophy, Search, X, Briefcase } from "lucide-react";
 import { useState, useEffect } from "react";
-import Image from "next/image";
+
 
 const NAV_ITEMS = [
   { href: "/", label: "Terminal", Icon: Activity },

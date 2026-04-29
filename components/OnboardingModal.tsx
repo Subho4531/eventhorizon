@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, ImageIcon, ArrowRight, Loader2, Sparkles, Plus } from "lucide-react";
 import { useWallet, getDefaultPfp } from "./WalletProvider";
-import Image from "next/image";
+
 
 export default function OnboardingModal() {
   const { publicKey, needsOnboarding, refreshUser } = useWallet();
@@ -117,6 +117,7 @@ export default function OnboardingModal() {
                     disabled={isUploading} 
                   />
                   {pfpUrl || (publicKey ? getDefaultPfp(publicKey) : "") ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img 
                       src={pfpUrl || (publicKey ? getDefaultPfp(publicKey) : "")} 
                       alt="Preview" 

@@ -9,7 +9,7 @@
  *   - "market-resolution" — delayed: fires at closeDate + RESOLVE_BUFFER
  */
 
-import { Queue, QueueOptions } from "bullmq";
+import { Queue } from "bullmq";
 
 // ── Redis connection ──────────────────────────────────────────────────────────
 

@@ -666,6 +666,7 @@ export async function getMarket(marketId: number): Promise<MarketState | null> {
  * Return true if a nullifier has been spent.
  */
 export async function isNullifierSpent(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _nullifier: string
 ): Promise<boolean> {
   if (!CONTRACT_ID) return false;

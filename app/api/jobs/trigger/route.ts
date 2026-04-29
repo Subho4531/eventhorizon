@@ -25,19 +25,19 @@ export async function POST(req: NextRequest) {
   const job = searchParams.get('job') || 'all'
 
   try {
-    const results: Record<string, any> = {}
+    const results: Record<string, unknown> = {}
 
     if (job === 'all' || job === 'probability') {
-      results.probability = await (probabilityUpdater as any).updateAll()
+      results.probability = await (probabilityUpdater as { updateAll: () => Promise<unknown> }).updateAll()
     }
     if (job === 'all' || job === 'liquidity') {
-      results.liquidity = await (liquidityAdjuster as any).adjustAll()
+      results.liquidity = await (liquidityAdjuster as { adjustAll: () => Promise<unknown> }).adjustAll()
     }
     if (job === 'all' || job === 'quality') {
-      results.quality = await (qualityUpdater as any).updateAll()
+      results.quality = await (qualityUpdater as { updateAll: () => Promise<unknown> }).updateAll()
     }
     if (job === 'all' || job === 'monitor') {
-      results.monitor = await (manipulationMonitor as any).monitorAll()
+      results.monitor = await (manipulationMonitor as { monitorAll: () => Promise<unknown> }).monitorAll()
     }
 
     return NextResponse.json({
@@ -45,10 +45,10 @@ export async function POST(req: NextRequest) {
       message: `Triggered job: ${job}`,
       results
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[JobTrigger] Error triggering ${job}:`, error)
     return NextResponse.json(
-      { error: error.message || 'Failed to trigger job' },
+      { error: error instanceof Error ? error.message : 'Failed to trigger job' },
       { status: 500 }
     )
   }

@@ -460,7 +460,7 @@ async function simulateBetPlacement(
     result.modalClosed = true
     result.hasActionableError = true // Success is actionable
 
-  } catch (error) {
+  } catch {
     result.errorMessage = 'An unexpected error occurred. Please try again.'
     result.modalStuckInLoading = false
     result.retryAvailable = true

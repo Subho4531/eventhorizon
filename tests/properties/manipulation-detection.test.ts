@@ -14,7 +14,6 @@ import {
   calculateRiskScore,
   detectWashTrading,
   detectSybilAccounts,
-  getMarketRisk,
 } from '@/lib/intelligence/manipulation-detector'
 import { prisma } from '@/lib/db'
 
@@ -348,7 +347,7 @@ describe('Manipulation Detection - Property Tests', () => {
           vi.mocked(prisma.walletRelationship.findMany).mockResolvedValue(relationships as any)
 
           // Mock bets from these accounts on the same market
-          const bets = accounts.map((account, i) => ({
+          const bets = accounts.map((account) => ({
             marketId,
             userPublicKey: account,
           }))

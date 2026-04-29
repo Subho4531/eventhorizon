@@ -525,7 +525,8 @@ interface MarketCreationResult {
 }
 
 async function simulateMarketCreation(
-  params: MarketCreationParams
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _params: MarketCreationParams
 ): Promise<MarketCreationResult> {
   // Simulate existing market creation flow
   // This captures the CURRENT behavior that must be preserved
@@ -558,7 +559,8 @@ interface MarketResolutionResult {
 }
 
 async function simulateMarketResolution(
-  params: MarketResolutionParams
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _params: MarketResolutionParams
 ): Promise<MarketResolutionResult> {
   // Simulate existing market resolution flow
   return {

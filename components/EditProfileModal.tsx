@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { X, User, ImageIcon, FileText, Link as LinkIcon, Plus, Trash2, Loader2, Check } from "lucide-react";
 import { useWallet, UserLink, getDefaultPfp } from "./WalletProvider";
@@ -136,6 +136,7 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
                       />
                       <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-blue-600/30 to-violet-600/30 border border-white/10 flex items-center justify-center">
                         {pfpUrl || (publicKey ? getDefaultPfp(publicKey) : "") ? (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img 
                             src={pfpUrl || (publicKey ? getDefaultPfp(publicKey) : "")} 
                             alt="" 

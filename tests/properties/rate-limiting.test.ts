@@ -1,5 +1,5 @@
 import fc from 'fast-check'
-import { describe, test, expect, beforeEach } from 'vitest'
+import { describe, test, expect } from 'vitest'
 
 /**
  * Property-Based Tests for Rate Limiting
@@ -205,7 +205,7 @@ describe('Property 37: Rate Limiting', () => {
           }
 
           // Each user should have independent rate limit
-          for (const [userId, results] of userResults) {
+          for (const results of userResults.values()) {
             const successCount = results.filter(r => r).length
             
             if (requestsPerUser <= 100) {
@@ -378,8 +378,8 @@ describe('Property 37: Rate Limiting', () => {
     fc.assert(
       fc.property(
         fc.string({ minLength: 1 }),
-        (userId) => {
-          const api = new IntelligenceAPI()
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        (_userId) => {
           const limiter = new RateLimiter()
           const config = limiter.getConfig()
 

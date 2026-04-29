@@ -1,10 +1,8 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   motion,
-  useMotionValue,
-  useMotionTemplate,
   AnimatePresence
 } from "framer-motion";
 import { 
@@ -12,12 +10,10 @@ import {
   Activity, 
   Database,
   Layers,
-  Sparkles,
   ArrowRight,
   ChevronLeft,
   ChevronRight,
-  BarChart2,
-  Image as ImageIcon
+  BarChart2
 } from "lucide-react";
 import Image from "next/image";
 import {
@@ -26,11 +22,8 @@ import {
   ResponsiveContainer
 } from "recharts";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 
 import { GlowCard } from "@/components/ui/glow-card";
 

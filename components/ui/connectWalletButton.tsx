@@ -1,6 +1,6 @@
 "use client";
 import { useWallet } from "../WalletProvider";
-import { Loader2, Wallet, LogOut, Zap } from "lucide-react";
+import { Loader2, LogOut, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 

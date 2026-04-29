@@ -101,7 +101,8 @@ describe('Property 2: Probability Update Frequency', () => {
           hoursUntilClose: fc.double({ min: 0.1, max: 23.9, noNaN: true }), // Within 24h
           updateCount: fc.integer({ min: 3, max: 10 })
         }),
-        async ({ marketId, hoursUntilClose, updateCount }) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        async ({ marketId, _hoursUntilClose, updateCount }) => {
           // Create fresh instance for each test
           const probabilityModel = new MockProbabilityModel()
           const now = new Date()
@@ -139,7 +140,8 @@ describe('Property 2: Probability Update Frequency', () => {
           hoursUntilClose: fc.double({ min: 24.1, max: 168, noNaN: true }), // More than 24h
           updateCount: fc.integer({ min: 3, max: 10 })
         }),
-        async ({ marketId, hoursUntilClose, updateCount }) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        async ({ marketId, _hoursUntilClose, updateCount }) => {
           // Create fresh instance for each test
           const probabilityModel = new MockProbabilityModel()
           const now = new Date()

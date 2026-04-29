@@ -73,6 +73,13 @@ class LiquidityAdjuster {
   }
 
   /**
+   * Execute one adjustment cycle manually
+   */
+  public async runOnce(): Promise<void> {
+    await this.run()
+  }
+
+  /**
    * Execute one adjustment cycle
    */
   private async run(): Promise<void> {
