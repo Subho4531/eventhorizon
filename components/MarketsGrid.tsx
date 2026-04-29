@@ -290,12 +290,20 @@ export default function MarketsGrid() {
 
                   {/* Image Section */}
                   {market.imageUrl && (
-                    <div className="relative w-full h-32 mb-2 border border-white/5 overflow-hidden">
+                    <div className="relative w-full h-32 mb-2 border border-white/5 overflow-hidden bg-[#1A1A1A]">
+                      {/* Fallback pattern if image is missing/broken */}
+                      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent" />
+                      
                       <Image 
                         src={market.imageUrl} 
                         alt={market.title}
                         fill
+                        unoptimized={true}
                         className="object-cover group-hover:scale-105 transition-all duration-700 opacity-80 group-hover:opacity-100"
+                        onError={(e) => {
+                          // Hide broken image icon, show fallback
+                          (e.target as any).style.display = 'none';
+                        }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-transparent to-transparent" />
                       
