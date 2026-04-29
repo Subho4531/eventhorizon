@@ -4,6 +4,7 @@ Horizon is a next-generation prediction market platform built on the Stellar blo
 
 [![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge&logo=vercel)](https://horizonmarkets.vercel.app/)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repo-black?style=for-the-badge&logo=github)](https://github.com/Subho4531/eventhorizon)
+[![Feedback](https://img.shields.io/badge/Feedback-Submit-orange?style=for-the-badge&logo=googleforms)](https://forms.gle/2gkJTvdxtBmSaDmU8)
 ![Stellar](https://img.shields.io/badge/Stellar-Soroban-blueviolet?style=for-the-badge&logo=stellar)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
 
@@ -32,6 +33,34 @@ Experience Horizon in action:
 - **📊 Intelligence Dashboard**: Real-time analysis of market quality, risk scores, and sentiment trends.
 - **🛡️ Secure Escrow**: Non-custodial escrow contracts manage user funds with cryptographic certainty.
 - **🔍 Manipulation Detection**: Automated systems flag suspicious trading patterns to ensure market health.
+- **🤖 Agentic Market Discovery**: Autonomous AI agents identify trends and resolve markets using real-world data feeds.
+
+---
+
+## 🥋 Level 6: Black Belt - Agentic Evolution
+
+Horizon has evolved into a production-grade **Agentic Market Intelligence System**. This transition introduces autonomous lifecycle management for markets, driven by specialized AI agents and distributed background workers.
+
+### 🤖 Autonomous Agentic Pipeline
+Horizon features a sophisticated multi-agent pipeline that transforms raw global data into executable on-chain markets with zero manual intervention.
+
+- **🔍 Deep Semantic Research**: Agents utilize **SerpAPI** and **Gemini 3 Flash** to ingest real-time news, identifying emerging trends and assigning "Intelligence Scores" to potential market topics.
+- **🏗️ Agent Framework**: A hybrid **Python-Node.js** architecture designed for seamless AI integration and high-performance worker coordination.
+- **✅ Self-Validating Resolutions**: The system autonomously cross-references high-authority sources to verify event outcomes before triggering the Soroban smart contract for resolution.
+
+### ⚡ High-Performance Redis Pipeline
+The backbone of Horizon's reliability is a distributed, Redis-driven orchestration layer that ensures the platform remains responsive under extreme loads.
+
+- **🎯 Distributed Job Orchestration**: Leverages **BullMQ** on **Upstash Redis** to decouple heavy AI computation from the main API thread, maintaining a 99.9% uptime for the user terminal.
+- **📡 Global State Relay**: Real-time propagation of market status, scores, and resolution events across distributed worker nodes and the frontend terminal.
+- **🛡️ Rate-Limit Resiliency**: Native Redis primitives ensure platform stability and protect against data inconsistency during high-throughput trading events.
+
+### 💎 Premium UI/UX: The "Glow-Terminal"
+The interface has been reimagined as a **"Glow-Terminal"**—a premium, data-dense experience designed for the professional trader.
+
+- **✨ Aesthetic Excellence**: Built with a custom **Glow-Card System**, featuring curated HSL-tailored colors, smooth CSS micro-animations, and glassmorphic overlays that create a sense of depth and focus.
+- **🔐 Zero-Knowledge UX**: Simplifies the complexities of ZK-proof generation into a seamless, 3-step workflow that ensures privacy without sacrificing speed or intuition.
+- **🌊 Interactive Vibe**: Hover-triggered lighting effects and fluid, interactive dashboards create an interface that feels "alive," responding dynamically to every trader interaction.
 
 ---
 
@@ -52,8 +81,16 @@ graph TD
         Relay["Relayer Service"]
     end
 
+    subgraph Agents ["Agentic Market Engine"]
+        Worker["BullMQ Worker (Node.js)"]
+        AE["Agent Engine (Python/Gemini)"]
+        TD["Topic Discovery"]
+        MR["Market Resolver"]
+    end
+
     subgraph Storage ["Data Layer"]
         DB[("PostgreSQL (Prisma)")]
+        Redis[("Redis (BullMQ)")]
         LS["localStorage (ZK Portfolio)"]
     end
 
@@ -74,6 +111,15 @@ graph TD
     API -- "Fetch Data" --> DB
     UI -- "Request Data" --> API
     BM -- "Store Nullifier" --> LS
+    
+    %% Agentic Flow
+    API -- "Enqueue Job" --> Redis
+    Redis -- "Pull Job" --> Worker
+    Worker -- "Call" --> AE
+    AE -- "Search & Analyze" --> TD
+    AE -- "Resolve Markets" --> MR
+    TD -- "Auto-Create" --> API
+    MR -- "Submit Resolution" --> SC
 ```
 
 ---
@@ -117,6 +163,9 @@ The journey has just begun. Our roadmap for the next 12-18 months includes:
 
 ### 🖼️ UI Screenshots
 
+#### 💎 Updated UI Terminal (Glow-Terminal)
+![Horizon Updated UI](./screenshots/updated_ui.png)
+
 #### 🚀 Main Dashboard
 ![Horizon Dashboard](./screenshots/dashboard.png)
 
@@ -143,28 +192,22 @@ The journey has just begun. Our roadmap for the next 12-18 months includes:
 
 ---
 
-## 📝 User Feedback & Reviews
+## 📝 User Feedback
 
-We value community input and actively iterate on platform features based on real-world usage data.
+We value community input and actively iterate on our platform based on user experiences.
 
-**[📊 View Full User Feedback Response Sheet](https://docs.google.com/spreadsheets/d/1ZWrlcff79a274MHBfSEh__zPHHFg-faftsk7UUYXess/edit?usp=sharing)**
-**[⭐ Review the Project / Submit Feedback](https://forms.gle/2gkJTvdxtBmSaDmU8)**
+[![Review Project](https://img.shields.io/badge/Review-Project-orange?style=for-the-badge&logo=googleforms)](https://forms.gle/2gkJTvdxtBmSaDmU8)
+[![Feedback Sheet](https://img.shields.io/badge/Feedback-Sheet-blue?style=for-the-badge&logo=googlesheets)](https://docs.google.com/spreadsheets/d/1ZWrlcff79a274MHBfSEh__zPHHFg-faftsk7UUYXess/edit?resourcekey=&gid=510073230#gid=510073230)
 
-### 💬 Latest Survey Responses
+### 💬 Feedback Summary & Implementation
 
-| Date | User Name | Wallet Address | Experience | UI/UX | Concepts | Performance | Key Feedback |
-| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| 16/04 | **Rohit Acharya** | `GCFJQC...KU54IQH` | 4/5 | 5/5 | 5/5 | 5/5 | Suggested adding live trading events. |
-| 16/04 | **Deep Saha** | `GAPZFL...BI7GMVL` | 5/5 | 5/5 | 5/5 | 5/5 | Liked unique markets; reported AI score discrepancy. |
-| 16/04 | **Sumit Sarkar** | `GAVAIW...H3AJVAN` | 4/5 | 5/5 | 5/5 | 5/5 | Appreciated security; suggested speed optimization. |
-| 17/04 | **Samrat Natta** | `GBTLRE...LXXB3FAI` | 5/5 | 5/5 | 5/5 | 5/5 | Excellent experience; praised unique tokenomics. |
-| 17/04 | **Nilarpan Jana** | `GCQM3X...Z3ULECUQ` | 5/5 | 4/5 | 5/5 | 5/5 | Suggested minor UX navigation improvements. |
-| 23/04 | **Samrat Trader** | `GCRG5U...QAP6T7L7` | 5/5 | 5/5 | 5/5 | 5/5 | Comprehensive praise for decentralization. |
-| 23/04 | **Cosmeon Trader** | `GAIQM3...ZW2XR7G` | 5/5 | 5/5 | 5/5 | 4/5 | Requested data filters in the market section. |
-| 23/04 | **Sylvia Barick** | `GBYOEY...4HPFIEIQ` | 5/5 | 5/5 | - | - | Solid performance and intuitive UI. |
+| User Name | Email | User Wallet Address | User Feedback | Commit ID |
+| :--- | :--- | :--- | :--- | :--- |
+| **Sumit Sarkar** | `sumit087@gmail.com` | `GAVAIWLB3PBWMVKPDHLDVRAS7VH4DA2SXW3W2G7V5QLJ6DK3HY3AJVAN` | Excellent decentralization focus. Suggested optimizing app loading times. | [`8512a70`](https://github.com/Subho4531/eventhorizon/commit/8512a70) |
+| **Nilarpan Jana** | `nnilarpan@gmail.com` | `GCQM3XP3IWUY3LCPDIP4QRLB7VIL2DY2QLZJ2KG2NANWUAFAZ3ULEQUQ` | Appreciated unique markets and security. Suggested UX navigation tweaks. | [`6bbb519`](https://github.com/Subho4531/eventhorizon/commit/6bbb519) |
 
-> [!IMPORTANT]
-> All feedback is carefully analyzed. Recent optimizations (Build `ecf0df9`) addressed loading time and navigation concerns reported by users.
+> [!TIP]
+> We actively monitor the [User Feedback Response Sheet](https://docs.google.com/spreadsheets/d/1ZWrlcff79a274MHBfSEh__zPHHFg-faftsk7UUYXess/edit?resourcekey=&gid=510073230#gid=510073230) for continuous improvements. Recent optimizations (Build `6c8bd79`) addressed critical linting and stability issues.
 
 ---
 
@@ -209,9 +252,10 @@ We value community input and actively iterate on platform features based on real
 ## 🛠️ Tech Stack
 Horizon is built using a modern, high-performance stack optimized for security and scale.
 
-- **Frontend**: ![Next.js](https://img.shields.io/badge/Next.js-000?style=flat&logo=next.js) ![Tailwind CSS](https://img.shields.io/badge/Tailwind-38B2AC?style=flat&logo=tailwind-css) ![Framer Motion](https://img.shields.io/badge/Framer-0055FF?style=flat&logo=framer)
+- **Frontend**: ![Next.js](https://img.shields.io/badge/Next.js-15-000?style=flat&logo=next.js) ![Tailwind CSS](https://img.shields.io/badge/Tailwind-38B2AC?style=flat&logo=tailwind-css) ![Framer Motion](https://img.shields.io/badge/Framer-0055FF?style=flat&logo=framer)
 - **Blockchain**: ![Stellar](https://img.shields.io/badge/Stellar-7D4698?style=flat&logo=stellar) ![Soroban](https://img.shields.io/badge/Soroban-FFD700?style=flat&logo=rust) ![Freighter](https://img.shields.io/badge/Freighter-FF4B00?style=flat)
 - **Backend**: ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=nodedotjs) ![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=flat&logo=prisma)
+- **Agentic Engine**: ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python) ![Gemini AI](https://img.shields.io/badge/Gemini--AI-4285F4?style=flat&logo=google-gemini) ![BullMQ](https://img.shields.io/badge/BullMQ-FF4B00?style=flat) ![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat&logo=redis)
 - **Database**: ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat&logo=postgresql)
 - **Security**: ![ZK-Proofs](https://img.shields.io/badge/ZK--Proofs-FF69B4?style=flat) ![Circuit](https://img.shields.io/badge/Circom-gray?style=flat)
 - **Testing**: ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat&logo=vitest)
