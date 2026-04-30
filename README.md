@@ -237,34 +237,22 @@ We value community input and actively iterate on our platform based on user expe
 | **Mrityunjay Mondal** | `mrityunjay.mondal@gmail.com` | [`GACGOQPB3G...`](https://stellar.expert/explorer/testnet/account/GACGOQPB3GXBQOE4FSOOKQVOK7AZXD75IQTWUSPF6C7TYXATN2ZQ6HSJ) |
 | **Shinzo Das** | `shinzodas99@gmail.com` | [`GA7PQOUEGW...`](https://stellar.expert/explorer/testnet/account/GA7PQOUEGWQTVKYNO4GXKBEE7H6LQE7GYTYSGQ4AIIRFBWPXJIBEUJJF) |
 
-### 💬 Table 2: User Feed Implementation
+### 💬 Table 2: User Feedback Implementation
 
-| User Name | User Email | User Wallet Address | Commit ID |
-| :--- | :--- | :--- | :--- |
-| **Rohit Acharya** | `rohitacharya25@gmail.com` | [`GCFJQCTGFO...`](https://stellar.expert/explorer/testnet/account/GCFJQCTGFO5QXE5F6TYFRARFDX3O2GXSJ56N37ZBEX4V5LQYQKU54IQH) | [`a3f91d2`](https://github.com/Subho4531/eventhorizon/commit/a3f91d2) (Add Live Trading Events) |
-| **Deep Saha** | `sdeep027@gmail.com` | [`GAPZFL43CL...`](https://stellar.expert/explorer/testnet/account/GAPZFL43CLQZUZTVH4XGC7XPY7WGWD7RI2D4E2IQGFDFVYZN4BI7GMVL) | [`3f82ac4`](https://github.com/Subho4531/eventhorizon/commit/3f82ac4) (Fix AI Probability score) |
-| **Sumit Sarkar** | `sumit087@gmail.com` | [`GAVAIWLB3P...`](https://stellar.expert/explorer/testnet/account/GAVAIWLB3PBWMVKPDHLDVRAS7VH4DA2SXW3W2G7V5QLJ6DK3HY3AJVAN) | [`6bbb519`](https://github.com/Subho4531/eventhorizon/commit/6bbb519) (Reduce app loading time) |
-| **Nilarpan Jana** | `nnilarpan@gmail.com` | [`GCQM3XP3IW...`](https://stellar.expert/explorer/testnet/account/GCQM3XP3IWUY3LCPDIP4QRLB7VIL2DY2QLZJ2KG2NANWUAFAZ3ULECUQ) | [`e2da6b0`](https://github.com/Subho4531/eventhorizon/commit/e2da6b0) (UX improvements) |
-| **Cosmeon Trader** | `nilarpanj@gmail.com` | [`GAIQM3ISTU...`](https://stellar.expert/explorer/testnet/account/GAIQM3ISTUYHANMIJ2ZYUCLGALE6UYWYIORVS7XA43YJ6WAHWZW2XR7G) | [`b273ce1`](https://github.com/Subho4531/eventhorizon/commit/b273ce1) (Added data filters to markets) |
-| **Nitesh Jana** | `niteshjana11@gmail.com` | [`GCKL2H6GSQ...`](https://stellar.expert/explorer/testnet/account/GCKL2H6GSQ5XB5OZE2IAVFKIYZ3XCEUEXPWRME2EO4UYPUFDAA2INWJW) | [`9e6fa42`](https://github.com/Subho4531/eventhorizon/commit/9e6fa42) (Added more market options) |
-| **Sumit Dey** | `sumitdey456@gmail.com` | [`GARFTDEIFI...`](https://stellar.expert/explorer/testnet/account/GARFTDEIFIAD34FRNTLESZEXSCROQVPT76WZVA5WKPQ5UREDF3BTCYMK) | [`cf40ba9`](https://github.com/Subho4531/eventhorizon/commit/cf40ba9) (Created portfolio tracker) |
-| **Arnab Jana** | `arnabjan99@gmail.com` | [`GCQVBE7IDE...`](https://stellar.expert/explorer/testnet/account/GCQVBE7IDEBEL7RCLYFYKKUK3YD4VKVYYXXZFHPSJ63KWDSPCIADJKEL) | [`d891b2c`](https://github.com/Subho4531/eventhorizon/commit/d891b2c) (Added more trading pairs) |
-| **Avik Banerjee** | `avikbanerjee08@gmail.com` | [`GBVPJ2TF6K...`](https://stellar.expert/explorer/testnet/account/GBVPJ2TF6KS6OESEBU3HGXNMFHNWWLI4FYAYU63EH6HKQRBMP45DWTJH) | [`5c18a9d`](https://github.com/Subho4531/eventhorizon/commit/5c18a9d) (Push notifications for markets) |
-| **Debashis Bhattacharya**| `debashis.bhat07@gmail.com` | [`GAEYXWJUKW...`](https://stellar.expert/explorer/testnet/account/GAEYXWJUKWF6KQPCN6WWJMIO5KARFGZ54UEM572JONF2W5TUAUNCEPXO) | [`8512a70`](https://github.com/Subho4531/eventhorizon/commit/8512a70) (Streamlined UI/minimalized) |
-| **Subhrajit Mandal** | `subhrajitmandal2k@gmail.com`| [`GAKD4A6VJL...`](https://stellar.expert/explorer/testnet/account/GAKD4A6VJLWXN2WOD4ICDECH7DUTPTKMXXR522P2S6WS4LTA5WQKPNO6) | [`19b0d24`](https://github.com/Subho4531/eventhorizon/commit/19b0d24) (Fixed minor UI bugs) |
-| **Pranab Chatterjee** | `pranabchat01@gmail.com` | [`GBG25BTFV5...`](https://stellar.expert/explorer/testnet/account/GBG25BTFV5NHSBCMTM7U2AMN27SBDRGR5ZXRJ5EDIL4MCG62L2ST5Z7P) | [`4f6c91e`](https://github.com/Subho4531/eventhorizon/commit/4f6c91e) (Added onboarding tooltips) |
-| **Babai Chakraborty** | `babai.chakra@gmail.com` | [`GC5VDVJDUY...`](https://stellar.expert/explorer/testnet/account/GC5VDVJDUYWPANLIOTNDSKR34JYISLULHLKIYRG7ER6TCRMNCWYQWEBA) | [`b1a73d5`](https://github.com/Subho4531/eventhorizon/commit/b1a73d5) (Mobile app responsiveness) |
-| **Alok Nath Sarkar** | `aloknathsarkar@gmail.com` | [`GBLU63FD4S...`](https://stellar.expert/explorer/testnet/account/GBLU63FD4SKHEFU2TJVWOTB7L7ZZMCE2VERTYLRGGLIYTLBIRTX4ERFC) | [`f2e87c1`](https://github.com/Subho4531/eventhorizon/commit/f2e87c1) (Improved mobile loading speed) |
-| **Guddu Sharma** | `guddu.sharma007@gmail.com`| [`GCRJPX6Z6E...`](https://stellar.expert/explorer/testnet/account/GCRJPX6Z6ELK5TH3RQSB6LEFSTRV25OVSIWHTXEW5IKTW5J2PXZE2JPM) | [`c8d19a2`](https://github.com/Subho4531/eventhorizon/commit/c8d19a2) (Wallet connect stability fix) |
-| **Aniket Mukherjee** | `aniketmukh2024@gmail.com` | [`GBAEHJGSF4...`](https://stellar.expert/explorer/testnet/account/GBAEHJGSF4DVGBMXOTWWHNAMRX2DXET66D4ZB5GGTO2MFB2NRC3BMKSS) | [`9a5e82b`](https://github.com/Subho4531/eventhorizon/commit/9a5e82b) (Added community chat features) |
-| **Shinzo Das** | `shinzodas99@gmail.com` | [`GA7PQOUEGW...`](https://stellar.expert/explorer/testnet/account/GA7PQOUEGWQTVKYNO4GXKBEE7H6LQE7GYTYSGQ4AIIRFBWPXJIBEUJJF) | [`e7f2b10`](https://github.com/Subho4531/eventhorizon/commit/e7f2b10) (Added dark mode toggle) |
+| User Name | User Email | User Wallet Address | User Feedback | Commit ID |
+| :--- | :--- | :--- | :--- | :--- |
+| **Rohit Acharya** | `rohitacharya25@gmail.com` | [`GCFJQCTGFO...`](https://stellar.expert/explorer/testnet/account/GCFJQCTGFO5QXE5F6TYFRARFDX3O2GXSJ56N37ZBEX4V5LQYQKU54IQH) | ADD Live Trading Events that are most recent | [`931e9a3`](https://github.com/Subho4531/eventhorizon/commit/931e9a3) (Agentic AI implementation for live events) |
+| **Deep Saha** | `sdeep027@gmail.com` | [`GAPZFL43CL...`](https://stellar.expert/explorer/testnet/account/GAPZFL43CLQZUZTVH4XGC7XPY7WGWD7RI2D4E2IQGFDFVYZN4BI7GMVL) | AI Probability score shows wrong | [`56c9ffc`](https://github.com/Subho4531/eventhorizon/commit/56c9ffc) (Fixed agent pipeline and probability logic) |
+| **Nilarpan Jana** | `nnilarpan@gmail.com` | [`GCQM3XP3IW...`](https://stellar.expert/explorer/testnet/account/GCQM3XP3IWUY3LCPDIP4QRLB7VIL2DY2QLZJ2KG2NANWUAFAZ3ULECUQ) | UX can be improve | [`f42bf0c`](https://github.com/Subho4531/eventhorizon/commit/f42bf0c) (Improved dashboard visuals & UX) |
+| **Sumit Sarkar** | `sumit087@gmail.com` | [`GAVAIWLB3P...`](https://stellar.expert/explorer/testnet/account/GAVAIWLB3PBWMVKPDHLDVRAS7VH4DA2SXW3W2G7V5QLJ6DK3HY3AJVAN) | Reduce the loading time of the app | [`7e0ec4b`](https://github.com/Subho4531/eventhorizon/commit/7e0ec4b) (Fixed connection exhaustion & optimized loading) |
+| **Subhrajit Mandal** | `subhrajitmandal2k@gmail.com`| [`GAKD4A6VJL...`](https://stellar.expert/explorer/testnet/account/GAKD4A6VJLWXN2WOD4ICDECH7DUTPTKMXXR522P2S6WS4LTA5WQKPNO6) | The UI is clean, just fix minor bugs | [`bc89083`](https://github.com/Subho4531/eventhorizon/commit/bc89083) (Updated dashboard and fixed minor UI errors) |
 
 ### 🔮 Next Phase Improvements (Based on Feedback)
 Based on the collected user feedback in our Level 6 cohort, we plan to evolve the project with the following updates:
-1. **Live Trading Events**: Users requested more real-time notifications and live events for recent markets. We will introduce WebSocket-driven market subscriptions in our next iteration (Commit tracking: [`a3f91d2`](https://github.com/Subho4531/eventhorizon/commit/a3f91d2)).
-2. **Further Performance Tweaks**: We will introduce a more optimized WASM client to address mobile loading speed concerns raised by users (Commit tracking: [`cf40ba9`](https://github.com/Subho4531/eventhorizon/commit/cf40ba9)).
-3. **Enhanced Advanced AI Modeling**: Updating the Python agents to provide better AI probability accuracy out-of-the-box (Commit tracking: [`3f82ac4`](https://github.com/Subho4531/eventhorizon/commit/3f82ac4)).
-4. **Community Features**: Adding a portfolio tracker and chat/forum capabilities to enhance the trader experience (Commit tracking: [`cf40ba9`](https://github.com/Subho4531/eventhorizon/commit/cf40ba9), [`9a5e82b`](https://github.com/Subho4531/eventhorizon/commit/9a5e82b)).
+1. **Live Trading Events**: Users requested more real-time notifications and live events for recent markets. We will introduce WebSocket-driven market subscriptions in our next iteration (Commit tracking: [`931e9a3`](https://github.com/Subho4531/eventhorizon/commit/931e9a3)).
+2. **Further Performance Tweaks**: We will introduce a more optimized WASM client to address mobile loading speed concerns raised by users (Commit tracking: [`7e0ec4b`](https://github.com/Subho4531/eventhorizon/commit/7e0ec4b)).
+3. **Enhanced Advanced AI Modeling**: Updating the Python agents to provide better AI probability accuracy out-of-the-box (Commit tracking: [`56c9ffc`](https://github.com/Subho4531/eventhorizon/commit/56c9ffc)).
+4. **Community Features**: Adding a portfolio tracker and chat/forum capabilities to enhance the trader experience (Commit tracking: [`f42bf0c`](https://github.com/Subho4531/eventhorizon/commit/f42bf0c), [`bc89083`](https://github.com/Subho4531/eventhorizon/commit/bc89083)).
 
 ---
 
