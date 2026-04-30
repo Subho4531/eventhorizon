@@ -318,7 +318,7 @@ export default function MarketsGrid() {
           </span>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center mx-auto w-full">
           {filteredMarkets.map((market, i) => {
             const odds = calculateOdds(market.yesPool, market.noPool);
             const intel = intelligence[market.id] || {};
@@ -330,13 +330,14 @@ export default function MarketsGrid() {
                 key={market.id}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -5, scale: 1.02 }}
                 transition={{ delay: i * 0.04, duration: 0.4, ease: "easeOut" }}
-                className="h-full"
+                className="h-full w-full max-w-[320px]"
               >
-                <GlowCard className="h-full">
+                <GlowCard className="h-full group hover:shadow-[0_0_30px_rgba(255,140,0,0.15)] transition-shadow duration-500">
                 <div
                   onClick={() => router.push(`/markets/${market.id}`)}
-                  className={`cursor-pointer group h-full flex flex-col rounded-[2rem] bg-transparent transition-all duration-500 relative overflow-hidden hover-lift ${
+                  className={`cursor-pointer h-full flex flex-col rounded-[2rem] bg-transparent transition-all duration-500 relative overflow-hidden ${
                     isResolved 
                       ? "opacity-50"
                       : ""

@@ -30,23 +30,28 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 export const metadata: Metadata = {
   title: {
-    default: "Event Horizon | ZK Prediction Market",
-    template: "%s | Event Horizon"
+    default: "Horizon Markets | Autonomous Prediction Engine",
+    template: "%s | Horizon Markets"
   },
-  description: "Experience the next generation of prediction markets with Zero-Knowledge privacy on Stellar Testnet. Trade outcomes with deep liquidity and total anonymity.",
-  keywords: ["stellar", "prediction market", "zero-knowledge", "zk-proofs", "soroban", "crypto", "betting"],
+  description: "Experience the next generation of autonomous prediction markets. Trade outcomes with high-confidence AI resolution and decentralized escrow.",
+  keywords: ["stellar", "prediction market", "autonomous", "ai", "crypto", "trading"],
   openGraph: {
-    title: "Event Horizon | ZK Prediction Market",
-    description: "Privacy-first prediction markets on Stellar.",
-    url: "https://eventhorizon-pied.vercel.app/",
-    siteName: "Event Horizon",
+    title: "Horizon Markets | Autonomous Prediction Engine",
+    description: "AI-driven autonomous prediction markets.",
+    url: "https://horizonmarkets.vercel.app/",
+    siteName: "Horizon Markets",
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Event Horizon | ZK Prediction Market",
-    description: "The cosmic event horizon of ZK-prediction markets on Stellar.",
+    title: "Horizon Markets | Autonomous Prediction Engine",
+    description: "The autonomous event horizon of prediction markets.",
+  },
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
   },
 };
 

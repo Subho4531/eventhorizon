@@ -51,7 +51,7 @@ export default function LaunchDashboard() {
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const CACHE_KEY = "gravityflow_dashboard_cache";
+  const CACHE_KEY = "horizon_dashboard_cache";
 
   useEffect(() => {
     const cachedData = localStorage.getItem(CACHE_KEY);
@@ -90,7 +90,10 @@ export default function LaunchDashboard() {
           change24h: 5.2 
         });
 
-        const topMarkets = [...allMarkets].sort((a, b) => b.totalVolume - a.totalVolume).slice(0, 5);
+        const topMarkets = allMarkets
+          .filter(m => m.status === 'OPEN')
+          .sort((a, b) => b.totalVolume - a.totalVolume)
+          .slice(0, 10);
         
         const marketsWithHistory = await Promise.all(topMarkets.map(async (m) => {
            try {
@@ -241,9 +244,9 @@ export default function LaunchDashboard() {
                       Trade Now
                       <ArrowRight className="transition-transform group-hover:translate-x-1" size={18} />
                   </button>
-                  <button onClick={() => router.push(`/markets/${featured.id}`)} className="flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-8 py-3.5 text-base font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/10">
+                  {/* <button onClick={() => router.push(`/markets/${featured.id}`)} className="flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-8 py-3.5 text-base font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/10">
                       View Analysis
-                  </button>
+                  </button> */}
                 </div>
               </div>
 
@@ -251,18 +254,13 @@ export default function LaunchDashboard() {
                  {featured.history && featured.history.length > 1 ? (
                    <ResponsiveContainer width="100%" height="100%">
                      <AreaChart data={featured.history}>
-                       <defs>
-                         <linearGradient id="featuredGrad" x1="0" y1="0" x2="0" y2="1">
-                           <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3} />
-                           <stop offset="95%" stopColor="#818cf8" stopOpacity={0} />
-                         </linearGradient>
-                       </defs>
                        <Area 
                          type="stepAfter" 
                          dataKey="p" 
                          stroke="#818cf8" 
-                         strokeWidth={3}
-                         fill="url(#featuredGrad)" 
+                         strokeWidth={2}
+                         strokeOpacity={0.4}
+                         fill="transparent" 
                        />
                      </AreaChart>
                    </ResponsiveContainer>
@@ -321,7 +319,7 @@ export default function LaunchDashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {trendingMarkets.slice(0, 6).map((market, i) => (
+          {trendingMarkets.slice(0, 9).map((market, i) => (
             <motion.div
               key={market.id}
               initial={{ opacity: 0, y: 20 }}
@@ -332,18 +330,13 @@ export default function LaunchDashboard() {
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
                 
                 {market.imageUrl && (
-                  <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-40 transition-opacity duration-500">
-                    <Image src={market.imageUrl} alt={market.title} fill className="object-cover" unoptimized />
-                    <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/80 to-transparent" />
+                  <div className="absolute inset-0 z-0 opacity-30 group-hover:opacity-50 transition-opacity duration-500">
+                    <Image src={market.imageUrl} alt={market.title} fill className="object-cover brightness-[0.7]" unoptimized />
+                    <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/60 via-transparent to-transparent" />
                   </div>
                 )}
                 
-                {/* Ribbon */}
-                <div className="absolute top-0 right-0 overflow-hidden w-24 h-24 z-20 pointer-events-none">
-                  <div className="absolute bg-gradient-to-r from-indigo-500 to-purple-500 text-[9px] font-bold text-white shadow-lg text-center font-mono py-1 right-[-35px] top-[25px] w-[140px] rotate-45 transform tracking-widest uppercase">
-                    Trending
-                  </div>
-                </div>
+
 
                 <div 
                   className="p-6 flex-1 flex flex-col justify-between gap-6 relative z-10"
@@ -354,13 +347,7 @@ export default function LaunchDashboard() {
                       <div className="inline-flex rounded-lg bg-white/5 px-3 py-1 text-sm text-neutral-300 border border-white/5 font-medium tracking-wide">
                         {market.category}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="relative flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-50" />
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500" />
-                        </span>
-                        <span className="text-xs font-semibold uppercase text-neutral-400 tracking-widest">Live</span>
-                      </div>
+
                     </div>
                     
                     <h4 className="text-lg font-light tracking-tight leading-tight text-white line-clamp-2">
@@ -369,22 +356,17 @@ export default function LaunchDashboard() {
                   </div>
 
                   <div className="h-16 w-full relative">
-                    <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 to-transparent z-10" />
+
                     {market.history && market.history.length > 1 ? (
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={market.history}>
-                           <defs>
-                             <linearGradient id={`grad-${market.id}`} x1="0" y1="0" x2="0" y2="1">
-                               <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3} />
-                               <stop offset="95%" stopColor="#818cf8" stopOpacity={0} />
-                             </linearGradient>
-                           </defs>
-                          <Area 
+                           <Area 
                             type="monotone" 
                             dataKey="p" 
                             stroke="#818cf8" 
                             strokeWidth={2}
-                            fill={`url(#grad-${market.id})`}
+                            strokeOpacity={0.8}
+                            fill="transparent"
                           />
                         </AreaChart>
                       </ResponsiveContainer>

@@ -17,7 +17,7 @@ export default function ConnectWalletButton() {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         whileTap={{ scale: 0.97 }}
-        className="relative flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[11px] font-semibold transition-all duration-300 bg-white/[0.04] border border-white/[0.08] text-white/70 hover:bg-white/[0.08] hover:border-white/[0.15] hover:text-white group"
+        className="relative flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[11px] font-semibold transition-all duration-300 bg-white/[0.04] border border-white/[0.08] text-white/70 hover:bg-white/[0.08] hover:border-white/[0.15] hover:text-white group focus:outline-none focus:ring-0"
       >
         {/* Connected dot */}
         <div className="relative">
@@ -59,7 +59,7 @@ export default function ConnectWalletButton() {
       disabled={isConnecting}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.97 }}
-      className="relative flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-[11px] font-bold tracking-wide transition-all duration-300 overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+      className="relative flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-[11px] font-bold tracking-wide transition-all duration-300 overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-0"
       style={{
         background: "linear-gradient(135deg, #FF8C00, #FF6B00)",
         boxShadow: "0 0 20px rgba(255, 140, 0, 0.25), inset 0 1px 1px rgba(255,255,255,0.15)",
