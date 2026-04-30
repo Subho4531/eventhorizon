@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { zkCreateMarket as createMarket, submitSignedXdr } from "@/lib/escrow";
+import { zkCreateMarket as createMarket, submitViaRelay } from "@/lib/escrow";
 import { signTransaction } from "@stellar/freighter-api";
 import { useRouter } from "next/navigation";
 import { X, Shield, Terminal, Database, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
@@ -63,7 +63,7 @@ export default function CreateMarketModal({
 
       if (!signRes || !signRes.signedTxXdr) throw new Error("AUTH_SIGNING_ABORTED");
 
-      const txResult = await submitSignedXdr(signRes.signedTxXdr);
+      const txResult = await submitViaRelay(signRes.signedTxXdr, userPublicKey);
       const onChainMarketId = txResult.returnValue;
 
       setStep("indexing");

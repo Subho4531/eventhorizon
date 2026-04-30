@@ -24,7 +24,7 @@ import { Progress } from "@/components/ui/progress";
 import RiskAlert from "@/components/RiskAlert";
 import {
   placeBet as placeBetOnChain,
-  submitSignedXdr,
+  submitViaRelay,
   getOnchainEscrowBalance,
   getMarket,
 } from "@/lib/escrow";
@@ -207,7 +207,7 @@ export default function MarketDetailPage({
       const res = await placeBetOnChain(publicKey, market.contractMarketId, commitmentHash, stake);
       if (!res.success || !res.unsignedXdr) throw new Error("Failed to build place_bet transaction");
 
-      setBetStatus("Waiting for Freighter signature...");
+      setBetStatus("Authorize in Freighter...");
       const { signTransaction } = await import("@stellar/freighter-api");
       const networkPassphrase = "Test SDF Network ; September 2015";
       const signResult = await signTransaction(res.unsignedXdr, { networkPassphrase });
@@ -216,8 +216,8 @@ export default function MarketDetailPage({
       else if (signResult && "signedTxXdr" in signResult) signedXdr = (signResult as { signedTxXdr: string }).signedTxXdr;
       if (!signedXdr) throw new Error("Freighter returned unexpected response");
 
-      setBetStatus("Submitting to Soroban...");
-      const submitRes = await submitSignedXdr(signedXdr);
+      setBetStatus("Submitting to network...");
+      const submitRes = await submitViaRelay(signedXdr, publicKey);
       if (!submitRes.hash) throw new Error("Transaction submission failed");
 
       setBetStatus("Recording bet...");
@@ -757,7 +757,7 @@ export default function MarketDetailPage({
                         className="p-4 rounded-xl border border-[#00C853]/30 bg-[#00C853]/10 text-[#00C853] text-[10px] font-bold uppercase leading-relaxed flex gap-3"
                       >
                         <Shield className="w-4 h-4 shrink-0 mt-0.5" />
-                        <span>Position cryptographically sealed on-chain.</span>
+                        <span>Position sealed on-chain. Verification zero-knowledge proof indexed.</span>
                       </motion.div>
                     )}
                     {betStatus && !betError && (
@@ -835,12 +835,16 @@ export default function MarketDetailPage({
                   <span className="text-white font-mono bg-white/[0.03] px-2 py-0.5 rounded truncate max-w-[120px]">{truncKey(market.oracleAddress)}</span>
                 </div>
               )}
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center border-b border-white/[0.04] pb-3">
                 <span className="text-white/40 uppercase text-[9px] tracking-wider">Network</span>
                 <span className="text-[#00C853] font-bold text-[10px] uppercase tracking-wider flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#00C853]" />
                   Stellar Testnet
                 </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-white/40 uppercase text-[9px] tracking-wider">Gas Fees</span>
+                <span className="text-white font-mono bg-white/[0.03] px-2 py-0.5 rounded">0</span>
               </div>
             </div>
           </div>

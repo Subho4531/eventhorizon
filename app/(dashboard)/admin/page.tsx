@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from "react";
 import { useWallet } from "@/components/WalletProvider";
-import { resolveMarket, submitSignedXdr } from "@/lib/escrow";
+import { resolveMarket, submitViaRelay } from "@/lib/escrow";
 import { signTransaction } from "@stellar/freighter-api";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -239,7 +239,7 @@ export default function AdminPage() {
       });
       if (!signRes.signedTxXdr) throw new Error("Signing failed");
 
-      await submitSignedXdr(signRes.signedTxXdr);
+      await submitViaRelay(signRes.signedTxXdr, publicKey);
 
       const dbRes = await fetch(`/api/markets/${market.id}/resolve`, {
         method: "PATCH",

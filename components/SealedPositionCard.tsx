@@ -7,7 +7,7 @@ import { useWallet } from "@/components/WalletProvider";
 import {
   getMarket,
   claimWinnings,
-  submitSignedXdr,
+  submitViaRelay,
   MarketState,
   SealedPosition
 } from "@/lib/escrow";
@@ -67,7 +67,7 @@ export default function SealedPositionCard({ position, onClaimed }: SealedPositi
       if (!res.success || !res.unsignedXdr) throw new Error("CLAIM TX BUILD FAILURE");
       
       const signedXdr = await freighterSign(res.unsignedXdr);
-      const submitRes = await submitSignedXdr(signedXdr);
+      const submitRes = await submitViaRelay(signedXdr, publicKey);
       if (!submitRes.hash) throw new Error("SUBMISSION FAILURE");
       
       await new Promise(r => setTimeout(r, 1000));

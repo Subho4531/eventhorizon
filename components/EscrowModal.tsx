@@ -7,7 +7,7 @@ import { useWallet } from "@/components/WalletProvider";
 import {
   depositToEscrow,
   withdrawFromEscrow,
-  submitSignedXdr,
+  submitViaRelay,
 } from "@/lib/escrow";
 
 type TxStatus = "idle" | "proving" | "signing" | "submitting" | "verifying" | "confirming" | "done" | "error" | "loading";
@@ -102,7 +102,7 @@ export default function EscrowModal({ isOpen = true, onClose, onComplete, mode, 
       if (result.unsignedXdr) {
         const signedXdr = await freighterSign(result.unsignedXdr);
         setStatus("submitting");
-        const submitted = await submitSignedXdr(signedXdr);
+        const submitted = await submitViaRelay(signedXdr, publicKey);
         txHash = submitted.hash;
         
         setStatus("verifying");

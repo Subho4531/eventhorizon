@@ -188,6 +188,65 @@ export async function submitSignedXdr(
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
+// Gasless Relay — Fee Sponsorship via Fee Bump Transactions
+// ──────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Submit a Freighter-signed XDR through the server relay for gasless execution.
+ *
+ * Flow:
+ *   1. Client signs the inner transaction (Freighter — authorizes the action only,
+ *      NOT paying fees. Freighter shows the inner fee, but the relay overrides it.)
+ *   2. This function sends the signed XDR to /api/relay
+ *   3. The server wraps it in a FeeBumpTransaction (oracle account pays all gas)
+ *   4. Server submits the fee-bumped transaction to Soroban RPC
+ *   5. Returns the confirmed hash
+ *
+ * NOTE: This does NOT fall back to direct submission. If the relay fails,
+ * we throw so the user sees the error rather than silently being charged a fee.
+ *
+ * @param signedXdr  - The Freighter-signed inner transaction XDR
+ * @param publicKey  - The user's public key (used for rate limiting on the server)
+ */
+export async function submitViaRelay(
+  signedXdr: string,
+  publicKey?: string
+): Promise<{ hash: string; returnValue?: unknown; sponsored?: boolean }> {
+  const res = await fetch("/api/relay", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ signedXdr, publicKey }),
+  });
+
+  let data: { hash?: string; success?: boolean; error?: string; returnValue?: unknown; sponsored?: boolean; pending?: boolean };
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`Relay returned non-JSON response (HTTP ${res.status}).`);
+  }
+
+  if (!res.ok) {
+    throw new Error(
+      data.error || `Relay failed with HTTP ${res.status}. Transaction was NOT submitted.`
+    );
+  }
+
+  if (!data.hash) {
+    throw new Error(data.error || "Relay succeeded but returned no transaction hash.");
+  }
+
+  console.log(
+    `[escrow] TX submitted via relay — hash: ${data.hash.slice(0, 16)}...`
+  );
+
+  return {
+    hash: data.hash,
+    returnValue: data.returnValue,
+    sponsored: data.sponsored ?? true,
+  };
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
 // Public escrow API
 // ──────────────────────────────────────────────────────────────────────────────
 
