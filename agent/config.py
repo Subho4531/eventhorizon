@@ -34,7 +34,7 @@ AGENT_API_KEY = os.getenv("AGENT_API_KEY", "")
 
 # ── Supabase ─────────────────────────────────────────────────────────────────
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
 # ── Agent behaviour ──────────────────────────────────────────────────────────
 CREATION_INTERVAL_HOURS = int(os.getenv("CREATION_INTERVAL_HOURS", "6"))
