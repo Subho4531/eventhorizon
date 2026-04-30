@@ -33,6 +33,27 @@ from agents.market_creator import run_creation_pipeline
 from agents.market_resolver import resolve_pending_markets
 from tools.nextjs_tool import get_agent_status
 
+import os
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/health' or self.path == '/':
+            self.send_response(200)
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"status":"ok"}')
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+def start_health_server():
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(("0.0.0.0", port), HealthHandler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    print(f"[Agent] Health server listening on 0.0.0.0:{port}")
+
 console = Console(force_terminal=True, highlight=False)
 
 
@@ -110,6 +131,7 @@ def main():
         return
 
     if args.daemon:
+        start_health_server()
         console.print(
             f"[bold]Starting scheduler[/bold]\n"
             f"  • Market creation: every {CREATION_INTERVAL_HOURS}h\n"

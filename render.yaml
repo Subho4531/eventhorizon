@@ -3,7 +3,7 @@
 
 services:
   # ── BullMQ Worker (Background Service) ──────────────────────────────────────
-  - type: worker
+  - type: web
     name: gravityflow-worker
     runtime: node
     plan: free
@@ -21,7 +21,7 @@ services:
         sync: false
 
   # ── Python Autonomous Agent (Background Service) ─────────────────────────────
-  - type: worker
+  - type: web
     name: gravityflow-agent
     runtime: python
     plan: free
@@ -36,6 +36,12 @@ services:
       - key: AGENT_NEXTJS_API_URL
         sync: false
       - key: AGENT_API_KEY
+        sync: false
+      - key: PEXELS_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: CREATION_INTERVAL_HOURS
         value: "6"
