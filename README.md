@@ -10,6 +10,25 @@ Horizon is a next-generation prediction market platform built on the Stellar blo
 
 ---
 
+## 📑 Table of Contents
+
+- [📖 Project Description](#-project-description)
+- [🎥 Video Demo](#-video-demo)
+- [✨ Key Features](#-key-features)
+- [🥋 Level 6: Black Belt - Agentic Evolution](#-level-6-black-belt---agentic-evolution)
+- [🏗️ Architecture](#️-architecture)
+- [📜 Smartcontract Details](#-smartcontract-details)
+- [🌟 Project Vision](#-project-vision)
+- [🚀 Future Scope](#-future-scope)
+- [🖼️ UI Screenshots](#️-ui-screenshots)
+- [📝 User Onboarding & Feedback](#-user-onboarding--feedback)
+- [🎖️ Level 6 Requirements Checklist](#️-level-6-requirements-checklist)
+- [🚀 Getting Started](#-getting-started)
+- [🛠️ Tech Stack](#️-tech-stack)
+- [📂 Project Structure](#-project-structure)
+
+---
+
 ## 📖 Project Description
 
 Horizon redefines prediction markets by prioritizing user privacy and data integrity. By integrating **Zero-Knowledge Proofs (ZKPs)** on the **Stellar Network**, Horizon allows users to take positions on global events without revealing their specific bets until the market is resolved. This prevents front-running and manipulation, creating a fairer ecosystem for all participants.
@@ -176,7 +195,7 @@ The journey has just begun. Our roadmap for the next 12-18 months includes:
 ![Market Overview](./screenshots/market_overview.png)
 
 #### 📱 Responsive Design (Mobile Ready)
-![Responsive UI](./screenshots/responsive_ui.jpeg)
+<img src="./screenshots/responsive_ui.jpeg" width="300" alt="Responsive UI" />
 
 #### 💼 User Portfolio
 ![Portfolio](./screenshots/portfolio.png)
@@ -206,46 +225,46 @@ We value community input and actively iterate on our platform based on user expe
 
 | User Name | User Email | User Wallet Address |
 | :--- | :--- | :--- |
-| **Rohit Acharya** | `rohitacharya25@gmail.com` | [`GCFJQCTGFO...`](https://stellar.expert/explorer/testnet/account/GCFJQCTGFO5QXE5F6TYFRARFDX3O2GXSJ56N37ZBEX4V5LQYQKU54IQH) |
-| **Deep Saha** | `sdeep027@gmail.com` | [`GAPZFL43CL...`](https://stellar.expert/explorer/testnet/account/GAPZFL43CLQZUZTVH4XGC7XPY7WGWD7RI2D4E2IQGFDFVYZN4BI7GMVL) |
-| **Sumit Sarkar** | `sumit087@gmail.com` | [`GAVAIWLB3P...`](https://stellar.expert/explorer/testnet/account/GAVAIWLB3PBWMVKPDHLDVRAS7VH4DA2SXW3W2G7V5QLJ6DK3HY3AJVAN) |
-| **Samrat Natta** | `samratnatta993@gmail.com` | [`GBTLRERJBU...`](https://stellar.expert/explorer/testnet/account/GBTLRERJBUOHFIIZCHAOTXSSQ2UF5BU6WFYMXCMHY672II75LXXB3FAI) |
-| **Nilarpan Jana** | `nnilarpan@gmail.com` | [`GCQM3XP3IW...`](https://stellar.expert/explorer/testnet/account/GCQM3XP3IWUY3LCPDIP4QRLB7VIL2DY2QLZJ2KG2NANWUAFAZ3ULECUQ) |
-| **Tanaj Das** | `tdas06@gmail.com` | [`GDZR3O22WS...`](https://stellar.expert/explorer/testnet/account/GDZR3O22WSIJRT25KIIY4UYDJXFHME7BEEHDMCUT2TAEI6SR7L2B5MUY) |
-| **Srijit Kundu** | `sgamer34@gmail.com` | [`GDVEBVTVNO...`](https://stellar.expert/explorer/testnet/account/GDVEBVTVNOD75J5AFRYJW7I2IPT2Q7AJOUCRB6F7C753MIH4MYQANTVI) |
-| **Sambhas Maiti** | `sambhasmaiti03@gmail.com` | [`GDTDI2OH76...`](https://stellar.expert/explorer/testnet/account/GDTDI2OH76ATUC6HUDAX3KUK74AMIL33BVNFJG2UBTBFJXOXQ2PNU53A) |
-| **Samrat Trader** | `mamotadasmamotadas@gmail.com` | [`GCRG5UZWUA...`](https://stellar.expert/explorer/testnet/account/GCRG5UZWUAFUEC67XU4Q6GUYLA4OGR3EBKEVFMXTJ34HI6QTQAP6T7L7) |
-| **Cosmeon Trader** | `nilarpanj@gmail.com` | [`GAIQM3ISTU...`](https://stellar.expert/explorer/testnet/account/GAIQM3ISTUYHANMIJ2ZYUCLGALE6UYWYIORVS7XA43YJ6WAHWZW2XR7G) |
-| **Sylvia Barick** | `taniabarick15@gmail.com` | [`GBYOEY63WV...`](https://stellar.expert/explorer/testnet/account/GBYOEY63WVKXY5KTSQZG4FGCDYY2CV7K3SH4ZSVN6IFDWJ464HPFIEIQ) |
-| **Nitesh Jana** | `niteshjana11@gmail.com` | [`GCKL2H6GSQ...`](https://stellar.expert/explorer/testnet/account/GCKL2H6GSQ5XB5OZE2IAVFKIYZ3XCEUEXPWRME2EO4UYPUFDAA2INWJW) |
-| **Sumit Dey** | `sumitdey456@gmail.com` | [`GARFTDEIFI...`](https://stellar.expert/explorer/testnet/account/GARFTDEIFIAD34FRNTLESZEXSCROQVPT76WZVA5WKPQ5UREDF3BTCYMK) |
-| **Sayan Koley** | `sayankoley.trader@gmail.com` | [`GCVSH65WNB...`](https://stellar.expert/explorer/testnet/account/GCVSH65WNB6IM3LPC5DMEEY5WXQ5ISX62STSGBYIRKRWSEMZ4S2LHPD7) |
-| **Arnab Jana** | `arnabjan99@gmail.com` | [`GCQVBE7IDE...`](https://stellar.expert/explorer/testnet/account/GCQVBE7IDEBEL7RCLYFYKKUK3YD4VKVYYXXZFHPSJ63KWDSPCIADJKEL) |
-| **Sneha Chakraborty** | `snehachakraborty21@gmail.com` | [`GAVTHBVKWA...`](https://stellar.expert/explorer/testnet/account/GAVTHBVKWAS7WBUN2NHROAGK376VDDRUZ5GYQVMDMUNLAYPS7EPXLWHX) |
-| **Avik Banerjee** | `avikbanerjee08@gmail.com` | [`GBVPJ2TF6K...`](https://stellar.expert/explorer/testnet/account/GBVPJ2TF6KS6OESEBU3HGXNMFHNWWLI4FYAYU63EH6HKQRBMP45DWTJH) |
-| **Trailokya Nath Roy** | `trailokyanroy@gmail.com` | [`GDFM62TGZ3...`](https://stellar.expert/explorer/testnet/account/GDFM62TGZ3RDCK7M2DJDW35QDPWC65GVHVX63JYGHQQUYXWYMZYG4PR7) |
-| **Debashis Bhattacharya**| `debashis.bhat07@gmail.com` | [`GAEYXWJUKW...`](https://stellar.expert/explorer/testnet/account/GAEYXWJUKWF6KQPCN6WWJMIO5KARFGZ54UEM572JONF2W5TUAUNCEPXO) |
-| **Subhrajit Mandal** | `subhrajitmandal2k@gmail.com`| [`GAKD4A6VJL...`](https://stellar.expert/explorer/testnet/account/GAKD4A6VJLWXN2WOD4ICDECH7DUTPTKMXXR522P2S6WS4LTA5WQKPNO6) |
-| **Pranab Chatterjee** | `pranabchat01@gmail.com` | [`GBG25BTFV5...`](https://stellar.expert/explorer/testnet/account/GBG25BTFV5NHSBCMTM7U2AMN27SBDRGR5ZXRJ5EDIL4MCG62L2ST5Z7P) |
-| **Babai Chakraborty** | `babai.chakra@gmail.com` | [`GC5VDVJDUY...`](https://stellar.expert/explorer/testnet/account/GC5VDVJDUYWPANLIOTNDSKR34JYISLULHLKIYRG7ER6TCRMNCWYQWEBA) |
-| **Koushik Biswas** | `koushikbiswas77@gmail.com` | [`GAYIDOBUXA...`](https://stellar.expert/explorer/testnet/account/GAYIDOBUXAMHDEDMQIBSGYXFUVZLIW7ZM6S3NCVYFLDU6RS56SRA42ZJ) |
-| **Alok Nath Sarkar** | `aloknathsarkar@gmail.com` | [`GBLU63FD4S...`](https://stellar.expert/explorer/testnet/account/GBLU63FD4SKHEFU2TJVWOTB7L7ZZMCE2VERTYLRGGLIYTLBIRTX4ERFC) |
-| **Alik Das** | `alikdas2003@gmail.com` | [`GDRSCM4LBC...`](https://stellar.expert/explorer/testnet/account/GDRSCM4LBC43CNRV3MI5Q3IV5PIMI3JCUQZTSGS3HCVUCTQTYGHXNUX6) |
-| **Guddu Sharma** | `guddu.sharma007@gmail.com` | [`GCRJPX6Z6E...`](https://stellar.expert/explorer/testnet/account/GCRJPX6Z6ELK5TH3RQSB6LEFSTRV25OVSIWHTXEW5IKTW5J2PXZE2JPM) |
-| **Quazi Rahul** | `quazirahul.trader@gmail.com` | [`GBV2VSXKD6...`](https://stellar.expert/explorer/testnet/account/GBV2VSXKD6CY3XNZOVKIWAEXBHYU3XDQWOGOZSFI27SDCA6SGST73ZBQ) |
-| **Aniket Mukherjee** | `aniketmukh2024@gmail.com` | [`GBAEHJGSF4...`](https://stellar.expert/explorer/testnet/account/GBAEHJGSF4DVGBMXOTWWHNAMRX2DXET66D4ZB5GGTO2MFB2NRC3BMKSS) |
-| **Mrityunjay Mondal** | `mrityunjay.mondal@gmail.com` | [`GACGOQPB3G...`](https://stellar.expert/explorer/testnet/account/GACGOQPB3GXBQOE4FSOOKQVOK7AZXD75IQTWUSPF6C7TYXATN2ZQ6HSJ) |
-| **Shinzo Das** | `shinzodas99@gmail.com` | [`GA7PQOUEGW...`](https://stellar.expert/explorer/testnet/account/GA7PQOUEGWQTVKYNO4GXKBEE7H6LQE7GYTYSGQ4AIIRFBWPXJIBEUJJF) |
+| **Rohit Acharya** | `rohitacharya25@gmail.com` | [`GCFJQCTGFO5QXE5F6TYFRARFDX3O2GXSJ56N37ZBEX4V5LQYQKU54IQH`](https://stellar.expert/explorer/testnet/account/GCFJQCTGFO5QXE5F6TYFRARFDX3O2GXSJ56N37ZBEX4V5LQYQKU54IQH) |
+| **Deep Saha** | `sdeep027@gmail.com` | [`GAPZFL43CLQZUZTVH4XGC7XPY7WGWD7RI2D4E2IQGFDFVYZN4BI7GMVL`](https://stellar.expert/explorer/testnet/account/GAPZFL43CLQZUZTVH4XGC7XPY7WGWD7RI2D4E2IQGFDFVYZN4BI7GMVL) |
+| **Sumit Sarkar** | `sumit087@gmail.com` | [`GAVAIWLB3PBWMVKPDHLDVRAS7VH4DA2SXW3W2G7V5QLJ6DK3HY3AJVAN`](https://stellar.expert/explorer/testnet/account/GAVAIWLB3PBWMVKPDHLDVRAS7VH4DA2SXW3W2G7V5QLJ6DK3HY3AJVAN) |
+| **Samrat Natta** | `samratnatta993@gmail.com` | [`GBTLRERJBUOHFIIZCHAOTXSSQ2UF5BU6WFYMXCMHY672II75LXXB3FAI`](https://stellar.expert/explorer/testnet/account/GBTLRERJBUOHFIIZCHAOTXSSQ2UF5BU6WFYMXCMHY672II75LXXB3FAI) |
+| **Nilarpan Jana** | `nnilarpan@gmail.com` | [`GCQM3XP3IWUY3LCPDIP4QRLB7VIL2DY2QLZJ2KG2NANWUAFAZ3ULECUQ`](https://stellar.expert/explorer/testnet/account/GCQM3XP3IWUY3LCPDIP4QRLB7VIL2DY2QLZJ2KG2NANWUAFAZ3ULECUQ) |
+| **Tanaj Das** | `tdas06@gmail.com` | [`GDZR3O22WSIJRT25KIIY4UYDJXFHME7BEEHDMCUT2TAEI6SR7L2B5MUY`](https://stellar.expert/explorer/testnet/account/GDZR3O22WSIJRT25KIIY4UYDJXFHME7BEEHDMCUT2TAEI6SR7L2B5MUY) |
+| **Srijit Kundu** | `sgamer34@gmail.com` | [`GDVEBVTVNOD75J5AFRYJW7I2IPT2Q7AJOUCRB6F7C753MIH4MYQANTVI`](https://stellar.expert/explorer/testnet/account/GDVEBVTVNOD75J5AFRYJW7I2IPT2Q7AJOUCRB6F7C753MIH4MYQANTVI) |
+| **Sambhas Maiti** | `sambhasmaiti03@gmail.com` | [`GDTDI2OH76ATUC6HUDAX3KUK74AMIL33BVNFJG2UBTBFJXOXQ2PNU53A`](https://stellar.expert/explorer/testnet/account/GDTDI2OH76ATUC6HUDAX3KUK74AMIL33BVNFJG2UBTBFJXOXQ2PNU53A) |
+| **Samrat Trader** | `mamotadasmamotadas@gmail.com` | [`GCRG5UZWUAFUEC67XU4Q6GUYLA4OGR3EBKEVFMXTJ34HI6QTQAP6T7L7`](https://stellar.expert/explorer/testnet/account/GCRG5UZWUAFUEC67XU4Q6GUYLA4OGR3EBKEVFMXTJ34HI6QTQAP6T7L7) |
+| **Cosmeon Trader** | `nilarpanj@gmail.com` | [`GAIQM3ISTUYHANMIJ2ZYUCLGALE6UYWYIORVS7XA43YJ6WAHWZW2XR7G`](https://stellar.expert/explorer/testnet/account/GAIQM3ISTUYHANMIJ2ZYUCLGALE6UYWYIORVS7XA43YJ6WAHWZW2XR7G) |
+| **Sylvia Barick** | `taniabarick15@gmail.com` | [`GBYOEY63WVKXY5KTSQZG4FGCDYY2CV7K3SH4ZSVN6IFDWJ464HPFIEIQ`](https://stellar.expert/explorer/testnet/account/GBYOEY63WVKXY5KTSQZG4FGCDYY2CV7K3SH4ZSVN6IFDWJ464HPFIEIQ) |
+| **Nitesh Jana** | `niteshjana11@gmail.com` | [`GCKL2H6GSQ5XB5OZE2IAVFKIYZ3XCEUEXPWRME2EO4UYPUFDAA2INWJW`](https://stellar.expert/explorer/testnet/account/GCKL2H6GSQ5XB5OZE2IAVFKIYZ3XCEUEXPWRME2EO4UYPUFDAA2INWJW) |
+| **Sumit Dey** | `sumitdey456@gmail.com` | [`GARFTDEIFIAD34FRNTLESZEXSCROQVPT76WZVA5WKPQ5UREDF3BTCYMK`](https://stellar.expert/explorer/testnet/account/GARFTDEIFIAD34FRNTLESZEXSCROQVPT76WZVA5WKPQ5UREDF3BTCYMK) |
+| **Sayan Koley** | `sayankoley.trader@gmail.com` | [`GCVSH65WNB6IM3LPC5DMEEY5WXQ5ISX62STSGBYIRKRWSEMZ4S2LHPD7`](https://stellar.expert/explorer/testnet/account/GCVSH65WNB6IM3LPC5DMEEY5WXQ5ISX62STSGBYIRKRWSEMZ4S2LHPD7) |
+| **Arnab Jana** | `arnabjan99@gmail.com` | [`GCQVBE7IDEBEL7RCLYFYKKUK3YD4VKVYYXXZFHPSJ63KWDSPCIADJKEL`](https://stellar.expert/explorer/testnet/account/GCQVBE7IDEBEL7RCLYFYKKUK3YD4VKVYYXXZFHPSJ63KWDSPCIADJKEL) |
+| **Sneha Chakraborty** | `snehachakraborty21@gmail.com` | [`GAVTHBVKWAS7WBUN2NHROAGK376VDDRUZ5GYQVMDMUNLAYPS7EPXLWHX`](https://stellar.expert/explorer/testnet/account/GAVTHBVKWAS7WBUN2NHROAGK376VDDRUZ5GYQVMDMUNLAYPS7EPXLWHX) |
+| **Avik Banerjee** | `avikbanerjee08@gmail.com` | [`GBVPJ2TF6KS6OESEBU3HGXNMFHNWWLI4FYAYU63EH6HKQRBMP45DWTJH`](https://stellar.expert/explorer/testnet/account/GBVPJ2TF6KS6OESEBU3HGXNMFHNWWLI4FYAYU63EH6HKQRBMP45DWTJH) |
+| **Trailokya Nath Roy** | `trailokyanroy@gmail.com` | [`GDFM62TGZ3RDCK7M2DJDW35QDPWC65GVHVX63JYGHQQUYXWYMZYG4PR7`](https://stellar.expert/explorer/testnet/account/GDFM62TGZ3RDCK7M2DJDW35QDPWC65GVHVX63JYGHQQUYXWYMZYG4PR7) |
+| **Debashis Bhattacharya**| `debashis.bhat07@gmail.com` | [`GAEYXWJUKWF6KQPCN6WWJMIO5KARFGZ54UEM572JONF2W5TUAUNCEPXO`](https://stellar.expert/explorer/testnet/account/GAEYXWJUKWF6KQPCN6WWJMIO5KARFGZ54UEM572JONF2W5TUAUNCEPXO) |
+| **Subhrajit Mandal** | `subhrajitmandal2k@gmail.com`| [`GAKD4A6VJLWXN2WOD4ICDECH7DUTPTKMXXR522P2S6WS4LTA5WQKPNO6`](https://stellar.expert/explorer/testnet/account/GAKD4A6VJLWXN2WOD4ICDECH7DUTPTKMXXR522P2S6WS4LTA5WQKPNO6) |
+| **Pranab Chatterjee** | `pranabchat01@gmail.com` | [`GBG25BTFV5NHSBCMTM7U2AMN27SBDRGR5ZXRJ5EDIL4MCG62L2ST5Z7P`](https://stellar.expert/explorer/testnet/account/GBG25BTFV5NHSBCMTM7U2AMN27SBDRGR5ZXRJ5EDIL4MCG62L2ST5Z7P) |
+| **Babai Chakraborty** | `babai.chakra@gmail.com` | [`GC5VDVJDUYWPANLIOTNDSKR34JYISLULHLKIYRG7ER6TCRMNCWYQWEBA`](https://stellar.expert/explorer/testnet/account/GC5VDVJDUYWPANLIOTNDSKR34JYISLULHLKIYRG7ER6TCRMNCWYQWEBA) |
+| **Koushik Biswas** | `koushikbiswas77@gmail.com` | [`GAYIDOBUXAMHDEDMQIBSGYXFUVZLIW7ZM6S3NCVYFLDU6RS56SRA42ZJ`](https://stellar.expert/explorer/testnet/account/GAYIDOBUXAMHDEDMQIBSGYXFUVZLIW7ZM6S3NCVYFLDU6RS56SRA42ZJ) |
+| **Alok Nath Sarkar** | `aloknathsarkar@gmail.com` | [`GBLU63FD4SKHEFU2TJVWOTB7L7ZZMCE2VERTYLRGGLIYTLBIRTX4ERFC`](https://stellar.expert/explorer/testnet/account/GBLU63FD4SKHEFU2TJVWOTB7L7ZZMCE2VERTYLRGGLIYTLBIRTX4ERFC) |
+| **Alik Das** | `alikdas2003@gmail.com` | [`GDRSCM4LBC43CNRV3MI5Q3IV5PIMI3JCUQZTSGS3HCVUCTQTYGHXNUX6`](https://stellar.expert/explorer/testnet/account/GDRSCM4LBC43CNRV3MI5Q3IV5PIMI3JCUQZTSGS3HCVUCTQTYGHXNUX6) |
+| **Guddu Sharma** | `guddu.sharma007@gmail.com` | [`GCRJPX6Z6ELK5TH3RQSB6LEFSTRV25OVSIWHTXEW5IKTW5J2PXZE2JPM`](https://stellar.expert/explorer/testnet/account/GCRJPX6Z6ELK5TH3RQSB6LEFSTRV25OVSIWHTXEW5IKTW5J2PXZE2JPM) |
+| **Quazi Rahul** | `quazirahul.trader@gmail.com` | [`GBV2VSXKD6CY3XNZOVKIWAEXBHYU3XDQWOGOZSFI27SDCA6SGST73ZBQ`](https://stellar.expert/explorer/testnet/account/GBV2VSXKD6CY3XNZOVKIWAEXBHYU3XDQWOGOZSFI27SDCA6SGST73ZBQ) |
+| **Aniket Mukherjee** | `aniketmukh2024@gmail.com` | [`GBAEHJGSF4DVGBMXOTWWHNAMRX2DXET66D4ZB5GGTO2MFB2NRC3BMKSS`](https://stellar.expert/explorer/testnet/account/GBAEHJGSF4DVGBMXOTWWHNAMRX2DXET66D4ZB5GGTO2MFB2NRC3BMKSS) |
+| **Mrityunjay Mondal** | `mrityunjay.mondal@gmail.com` | [`GACGOQPB3GXBQOE4FSOOKQVOK7AZXD75IQTWUSPF6C7TYXATN2ZQ6HSJ`](https://stellar.expert/explorer/testnet/account/GACGOQPB3GXBQOE4FSOOKQVOK7AZXD75IQTWUSPF6C7TYXATN2ZQ6HSJ) |
+| **Shinzo Das** | `shinzodas99@gmail.com` | [`GA7PQOUEGWQTVKYNO4GXKBEE7H6LQE7GYTYSGQ4AIIRFBWPXJIBEUJJF`](https://stellar.expert/explorer/testnet/account/GA7PQOUEGWQTVKYNO4GXKBEE7H6LQE7GYTYSGQ4AIIRFBWPXJIBEUJJF) |
 
 ### 💬 Table 2: User Feedback Implementation
 
 | User Name | User Email | User Wallet Address | User Feedback | Commit ID |
 | :--- | :--- | :--- | :--- | :--- |
-| **Rohit Acharya** | `rohitacharya25@gmail.com` | [`GCFJQCTGFO...`](https://stellar.expert/explorer/testnet/account/GCFJQCTGFO5QXE5F6TYFRARFDX3O2GXSJ56N37ZBEX4V5LQYQKU54IQH) | ADD Live Trading Events that are most recent | [`931e9a3`](https://github.com/Subho4531/eventhorizon/commit/931e9a3) (Agentic AI implementation for live events) |
-| **Deep Saha** | `sdeep027@gmail.com` | [`GAPZFL43CL...`](https://stellar.expert/explorer/testnet/account/GAPZFL43CLQZUZTVH4XGC7XPY7WGWD7RI2D4E2IQGFDFVYZN4BI7GMVL) | AI Probability score shows wrong | [`56c9ffc`](https://github.com/Subho4531/eventhorizon/commit/56c9ffc) (Fixed agent pipeline and probability logic) |
-| **Nilarpan Jana** | `nnilarpan@gmail.com` | [`GCQM3XP3IW...`](https://stellar.expert/explorer/testnet/account/GCQM3XP3IWUY3LCPDIP4QRLB7VIL2DY2QLZJ2KG2NANWUAFAZ3ULECUQ) | UX can be improve | [`f42bf0c`](https://github.com/Subho4531/eventhorizon/commit/f42bf0c) (Improved dashboard visuals & UX) |
-| **Sumit Sarkar** | `sumit087@gmail.com` | [`GAVAIWLB3P...`](https://stellar.expert/explorer/testnet/account/GAVAIWLB3PBWMVKPDHLDVRAS7VH4DA2SXW3W2G7V5QLJ6DK3HY3AJVAN) | Reduce the loading time of the app | [`7e0ec4b`](https://github.com/Subho4531/eventhorizon/commit/7e0ec4b) (Fixed connection exhaustion & optimized loading) |
-| **Subhrajit Mandal** | `subhrajitmandal2k@gmail.com`| [`GAKD4A6VJL...`](https://stellar.expert/explorer/testnet/account/GAKD4A6VJLWXN2WOD4ICDECH7DUTPTKMXXR522P2S6WS4LTA5WQKPNO6) | The UI is clean, just fix minor bugs | [`bc89083`](https://github.com/Subho4531/eventhorizon/commit/bc89083) (Updated dashboard and fixed minor UI errors) |
+| **Sumit Sarkar** | `sumit087@gmail.com` | [`GAVAIWLB3PBWMVKPDHLDVRAS7VH4DA2SXW3W2G7V5QLJ6DK3HY3AJVAN`](https://stellar.expert/explorer/testnet/account/GAVAIWLB3PBWMVKPDHLDVRAS7VH4DA2SXW3W2G7V5QLJ6DK3HY3AJVAN) | Reduce the loading time of the app | [`8512a70`](https://github.com/Subho4531/eventhorizon/commit/8512a701af4e1d0ed5ad562ab6ed00602d4d08f2) (Local Caching for faster loading) |
+| **Rohit Acharya** | `rohitacharya25@gmail.com` | [`GCFJQCTGFO5QXE5F6TYFRARFDX3O2GXSJ56N37ZBEX4V5LQYQKU54IQH`](https://stellar.expert/explorer/testnet/account/GCFJQCTGFO5QXE5F6TYFRARFDX3O2GXSJ56N37ZBEX4V5LQYQKU54IQH) | ADD Live Trading Events that are most recent | [`d394fc9`](https://github.com/Subho4531/eventhorizon/commit/d394fc9d37a4a8261337f10ee467986aab9c5752) (Agentic AI implementation for live events) |
+| **Deep Saha** | `sdeep027@gmail.com` | [`GAPZFL43CLQZUZTVH4XGC7XPY7WGWD7RI2D4E2IQGFDFVYZN4BI7GMVL`](https://stellar.expert/explorer/testnet/account/GAPZFL43CLQZUZTVH4XGC7XPY7WGWD7RI2D4E2IQGFDFVYZN4BI7GMVL) | AI Probability score shows wrong | [`8e9234c`](https://github.com/Subho4531/eventhorizon/commit/8e9234ce8863a163a24af305b3fdd06c337e3585) (Fixed agent pipeline and probability logic) |
+| **Nilarpan Jana** | `nnilarpan@gmail.com` | [`GCQM3XP3IWUY3LCPDIP4QRLB7VIL2DY2QLZJ2KG2NANWUAFAZ3ULECUQ`](https://stellar.expert/explorer/testnet/account/GCQM3XP3IWUY3LCPDIP4QRLB7VIL2DY2QLZJ2KG2NANWUAFAZ3ULECUQ) | UX can be improve | [`467815a`](https://github.com/Subho4531/eventhorizon/commit/467815a3525baae1d2a6d41366f7c89e360bbff4) (Improved dashboard visuals & UX) |
+| **Subhrajit Mandal** | `subhrajitmandal2k@gmail.com` | [`GAKD4A6VJLWXN2WOD4ICDECH7DUTPTKMXXR522P2S6WS4LTA5WQKPNO6`](https://stellar.expert/explorer/testnet/account/GAKD4A6VJLWXN2WOD4ICDECH7DUTPTKMXXR522P2S6WS4LTA5WQKPNO6) | The UI is clean, just fix minor bugs | [`d4ddcef`](https://github.com/Subho4531/eventhorizon/commit/d4ddceffa4c27c4c52150e81df756f7afb144e8e) (Updated dashboard and fixed minor UI errors) |
 
 ### 🔮 Next Phase Improvements (Based on Feedback)
 Based on the collected user feedback in our Level 6 cohort, we plan to evolve the project with the following updates:
