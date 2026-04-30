@@ -49,10 +49,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Ensure user exists (we skip strict DB balance check here because the contract handles it on-chain)
+    const defaultPfp = `https://api.dicebear.com/9.x/identicon/svg?seed=${encodeURIComponent(userPublicKey)}`;
     await prisma.user.upsert({
       where: { publicKey: userPublicKey },
       update: {},
-      create: { publicKey: userPublicKey, name: "", balance: 1000 }, // Default high balance for indexing
+      create: { 
+        publicKey: userPublicKey, 
+        name: "", 
+        balance: 1000,
+        pfpUrl: defaultPfp 
+      },
       select: { publicKey: true, balance: true },
     });
 

@@ -2,38 +2,6 @@
 # Docs: https://render.com/docs/blueprint-spec
 
 services:
-  # ── Next.js Web App ─────────────────────────────────────────────────────────
-  - type: web
-    name: gravityflow-web
-    runtime: node
-    plan: free
-    buildCommand: npm ci && npx prisma generate && npm run build
-    startCommand: npm start
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: DATABASE_URL
-        sync: false
-      - key: DIRECT_URL
-        sync: false
-      - key: UPSTASH_REDIS_URL
-        sync: false
-      - key: AGENT_API_KEY
-        sync: false
-      - key: ORACLE_SECRET_KEY
-        sync: false
-      - key: NEXT_PUBLIC_ESCROW_CONTRACT_ID
-        sync: false
-      - key: NEXT_PUBLIC_SOROBAN_RPC_URL
-        sync: false
-      - key: NEXT_PUBLIC_STELLAR_NETWORK
-        sync: false
-      - key: SERPAPI_API_KEY
-        sync: false
-      - key: GOOGLE_API_KEY
-        sync: false
-    healthCheckPath: /api/health
-
   # ── BullMQ Worker (Background Service) ──────────────────────────────────────
   - type: worker
     name: gravityflow-worker
@@ -51,3 +19,23 @@ services:
         sync: false
       - key: AGENT_API_KEY
         sync: false
+
+  # ── Python Autonomous Agent (Background Service) ─────────────────────────────
+  - type: worker
+    name: gravityflow-agent
+    runtime: python
+    plan: free
+    rootDir: agent
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py --daemon
+    envVars:
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: SERPAPI_API_KEY
+        sync: false
+      - key: AGENT_NEXTJS_API_URL
+        sync: false
+      - key: AGENT_API_KEY
+        sync: false
+      - key: CREATION_INTERVAL_HOURS
+        value: "6"

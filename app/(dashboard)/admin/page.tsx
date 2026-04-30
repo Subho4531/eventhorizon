@@ -36,6 +36,8 @@ interface Market {
   qualityScore?: number;
   manipulationScore?: number;
   imageUrl?: string | null;
+  payoutBps?: number | null;
+  outcome?: string | null;
 }
 
 interface Bet {
@@ -65,7 +67,7 @@ interface BetStats {
   revealedCount: number;
 }
 
-type MarketSortKey = "title" | "status" | "yesPool" | "noPool" | "closeDate" | "contractMarketId";
+type MarketSortKey = "title" | "status" | "yesPool" | "noPool" | "closeDate" | "contractMarketId" | "outcome" | "payoutBps";
 
 const STATUS_STYLES: Record<string, string> = {
   OPEN: "text-[#FF8C00] border-[#FF8C00]/30 bg-[#FF8C00]/5",
@@ -86,8 +88,6 @@ export default function AdminPage() {
 
   // Resolution state
   const [resolvingId, setResolvingId] = useState<string | null>(null);
-  const [outcome, setOutcome] = useState<"YES" | "NO">("YES");
-  const [payoutBps, setPayoutBps] = useState("20000");
 
   // UI toggles
   const [showDashboard, setShowDashboard] = useState(false);
@@ -218,11 +218,20 @@ export default function AdminPage() {
     }
   };
 
-  async function handleResolve(market: Market) {
+  async function handleResolve(market: Market, selectedOutcome: "YES" | "NO") {
     if (!publicKey) return alert("Please connect wallet");
     setResolvingId(market.id);
     try {
-      const res = await resolveMarket(publicKey, market.contractMarketId, outcome, parseInt(payoutBps));
+      const X = selectedOutcome === "YES" ? market.noPool : market.yesPool;
+      const Y = selectedOutcome === "YES" ? market.yesPool : market.noPool;
+      const totalPool = Y + (0.9 * X);
+      let payoutMultiplier = 1;
+      if (Y > 0) {
+        payoutMultiplier = totalPool / Y;
+      }
+      const computedPayoutBps = Math.max(10000, Math.floor(payoutMultiplier * 10000));
+
+      const res = await resolveMarket(publicKey, market.contractMarketId, selectedOutcome, computedPayoutBps);
       if (!res.success || !res.unsignedXdr) throw new Error("Failed to build XDR");
 
       const signRes = await signTransaction(res.unsignedXdr, {
@@ -235,7 +244,7 @@ export default function AdminPage() {
       const dbRes = await fetch(`/api/markets/${market.id}/resolve`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ outcome, payoutBps: parseInt(payoutBps), oraclePubKey: publicKey }),
+        body: JSON.stringify({ outcome: selectedOutcome, payoutBps: computedPayoutBps, oraclePubKey: publicKey }),
       });
       if (!dbRes.ok) throw new Error("DB sync failed");
 
@@ -404,43 +413,6 @@ export default function AdminPage() {
           ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === "resolution" && (
         <div className="space-y-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-[#0D0D0D] border border-white/10 p-8">
-            <div>
-              <h2 className="text-xl font-black text-white uppercase tracking-[0.1em]">Verdict Parameters</h2>
-              <p className="text-[9px] text-white/20 uppercase tracking-[0.3em] mt-1 font-bold">Set global outcome for batch processing</p>
-            </div>
-
-            <div className="flex items-center gap-6">
-              <div className="flex p-1 bg-black border border-white/10">
-                <button
-                  onClick={() => setOutcome("YES")}
-                  className={`px-8 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${
-                    outcome === "YES" ? "bg-[#00C853] text-black" : "text-white/20 hover:text-white"
-                  }`}
-                >
-                  YES
-                </button>
-                <button
-                  onClick={() => setOutcome("NO")}
-                  className={`px-8 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${
-                    outcome === "NO" ? "bg-red-500 text-black" : "text-white/20 hover:text-white"
-                  }`}
-                >
-                  NO
-                </button>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[8px] text-white/20 uppercase font-black tracking-widest pl-1">PAYOUT BPS CONFIG</label>
-                <input
-                  type="number"
-                  value={payoutBps}
-                  onChange={(e) => setPayoutBps(e.target.value)}
-                  className="bg-black border border-white/10 px-4 py-3 text-white text-[12px] font-black w-32 focus:outline-none focus:border-[#FF8C00]/50"
-                />
-              </div>
-            </div>
-          </div>
-
           <div className="grid grid-cols-1 gap-4">
             {loading ? (
               <div className="py-20 text-center border border-white/5 bg-[#0D0D0D]">
@@ -480,13 +452,22 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => handleResolve(m)}
-                      disabled={resolvingId === m.id}
-                      className="px-10 py-5 bg-white text-black text-[11px] font-black uppercase tracking-[0.3em] hover:bg-[#FF8C00] transition-all disabled:opacity-20 shrink-0"
-                    >
-                      {resolvingId === m.id ? "Executing..." : "Commit Verdict"}
-                    </button>
+                    <div className="flex flex-col gap-2 shrink-0">
+                      <button
+                        onClick={() => handleResolve(m, "YES")}
+                        disabled={resolvingId === m.id}
+                        className="px-8 py-3 bg-[#00C853]/10 text-[#00C853] border border-[#00C853]/30 text-[11px] font-black uppercase tracking-[0.3em] hover:bg-[#00C853] hover:text-black transition-all disabled:opacity-20"
+                      >
+                        {resolvingId === m.id ? "EXECUTING..." : "RESOLVE YES"}
+                      </button>
+                      <button
+                        onClick={() => handleResolve(m, "NO")}
+                        disabled={resolvingId === m.id}
+                        className="px-8 py-3 bg-red-500/10 text-red-500 border border-red-500/30 text-[11px] font-black uppercase tracking-[0.3em] hover:bg-red-500 hover:text-black transition-all disabled:opacity-20"
+                      >
+                        {resolvingId === m.id ? "EXECUTING..." : "RESOLVE NO"}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -534,6 +515,8 @@ export default function AdminPage() {
                     { key: "status", label: "STATE" },
                     { key: "yesPool", label: "POOL YES" },
                     { key: "noPool", label: "POOL NO" },
+                    { key: "outcome", label: "OUTCOME" },
+                    { key: "payoutBps", label: "BPS" },
                     { key: "closeDate", label: "TERMINATION" },
                   ].map(({ key, label }) => (
                     <th
@@ -552,9 +535,9 @@ export default function AdminPage() {
               </thead>
               <tbody className="divide-y divide-white/5">
                 {loading ? (
-                  <tr><td colSpan={7} className="px-6 py-20 text-center text-white/10 text-[10px] font-black uppercase">SYNCING DATA STREAM...</td></tr>
+                  <tr><td colSpan={9} className="px-6 py-20 text-center text-white/10 text-[10px] font-black uppercase">SYNCING DATA STREAM...</td></tr>
                 ) : filteredAllMarkets.length === 0 ? (
-                  <tr><td colSpan={7} className="px-6 py-20 text-center text-white/10 text-[10px] font-black uppercase">NO RECORDS FOUND</td></tr>
+                  <tr><td colSpan={9} className="px-6 py-20 text-center text-white/10 text-[10px] font-black uppercase">NO RECORDS FOUND</td></tr>
                 ) : (
                   filteredAllMarkets.map((m) => (
                     <tr key={m.id} className="hover:bg-white/[0.02] transition-colors group">
@@ -578,13 +561,21 @@ export default function AdminPage() {
                       </td>
                       <td className="px-6 py-6 text-[11px] font-black text-white/60">{m.yesPool} XLM</td>
                       <td className="px-6 py-6 text-[11px] font-black text-white/60">{m.noPool} XLM</td>
+                      <td className="px-6 py-6">
+                        <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 border ${m.outcome === "YES" ? "text-[#00C853] border-[#00C853]/30 bg-[#00C853]/5" : m.outcome === "NO" ? "text-red-500 border-red-500/30 bg-red-500/5" : "text-white/20 border-white/10 bg-transparent"}`}>
+                          {m.outcome || "---"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-6 text-[11px] font-black text-white/60">
+                        {m.payoutBps ? m.payoutBps : "---"}
+                      </td>
                       <td className="px-6 py-6 text-[10px] font-black text-white/20">
                         {m.closeDate ? new Date(m.closeDate).toLocaleDateString().toUpperCase() : "---"}
                       </td>
                       <td className="px-6 py-6 text-right">
                         {m.status === "OPEN" && (
                           <button
-                            onClick={() => { setActiveTab("resolution"); setOutcome("YES"); }}
+                            onClick={() => { setActiveTab("resolution"); }}
                             className="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 border border-[#FF8C00]/30 text-[#FF8C00] hover:bg-[#FF8C00] hover:text-black transition-all"
                           >
                             RESOLVE

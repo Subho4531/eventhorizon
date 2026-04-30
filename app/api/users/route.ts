@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     if (!publicKey || !name) {
       return NextResponse.json({ error: "publicKey and name are required" }, { status: 400 });
     }
-    const defaultPfp = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(publicKey)}`;
+    const defaultPfp = `https://api.dicebear.com/9.x/identicon/svg?seed=${encodeURIComponent(publicKey)}`;
     const user = await prisma.user.upsert({
       where: { publicKey },
       create: { 

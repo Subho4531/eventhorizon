@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { scheduleMarketLifecycle } from "@/lib/queue/queue-client";
 
 // GET /api/markets - fetch all markets
 export async function GET() {
@@ -48,6 +49,20 @@ export async function POST(req: NextRequest) {
           status: "OPEN"
         }
       });
+
+      // ── Schedule BullMQ lifecycle ───────────────────────────────────────────
+      // Fires at closeDate (to close) and closeDate + 1h (to resolve)
+      try {
+        await scheduleMarketLifecycle(
+          market.id,
+          market.contractMarketId,
+          market.title,
+          market.description,
+          market.closeDate
+        );
+      } catch (queueErr) {
+        console.warn("[API/Markets] Failed to schedule lifecycle:", queueErr);
+      }
 
       return NextResponse.json({ market }, { status: 201 });
     } catch (err) {

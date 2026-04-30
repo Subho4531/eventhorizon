@@ -80,6 +80,37 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // ── Payout Calculation Logic ────────────────────────────────────────────
+    // X = incorrect-side bets
+    // Y = correct-side bets
+    const X = outcome === "YES" ? market.noPool : market.yesPool;
+    const Y = outcome === "YES" ? market.yesPool : market.noPool;
+    
+    const fee = 0.1 * X;
+    const payoutFromIncorrectSide = 0.9 * X;
+    const totalPool = Y + payoutFromIncorrectSide;
+    
+    let payoutMultiplier = 1;
+    if (Y > 0) {
+      payoutMultiplier = totalPool / Y;
+    }
+    
+    const computedPayoutBps = Math.floor(payoutMultiplier * 10000);
+    const extraReturnBps = Math.floor((payoutMultiplier - 1) * 10000);
+    
+    const finalPayoutBps = Math.max(10000, computedPayoutBps); // Ensure minimum 1x (10000 BPS)
+
+    const payoutCalculation = {
+      incorrectSideBets: X,
+      correctSideBets: Y,
+      fee,
+      payoutFromIncorrectSide,
+      totalPool,
+      payoutMultiplier,
+      payoutBps: finalPayoutBps,
+      extraReturnBps,
+    };
+
     // ── On-chain resolution ─────────────────────────────────────────────────
     let chainResult: { success: boolean; hash: string; error?: string } = {
       success: false,
@@ -91,7 +122,7 @@ export async function POST(req: NextRequest) {
       chainResult = await serverResolveMarket(
         market.contractMarketId,
         outcome as "YES" | "NO",
-        payoutBps ?? 20000
+        finalPayoutBps
       );
     } else {
       // Markets without a contractMarketId are off-chain only (e.g., seeded demos)
@@ -104,7 +135,7 @@ export async function POST(req: NextRequest) {
       data: {
         status: "RESOLVED",
         outcome,
-        payoutBps: payoutBps ?? 20000,
+        payoutBps: finalPayoutBps,
         resolvedAt: now,
         resolutionTxHash: chainResult.hash || null,
       },
@@ -116,7 +147,7 @@ export async function POST(req: NextRequest) {
         type: "RESOLVE_MARKET",
         marketId,
         status: chainResult.success ? "COMPLETED" : "PARTIAL",
-        payload: { marketId, outcome, payoutBps: payoutBps ?? 20000, evidence },
+        payload: { marketId, outcome, payoutBps: finalPayoutBps, evidence },
         result: { txHash: chainResult.hash },
         error: chainResult.error ?? null,
         attempts: 1,
@@ -138,6 +169,7 @@ export async function POST(req: NextRequest) {
         success: chainResult.success,
         hash: chainResult.hash,
       },
+      payoutCalculation,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Internal error";
