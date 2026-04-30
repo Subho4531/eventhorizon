@@ -3,18 +3,20 @@ import prisma from "@/lib/db";
 
 export async function GET() {
   try {
-    const users = await prisma.user.findMany({
-      orderBy: { totalWinnings: "desc" },
-      take: 50,
-      select: {
-        publicKey: true,
-        name: true,
-        pfpUrl: true,
-        balance: true,
-        totalWinnings: true,
-        updatedAt: true,
-      }
-    });
+    // Rank users by net profit: totalWinnings - totalSpent
+    const users = await prisma.$queryRaw`
+      SELECT 
+        public_key as "publicKey", 
+        name, 
+        pfp_url as "pfpUrl", 
+        balance, 
+        total_winnings as "totalWinnings",
+        total_spent as "totalSpent",
+        (total_winnings - total_spent) as "netProfit"
+      FROM users
+      ORDER BY (total_winnings - total_spent) DESC
+      LIMIT 50
+    `;
 
     return NextResponse.json({ users });
   } catch (err) {

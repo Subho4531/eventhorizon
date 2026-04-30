@@ -93,7 +93,10 @@ export async function POST(req: NextRequest) {
       }),
       prisma.user.update({
         where: { publicKey: userPublicKey },
-        data: { balance: { decrement: stake } },
+        data: { 
+          balance: { decrement: stake },
+          totalSpent: { increment: stake }
+        },
       }),
     ]);
 

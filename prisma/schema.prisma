@@ -15,6 +15,7 @@ model User {
   links               Json               @default("[]")
   balance             Float              @default(0)
   totalWinnings       Float              @default(0) @map("total_winnings")
+  totalSpent          Float              @default(0) @map("total_spent")
   createdAt           DateTime           @default(now()) @map("created_at")
   updatedAt           DateTime           @updatedAt @map("updated_at")
   reputationScore     Int                @default(500) @map("reputation_score")

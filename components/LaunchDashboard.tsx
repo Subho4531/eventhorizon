@@ -176,7 +176,7 @@ export default function LaunchDashboard() {
           <motion.div 
             className="flex whitespace-nowrap items-center gap-8"
             animate={{ x: ["0%", "-50%"] }}
-            transition={{ repeat: Infinity, ease: "linear", duration: 20 }}
+            transition={{ repeat: Infinity, ease: "linear", duration: 120 }}
           >
             {[...trendingMarkets, ...trendingMarkets, ...trendingMarkets].map((m, i) => (
               <span key={i} className="text-xs font-mono text-indigo-300 flex items-center gap-2 tracking-widest uppercase cursor-pointer hover:text-white transition-colors" onClick={() => router.push(`/markets/${m.id}`)}>

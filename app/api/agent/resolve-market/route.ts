@@ -33,7 +33,6 @@ export async function POST(req: NextRequest) {
     const {
       marketId,
       outcome,     // "YES" | "NO"
-      payoutBps,   // optional, default 20000 (2x for winners)
       evidence,    // optional string — reasoning from agent
     } = body;
 

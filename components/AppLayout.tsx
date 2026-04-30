@@ -260,11 +260,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="max-w-6xl mx-auto relative z-10 flex flex-col items-center">
               <div className="w-full flex flex-col md:flex-row justify-between items-center text-sm font-medium text-neutral-500 tracking-wider uppercase">
-                <p>© 2026 Horizon Protocol.</p>
+                <p>© 2026 Horizon Markets Steller.</p>
                 <div className="flex gap-8 mt-6 md:mt-0">
-                  <a href="#" className="hover:text-white transition-colors">Twitter</a>
-                  <a href="#" className="hover:text-white transition-colors">GitHub</a>
-                  <a href="#" className="hover:text-white transition-colors">Discord</a>
+                  <a href="https://jeet.net" className="hover:text-white transition-colors">Made with ❤️ by Jeet </a>
+                  <a href="https://github.com/subho4531" className="hover:text-white transition-colors">GitHub</a>
+                  <a href="https://www.linkedin.com/in/subhajeet-gorai" className="hover:text-white transition-colors">Linkedin</a>
                 </div>
               </div>
             </div>

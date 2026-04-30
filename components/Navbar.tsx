@@ -36,6 +36,7 @@ export default function Navbar() {
 
   useEffect(() => {
     const q = searchParams.get("q") || "";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchQuery(prev => (prev === q ? prev : q));
   }, [searchParams]);
 

@@ -12,6 +12,8 @@ interface User {
   pfpUrl: string;
   balance: number;
   totalWinnings: number;
+  totalSpent: number;
+  netProfit: number;
   updatedAt: string;
 }
 
@@ -141,7 +143,7 @@ export default function LeaderboardPage() {
             Leaderboard
           </h1>
           <p className="text-sm text-white/25 max-w-md font-medium">
-            Top traders ranked by total winnings across all prediction markets.
+            Top traders ranked by net profit (Total Payouts - Total Bets) across all prediction markets.
           </p>
         </div>
 
@@ -158,13 +160,13 @@ export default function LeaderboardPage() {
           </div>
           <div className="w-px h-10 bg-white/[0.06]" />
           <div className="text-center">
-            <p className="text-[8px] text-white/25 uppercase tracking-[0.15em] font-semibold mb-1.5">Total Winnings</p>
+            <p className="text-[8px] text-white/25 uppercase tracking-[0.15em] font-semibold mb-1.5">Net Profits</p>
             <div className="flex items-center gap-2 justify-center">
               <div className="w-6 h-6 rounded-lg bg-[#00C853]/[0.06] flex items-center justify-center">
                 <TrendingUp className="w-3 h-3 text-[#00C853]/50" />
               </div>
               <span className="text-xl font-black text-white tabular-nums font-mono">
-                {users.reduce((sum, u) => sum + u.totalWinnings, 0).toLocaleString()}
+                {users.reduce((sum, u) => sum + (u.netProfit || 0), 0).toLocaleString()}
                 <span className="text-[9px] text-white/15 ml-1 font-medium font-sans">XLM</span>
               </span>
             </div>
@@ -227,7 +229,7 @@ export default function LeaderboardPage() {
                 </p>
                 <div className="text-center">
                   <p className={`font-black tabular-nums text-white font-mono ${rank === 1 ? "text-3xl" : "text-xl"}`}>
-                    {user.totalWinnings.toLocaleString()}
+                    {(user.netProfit || 0).toLocaleString()}
                   </p>
                   <p className="text-[8px] text-white/20 font-medium uppercase tracking-[0.15em] mt-1">XLM Won</p>
                 </div>
@@ -254,7 +256,7 @@ export default function LeaderboardPage() {
           </h2>
           <div className="flex gap-3">
             <span className="px-3 py-1.5 rounded-lg bg-[#FF8C00]/[0.06] text-[8px] font-bold tracking-[0.12em] uppercase border border-[#FF8C00]/15 text-[#FF8C00]/60">
-              By Winnings
+              By Profit
             </span>
           </div>
         </div>
@@ -267,7 +269,7 @@ export default function LeaderboardPage() {
                 <th className="px-8 py-4 text-[9px] text-white/15 font-bold uppercase tracking-[0.15em]">Trader</th>
                 <th className="px-8 py-4 text-[9px] text-white/15 font-bold uppercase tracking-[0.15em]">Tier</th>
                 <th className="px-8 py-4 text-[9px] text-white/15 font-bold uppercase tracking-[0.15em]">Performance</th>
-                <th className="px-8 py-4 text-[9px] text-white/15 font-bold uppercase tracking-[0.15em] text-right">Total Winnings</th>
+                <th className="px-8 py-4 text-[9px] text-white/15 font-bold uppercase tracking-[0.15em] text-right">Net Profit</th>
               </tr>
             </thead>
             <tbody>
@@ -330,7 +332,7 @@ export default function LeaderboardPage() {
                     </td>
                     <td className="px-8 py-4 text-right">
                       <span className="font-bold text-sm tabular-nums text-white font-mono">
-                        {user.totalWinnings.toLocaleString()}
+                        {(user.netProfit || 0).toLocaleString()}
                       </span>
                       <span className="text-[9px] text-white/15 ml-1.5 font-medium">XLM</span>
                     </td>
