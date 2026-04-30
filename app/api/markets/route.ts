@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
           market.id,
           market.contractMarketId,
           market.title,
-          market.description,
+          market.description ?? "",
           market.closeDate
         );
       } catch (queueErr) {
