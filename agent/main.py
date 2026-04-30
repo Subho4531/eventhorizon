@@ -28,25 +28,70 @@ import schedule
 from rich.console import Console
 from rich.table import Table
 
-from config import CREATION_INTERVAL_HOURS
+from config import CREATION_INTERVAL_HOURS, AGENT_API_KEY
 from agents.market_creator import run_creation_pipeline
 from agents.market_resolver import resolve_pending_markets
 from tools.nextjs_tool import get_agent_status
 
 import os
 import threading
+import json
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
+        # 1. Health check (No auth required)
         if self.path == '/health' or self.path == '/':
             self.send_response(200)
             self.send_header("Content-type", "application/json")
             self.end_headers()
-            self.wfile.write(b'{"status":"ok"}')
-        else:
-            self.send_response(404)
+            self.wfile.write(b'{"status":"ok", "service":"gravityflow-agent"}')
+            return
+
+        # 2. Auth check for protected actions
+        auth_header = self.headers.get("Authorization")
+        if not AGENT_API_KEY or auth_header != f"Bearer {AGENT_API_KEY}":
+            self.send_response(401)
+            self.send_header("Content-type", "application/json")
             self.end_headers()
+            self.wfile.write(b'{"error":"Unauthorized"}')
+            return
+
+        # 3. Action routes
+        try:
+            if self.path.startswith('/create'):
+                # Extract category if provided: /create?category=Crypto
+                category = None
+                if '?' in self.path:
+                    params = self.path.split('?')[1]
+                    for p in params.split('&'):
+                        if p.startswith('category='):
+                            category = p.split('=')[1]
+
+                # Run in background to not block HTTP response
+                threading.Thread(target=run_creation_job, args=(category,)).start()
+                
+                self.send_response(202) # Accepted
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"message": "Market creation job triggered", "category": category}).encode())
+
+            elif self.path == '/resolve':
+                # Run in background
+                threading.Thread(target=run_resolution_job).start()
+                
+                self.send_response(202)
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(b'{"message": "Market resolution scan triggered"}')
+
+            else:
+                self.send_response(404)
+                self.end_headers()
+        except Exception as e:
+            self.send_response(500)
+            self.end_headers()
+            self.wfile.write(str(e).encode())
 
 def start_health_server():
     port = int(os.environ.get("PORT", 8080))
