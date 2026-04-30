@@ -45,6 +45,7 @@ next-env.d.ts
 .design
 .agents
 
+
 /lib/generated/prisma
 
 # Rust / Soroban
@@ -69,3 +70,4 @@ circuit/*_js/
 /tmp_script.py
 /agent/venv
 /**/__pycache__/
+

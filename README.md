@@ -81,6 +81,9 @@ The interface has been reimagined as a **"Glow-Terminal"**—a premium, data-den
 - **🔐 Zero-Knowledge UX**: Simplifies the complexities of ZK-proof generation into a seamless, 3-step workflow that ensures privacy without sacrificing speed or intuition.
 - **🌊 Interactive Vibe**: Hover-triggered lighting effects and fluid, interactive dashboards create an interface that feels "alive," responding dynamically to every trader interaction.
 
+### ✨ Gasless Transactions
+Horizon now implements **Stellar Fee Bump** transactions! This allows users to place ZK bets completely gas-free. Our custom Relayer API handles the transaction submission and fee sponsorship.
+
 ---
 
 ## 🏗️ Architecture
@@ -279,11 +282,11 @@ Based on the collected user feedback in our Level 6 cohort, we plan to evolve th
 
 - [x] **30+ verified active users**: Onboarded and tracked via Google Sheets.
 - [x] **Metrics Dashboard Live**: Track DAU, transactions, and retention.
-- [x] **Security Checklist Completed**: [View Security Checklist](https://github.com/Subho4531/eventhorizon/blob/main/SECURITY.md)
+- [x] **Security Checklist Completed**: [View Security Checklist](https://github.com/Subho4531/eventhorizon/SECURITY.md)
 - [x] **Monitoring Active**: System health and RPC metrics are actively monitored.
 - [x] **Data Indexing Implemented**: Custom Relayers + Prisma Postgres sync.
 - [x] **Full Documentation**: Present in this README.
-- [x] **Community Contribution**: [Twitter Post (Horizon Agentic Release)](https://x.com/StellarHorizon/status/123456789)
+- [x] **Community Contribution**: [Twitter Post (Horizon Agentic Release)](https://x.com/jeet_xtweet/status/2049868407529697743?s=20)
 - [x] **Advanced Feature Implemented**: **Fee Sponsorship (Gasless transactions via fee bump)**
 - [x] **Minimum 15+ Meaningful Commits**: Maintained actively.
 
