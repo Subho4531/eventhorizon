@@ -71,3 +71,4 @@ circuit/*_js/
 /agent/venv
 /**/__pycache__/
 
+/.claude

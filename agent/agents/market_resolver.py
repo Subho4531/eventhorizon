@@ -44,22 +44,24 @@ Your decision directly controls real money payouts. Be rigorous, fair, and evide
 
 ═══ RESOLUTION PROTOCOL ═══
 
-1. ANALYZE all provided evidence carefully.
-2. DETERMINE if the market condition was MET (YES) or NOT MET (NO).
-3. CITE specific sources in your evidence field.
-4. ASSIGN confidence honestly:
-   - 0.9–1.0: Definitive proof (official results, confirmed data)
+1. ANALYZE the provided evidence against the explicit **Resolution Criteria**.
+2. DETERMINE if the market condition was fully MET (YES) or NOT MET (NO) based strictly on the criteria.
+3. CITE specific sources in your sources field.
+4. WRITE a clear, concise summary in the `evidence` field (max 2-3 sentences) explaining the outcome (e.g., "Company X launched Product Y on Date Z, meeting the criteria. Verified by Source A.").
+5. ASSIGN confidence honestly:
+   - 0.9–1.0: Definitive proof (official results, confirmed data, direct source)
    - 0.7–0.89: Strong evidence from credible sources
    - 0.5–0.69: Mixed signals, lean towards conservative answer
-   - Below 0.5: Insufficient evidence — default to NO
+   - Below 0.5: Insufficient, inconclusive, or unavailable evidence.
+     *IMPORTANT:* If the event outcome is unknown, unverified, or cannot be determined from the gathered evidence yet, set confidence < 0.5. Do NOT resolve as "NO" with high confidence if evidence is simply missing.
 
 ═══ CRITICAL RULES ═══
 
-- When in DOUBT, resolve NO. This is the conservative safe default.
-- NEVER guess. If evidence is insufficient, say so and resolve NO.
-- The close_date is the DEADLINE. Only events BEFORE the close_date count.
+- The close_date is the DEADLINE for the event to occur. Only events happening ON or BEFORE the close_date count.
+- Distinguish between the event date and the news publication date: evidence/news will naturally be published AFTER the close_date, but the event itself must have occurred before the deadline.
 - Use exact numbers, dates, and facts from the evidence.
-- Your "evidence" field must cite at least one source.
+- Do not guess or hallucinate.
+- When in doubt or if evidence is insufficient, set a low confidence score (< 0.5) to postpone resolution.
 
 ═══ CURRENT TIMESTAMP ═══
 {current_datetime}
@@ -67,6 +69,7 @@ Your decision directly controls real money payouts. Be rigorous, fair, and evide
 ═══ OUTPUT FORMAT ═══
 {format_instructions}
 """
+
 
 
 def resolve_pending_markets() -> list[dict]:
@@ -131,6 +134,14 @@ def _resolve_single_market(market: dict) -> Optional[dict]:
 
     print(f"\n[MarketResolver] Resolving: {title!r}")
 
+    # Parse resolution criteria from description if available
+    desc_clean = description
+    resolution_criteria = "Not explicitly specified in description"
+    if "**Resolution criteria:**" in description:
+        parts = description.split("**Resolution criteria:**")
+        desc_clean = parts[0].strip()
+        resolution_criteria = parts[1].strip()
+
     # ── Step 1: Gather evidence from multiple queries ────────────────────────
     evidence_pieces = []
 
@@ -173,7 +184,8 @@ def _resolve_single_market(market: dict) -> Optional[dict]:
 
 ═══ MARKET TO RESOLVE ═══
 Title: {title}
-Description: {description}
+Description: {desc_clean}
+Resolution Criteria: {resolution_criteria}
 Category: {category}
 Close Date: {close_date}
 Market ID: {market_id}
@@ -226,7 +238,6 @@ Return ONLY valid JSON matching the schema above. Set market_id to "{market_id}"
         result = nextjs_tool.resolve_market(
             market_id=market_id,
             outcome=decision.outcome,
-            payout_bps=decision.payout_bps,
             evidence=decision.evidence,
         )
 

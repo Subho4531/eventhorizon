@@ -55,4 +55,4 @@ class ResolutionDecision(BaseModel):
     confidence: float = Field(..., ge=0, le=1)
     evidence: str
     sources: list[str] = []
-    payout_bps: int = Field(default=20000, description="20000 = 2x for winners")
+

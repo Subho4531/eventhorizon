@@ -3,18 +3,28 @@ import prisma from "@/lib/db";
 
 export async function GET() {
   try {
-    // Rank users by net profit: totalWinnings - totalSpent
+    // Rank users by net profit: totalWinnings - totalSpent on resolved markets
     const users = await prisma.$queryRaw`
       SELECT 
-        public_key as "publicKey", 
-        name, 
-        pfp_url as "pfpUrl", 
-        balance, 
-        total_winnings as "totalWinnings",
-        total_spent as "totalSpent",
-        (total_winnings - total_spent) as "netProfit"
-      FROM users
-      ORDER BY (total_winnings - total_spent) DESC
+        u.public_key as "publicKey", 
+        u.name, 
+        u.pfp_url as "pfpUrl", 
+        u.balance, 
+        u.total_winnings as "totalWinnings",
+        u.total_spent as "totalSpent",
+        COALESCE(u.total_winnings - (
+          SELECT COALESCE(SUM(b.amount), 0)
+          FROM bets b
+          JOIN markets m ON b.market_id = m.id
+          WHERE b.user_public_key = u.public_key AND m.status = 'RESOLVED'
+        ), 0) as "netProfit"
+      FROM users u
+      ORDER BY COALESCE(u.total_winnings - (
+        SELECT COALESCE(SUM(b.amount), 0)
+        FROM bets b
+        JOIN markets m ON b.market_id = m.id
+        WHERE b.user_public_key = u.public_key AND m.status = 'RESOLVED'
+      ), 0) DESC
       LIMIT 50
     `;
 
@@ -24,3 +34,4 @@ export async function GET() {
     return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 }
+

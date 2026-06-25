@@ -143,7 +143,7 @@ export default function LeaderboardPage() {
             Leaderboard
           </h1>
           <p className="text-sm text-white/25 max-w-md font-medium">
-            Top traders ranked by net profit (Total Payouts - Total Bets) across all prediction markets.
+            Top traders ranked by net profit (Total Winnings - Bets on Resolved Markets) across all prediction markets.
           </p>
         </div>
 

@@ -76,7 +76,6 @@ def create_market(
 def resolve_market(
     market_id: str,
     outcome: str,
-    payout_bps: int = 20000,
     evidence: str = "",
     timeout: float = 120.0,
 ) -> dict:
@@ -87,7 +86,6 @@ def resolve_market(
     payload = {
         "marketId": market_id,
         "outcome": outcome,
-        "payoutBps": payout_bps,
         "evidence": evidence,
     }
 

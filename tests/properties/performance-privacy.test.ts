@@ -102,7 +102,7 @@ describe('Property 2: Probability Update Frequency', () => {
           updateCount: fc.integer({ min: 3, max: 10 })
         }),
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        async ({ marketId, _hoursUntilClose, updateCount }) => {
+        async ({ marketId, hoursUntilClose: _hoursUntilClose, updateCount }) => {
           // Create fresh instance for each test
           const probabilityModel = new MockProbabilityModel()
           const now = new Date()
@@ -141,7 +141,7 @@ describe('Property 2: Probability Update Frequency', () => {
           updateCount: fc.integer({ min: 3, max: 10 })
         }),
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        async ({ marketId, _hoursUntilClose, updateCount }) => {
+        async ({ marketId, hoursUntilClose: _hoursUntilClose, updateCount }) => {
           // Create fresh instance for each test
           const probabilityModel = new MockProbabilityModel()
           const now = new Date()
